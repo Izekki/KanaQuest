@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-background: 31 20 24;
+  --color-surface: 42 27 33;
+  --color-surface-alt: 57 36 44;
+  --color-accent: 191 84 104;
+  --color-accent-dark: 115 39 59;
+  --color-cream: 242 208 189;
+  --color-muted-rose: 166 114 114;
+  --color-neutral: 242 242 242;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, 'Noto Sans JP', system-ui, sans-serif;
+  background: rgb(var(--color-background));
+  color: rgb(var(--color-neutral));
+}
