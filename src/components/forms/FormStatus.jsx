@@ -1,7 +1,7 @@
 const tones = {
-  default: 'text-cream',
-  success: 'text-emerald-300',
-  error: 'text-red-300',
+  default: 'text-[rgb(var(--color-accent))]',
+  success: 'text-emerald-700',
+  error: 'text-red-600',
 };
 
 export default function FormStatus({ children, className = '', tone = 'default' }) {

@@ -1,7 +1,7 @@
 const variants = {
   solid: 'bg-accent text-white',
-  subtle: 'bg-cream/10 text-cream',
-  outline: 'border border-cream/20 text-neutral',
+  subtle: 'bg-[#f7ebe5] text-[rgb(var(--color-accent))]',
+  outline: 'border border-[rgba(128,43,56,0.2)] text-[rgb(var(--color-accent))]',
 };
 
 export default function Badge({ className = '', variant = 'solid', children, ...props }) {
