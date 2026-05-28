@@ -5,6 +5,7 @@ import AuthRedirectRoute from './components/auth/AuthRedirectRoute';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import HomePage from './pages/Home/HomePage';
 import GamePage from './pages/Game/GamePage';
+import HistoryPage from './pages/History/HistoryPage';
 import LoginPage from './pages/Login/LoginPage';
 import RegisterPage from './pages/Register/RegisterPage';
 import ProfilePage from './pages/Profile/ProfilePage';
@@ -56,6 +57,16 @@ export default function App() {
           <ProtectedRoute>
             <AppLayout>
               <ProfilePage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/historial"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <HistoryPage />
             </AppLayout>
           </ProtectedRoute>
         }

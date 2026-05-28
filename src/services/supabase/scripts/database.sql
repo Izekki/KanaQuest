@@ -68,6 +68,9 @@ create table public.progress (
 
     user_id uuid references auth.users(id) on delete cascade,
     word_id uuid references public.words(id) on delete cascade,
+    mode text not null default 'recognize' check (
+        mode in ('recognize', 'translate')
+    ),
 
     status text not null default 'new' check (
         status in ('new', 'learning', 'correct', 'incorrect', 'review', 'mastered')
@@ -80,7 +83,7 @@ create table public.progress (
 );
 
 alter table public.progress
-add constraint progress_user_word_key unique (user_id, word_id);
+add constraint progress_user_word_mode_key unique (user_id, word_id, mode);
 
 
 -- =========================================

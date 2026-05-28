@@ -1,9 +1,13 @@
+import { useEffect, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
+import { useAuthSession } from '../../hooks/useAuthSession';
+import { supabase } from '../../services/supabase/client';
 
 const navItems = [
   { to: '/', label: 'Inicio' },
   { to: '/game', label: 'Aprender' },
-  { to: '/profile', label: 'Repaso' },
+  { to: '/historial', label: 'Historial' },
+  { to: '/profile', label: 'Perfil' },
   { to: '/register', label: 'Desafíos' },
 ];
 
@@ -52,6 +56,49 @@ function PetalsLayer() {
 }
 
 export default function AppLayout({ children }) {
+  const { user } = useAuthSession();
+  const [profileName, setProfileName] = useState('Jugador');
+  const [profileLevel, setProfileLevel] = useState(1);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadProfile = async () => {
+      if (!user?.id) {
+        if (isMounted) {
+          setProfileName('Jugador');
+          setProfileLevel(1);
+        }
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('username,level')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (isMounted && data) {
+          setProfileName(data.username || 'Jugador');
+          setProfileLevel(data.level ?? 1);
+        }
+      } catch (error) {
+        console.warn('No se pudo cargar el perfil:', error?.message ?? error);
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
+
+  const profileInitial = (profileName || 'J').slice(0, 1).toUpperCase();
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-background text-neutral">
       <PetalsLayer />
@@ -88,11 +135,11 @@ export default function AppLayout({ children }) {
 
               <div className="flex items-center gap-3 rounded-full px-2 py-1">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f5d2dd,#b86773)] text-sm font-semibold text-white shadow-sm">
-                  H
+                  {profileInitial}
                 </div>
                 <div className="leading-tight">
-                  <div className="text-sm font-semibold text-[rgb(var(--color-neutral))]">Hana</div>
-                  <div className="text-xs text-[rgb(var(--color-accent))]/70">Nivel 8</div>
+                  <div className="text-sm font-semibold text-[rgb(var(--color-neutral))]">{profileName}</div>
+                  <div className="text-xs text-[rgb(var(--color-accent))]/70">Nivel {profileLevel}</div>
                 </div>
                 <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 text-[rgb(var(--color-accent))]/60">
                   <path fill="currentColor" d="M5.5 7.5 10 12l4.5-4.5 1.4 1.4L10 14.8 4.1 8.9z" />

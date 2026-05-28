@@ -82,6 +82,10 @@ const toKatakana = (value = '') =>
 const getAcceptedAnswers = (answers, mode) => {
   const base = (answers ?? []).filter(Boolean).map((item) => item.toString());
 
+  if (mode !== 'translate') {
+    return base;
+  }
+
   const expanded = new Set();
 
   base.forEach((item) => {
@@ -156,44 +160,35 @@ export default function GamePage() {
   const [streak, setStreak] = useState(0);
   const [canAdvance, setCanAdvance] = useState(false);
 
-  const normalizeWords = (payload) => {
-    if (!Array.isArray(payload)) {
-      return [];
-    }
-
-    return payload.filter((row) => row && typeof row === 'object' && !Array.isArray(row));
-  };
-
   useEffect(() => {
     let isMounted = true;
 
     const loadWords = async () => {
       try {
-        const query = supabase
-          .from('words')
-          .select('id,japanese,hiragana,katakana,romaji,translation,difficulty,type_id,image_url,audio_url,created_at')
-          .order('created_at', { ascending: true });
+        const { data: kanjiType, error: typeError } = await supabase.from('word_types').select('id').eq('name', 'kanji').maybeSingle();
+        if (typeError) throw typeError;
+
+        let query = supabase.from('words').select('id,japanese,hiragana,romaji,translation,difficulty,type_id').limit(200);
+        if (kanjiType?.id) {
+          query = query.eq('type_id', kanjiType.id);
+        }
 
         const { data, error } = await query;
         if (error) throw error;
 
-        const rows = normalizeWords(data);
-        if (!rows.length) {
-          throw new Error('Supabase returned an empty or invalid words payload.');
-        }
-
+        const rows = data ?? [];
         const shuffled = [...rows].sort(() => Math.random() - 0.5);
 
         const recognize = shuffled.map((row) => ({
-          prompt: row.japanese || row.hiragana || row.katakana || row.romaji || row.translation,
-          answers: [row.translation, row.romaji, row.hiragana, row.katakana].filter(Boolean),
-          instruction: 'Escribe el significado o la lectura correcta.',
+          prompt: row.japanese || row.hiragana || row.romaji || row.translation,
+          answers: [row.translation, row.romaji].filter(Boolean),
+          instruction: 'Escribe el significado (español o romaji).',
         }));
 
         const translate = shuffled.map((row) => ({
-          prompt: row.translation || row.romaji || row.japanese || row.hiragana || row.katakana,
-          answers: [row.japanese, row.hiragana, row.katakana, row.romaji].filter(Boolean),
-          instruction: 'Escribe la palabra en japonés (kanji, hiragana o katakana).',
+          prompt: row.translation || row.romaji || row.japanese,
+          answers: [row.japanese, row.hiragana, toKatakana(row.hiragana || ''), row.romaji].filter(Boolean),
+          instruction: 'Escribe la palabra en japonés (hiragana, katakana o kanji).',
         }));
 
         if (isMounted) {
@@ -218,12 +213,12 @@ export default function GamePage() {
   const fallbackDeck = useMemo(
     () => ({
       recognize: [
-        { prompt: '猫', answers: ['gato', 'neko', 'cat', 'ねこ', 'ネコ'], instruction: 'Escribe el significado o la lectura correcta.' },
-        { prompt: '水', answers: ['agua', 'mizu', 'water', 'みず', 'ミズ'], instruction: 'Escribe el significado o la lectura correcta.' },
+        { prompt: '猫', answers: ['gato', 'neko', 'cat'], instruction: 'Escribe el significado (español o romaji).' },
+        { prompt: '水', answers: ['agua', 'mizu', 'water'], instruction: 'Escribe el significado (español o romaji).' },
       ],
       translate: [
-        { prompt: 'gato', answers: ['猫', 'ねこ', 'ネコ', 'neko'], instruction: 'Escribe la palabra en japonés (kanji, hiragana o katakana).' },
-        { prompt: 'agua', answers: ['水', 'みず', 'ミズ', 'mizu'], instruction: 'Escribe la palabra en japonés (kanji, hiragana o katakana).' },
+        { prompt: 'gato', answers: ['猫', 'ねこ', 'ネコ', 'neko'], instruction: 'Escribe la palabra en japonés (hiragana, katakana o kanji).' },
+        { prompt: 'agua', answers: ['水', 'みず', 'ミズ', 'mizu'], instruction: 'Escribe la palabra en japonés (hiragana, katakana o kanji).' },
       ],
     }),
     []
@@ -256,7 +251,7 @@ export default function GamePage() {
       label: 'Reconocer',
       crown: true,
       active: mode === 'recognize',
-      description: 'Kana / Kanji / Romaji → significado o lectura',
+      description: 'Kana / Kanji → significado',
     },
     {
       id: 'translate',
@@ -286,7 +281,7 @@ export default function GamePage() {
     }
 
     const normalizedAnswer = normalize(answer);
-    const acceptedAnswers = getAcceptedAnswers(currentQuestion?.answers ?? []);
+    const acceptedAnswers = getAcceptedAnswers(currentQuestion?.answers ?? [], mode);
     const isCorrect = acceptedAnswers.some((item) => item && normalize(item) === normalizedAnswer);
 
     if (isCorrect) {
