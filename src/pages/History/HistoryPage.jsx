@@ -36,6 +36,10 @@ export default function HistoryPage() {
         return;
       }
 
+      if (isMounted) {
+        setLoading(true);
+      }
+
       try {
         const [wordsResult, progressResult] = await Promise.all([
           supabase
@@ -45,8 +49,7 @@ export default function HistoryPage() {
           supabase
             .from('progress')
             .select('word_id,mode,correct,attempts,last_attempt')
-            .eq('user_id', user.id)
-            .eq('mode', mode),
+            .eq('user_id', user.id),
         ]);
 
         if (wordsResult.error) throw wordsResult.error;
@@ -74,20 +77,22 @@ export default function HistoryPage() {
     return () => {
       isMounted = false;
     };
-  }, [user?.id, mode]);
+  }, [user?.id]);
 
   useEffect(() => {
     setPage(1);
   }, [mode]);
 
   const progressMap = useMemo(() => {
-    return progressRows.reduce((accumulator, row) => {
-      if (row?.word_id) {
-        accumulator[row.word_id] = row;
-      }
-      return accumulator;
-    }, {});
-  }, [progressRows]);
+    return progressRows
+      .filter((row) => row?.mode === mode)
+      .reduce((accumulator, row) => {
+        if (row?.word_id) {
+          accumulator[row.word_id] = row;
+        }
+        return accumulator;
+      }, {});
+  }, [progressRows, mode]);
 
   const historyItems = useMemo(() => {
     return words.map((word) => {

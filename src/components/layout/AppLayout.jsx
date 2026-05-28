@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useAuthSession } from '../../hooks/useAuthSession';
 import { supabase } from '../../services/supabase/client';
@@ -21,6 +21,8 @@ const petals = [
   { left: '86%', top: '28%', size: '0.48rem', duration: '14.5s', delay: '4s', opacity: 0.35 },
   { left: '92%', top: '58%', size: '0.62rem', duration: '15.5s', delay: '1.2s', opacity: 0.4 },
 ];
+
+const getStreakStorageKey = (userId) => `kanaquest-streak:${userId}`;
 
 function ToriiIcon() {
   return (
@@ -59,6 +61,9 @@ export default function AppLayout({ children }) {
   const { user } = useAuthSession();
   const [profileName, setProfileName] = useState('Jugador');
   const [profileLevel, setProfileLevel] = useState(1);
+  const [streak, setStreak] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -97,6 +102,48 @@ export default function AppLayout({ children }) {
     };
   }, [user?.id]);
 
+  useEffect(() => {
+    const syncStreak = () => {
+      if (!user?.id) {
+        setStreak(0);
+        return;
+      }
+
+      const storedStreak = Number(sessionStorage.getItem(getStreakStorageKey(user.id)) ?? 0);
+      setStreak(Number.isFinite(storedStreak) ? storedStreak : 0);
+    };
+
+    syncStreak();
+
+    const handleStreakChange = () => syncStreak();
+    window.addEventListener('kanaquest-streak-change', handleStreakChange);
+    window.addEventListener('storage', handleStreakChange);
+
+    return () => {
+      window.removeEventListener('kanaquest-streak-change', handleStreakChange);
+      window.removeEventListener('storage', handleStreakChange);
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    const handlePointerDown = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('pointerdown', handlePointerDown);
+
+    return () => {
+      window.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, []);
+
+  const handleSignOut = async () => {
+    setMenuOpen(false);
+    await supabase.auth.signOut();
+  };
+
   const profileInitial = (profileName || 'J').slice(0, 1).toUpperCase();
 
   return (
@@ -130,20 +177,61 @@ export default function AppLayout({ children }) {
             <div className="flex items-center gap-3 sm:gap-4">
               <div className="flex items-center gap-2 rounded-full bg-[#f8ebe6] px-4 py-2 text-[rgb(var(--color-accent))] shadow-sm">
                 <span className="text-base">🔥</span>
-                <span className="text-sm font-semibold">12</span>
+                <span className="text-sm font-semibold">{streak}</span>
               </div>
 
-              <div className="flex items-center gap-3 rounded-full px-2 py-1">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f5d2dd,#b86773)] text-sm font-semibold text-white shadow-sm">
-                  {profileInitial}
-                </div>
-                <div className="leading-tight">
-                  <div className="text-sm font-semibold text-[rgb(var(--color-neutral))]">{profileName}</div>
-                  <div className="text-xs text-[rgb(var(--color-accent))]/70">Nivel {profileLevel}</div>
-                </div>
-                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 text-[rgb(var(--color-accent))]/60">
-                  <path fill="currentColor" d="M5.5 7.5 10 12l4.5-4.5 1.4 1.4L10 14.8 4.1 8.9z" />
-                </svg>
+              <div ref={menuRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen((value) => !value)}
+                  className="flex items-center gap-3 rounded-full px-2 py-1 text-left transition hover:bg-[#f9efea]"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f5d2dd,#b86773)] text-sm font-semibold text-white shadow-sm">
+                    {profileInitial}
+                  </div>
+                  <div className="leading-tight">
+                    <div className="text-sm font-semibold text-[rgb(var(--color-neutral))]">{profileName}</div>
+                    <div className="text-xs text-[rgb(var(--color-accent))]/70">Nivel {profileLevel}</div>
+                  </div>
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className={['h-4 w-4 text-[rgb(var(--color-accent))]/60 transition-transform', menuOpen ? 'rotate-180' : 'rotate-0'].join(' ')}>
+                    <path fill="currentColor" d="M5.5 7.5 10 12l4.5-4.5 1.4 1.4L10 14.8 4.1 8.9z" />
+                  </svg>
+                </button>
+
+                {menuOpen ? (
+                  <div className="absolute right-0 top-full z-20 mt-2 w-52 overflow-hidden rounded-[1.1rem] border border-[#eaded6] bg-white p-2 shadow-[0_18px_35px_rgba(128,43,56,0.14)]">
+                    {user ? (
+                      <>
+                        <div className="px-3 py-2 text-xs uppercase tracking-[0.25em] text-[rgb(var(--color-accent))]/55">Sesión</div>
+                        <button
+                          type="button"
+                          onClick={handleSignOut}
+                          className="flex w-full items-center rounded-xl px-3 py-2 text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea]"
+                        >
+                          Cerrar sesión
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="px-3 py-2 text-xs uppercase tracking-[0.25em] text-[rgb(var(--color-accent))]/55">Cuenta</div>
+                        <Link
+                          to="/login"
+                          onClick={() => setMenuOpen(false)}
+                          className="flex rounded-xl px-3 py-2 text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea]"
+                        >
+                          Iniciar sesión
+                        </Link>
+                        <Link
+                          to="/register"
+                          onClick={() => setMenuOpen(false)}
+                          className="mt-1 flex rounded-xl px-3 py-2 text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea]"
+                        >
+                          Registrarse
+                        </Link>
+                      </>
+                    )}
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>

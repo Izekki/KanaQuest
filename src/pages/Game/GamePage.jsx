@@ -106,6 +106,8 @@ const getAnswersFromWord = (word, mode) => {
 
 const getModeLabel = (value) => (value === 'translate' ? 'Traducir' : 'Reconocer');
 
+const getStreakStorageKey = (userId) => `kanaquest-streak:${userId}`;
+
 function Avatar({ label, tone }) {
   return (
     <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${tone} text-sm font-semibold text-white shadow-sm`}>
@@ -163,6 +165,8 @@ export default function GamePage() {
   const [mode, setMode] = useState('recognize');
   const [deckData, setDeckData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [rankingProfiles, setRankingProfiles] = useState([]);
+  const [rankingLoading, setRankingLoading] = useState(true);
   const [reviewItems, setReviewItems] = useState([]);
   const [reviewLoading, setReviewLoading] = useState(true);
   const [answer, setAnswer] = useState('');
@@ -171,6 +175,63 @@ export default function GamePage() {
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [canAdvance, setCanAdvance] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setStreak(0);
+      return;
+    }
+
+    const savedStreak = sessionStorage.getItem(getStreakStorageKey(user.id));
+    const nextStreak = Number(savedStreak);
+
+    setStreak(Number.isFinite(nextStreak) ? nextStreak : 0);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      return;
+    }
+
+    sessionStorage.setItem(getStreakStorageKey(user.id), String(streak));
+    window.dispatchEvent(new Event('kanaquest-streak-change'));
+  }, [streak, user?.id]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadRanking = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('user_id,username,avatar_url,level,experience,games_played,correct_answers,wrong_answers,created_at')
+          .order('experience', { ascending: false })
+          .order('level', { ascending: false })
+          .limit(6);
+
+        if (error) throw error;
+
+        if (isMounted) {
+          setRankingProfiles(data ?? []);
+        }
+      } catch (error) {
+        console.warn('No se pudo cargar el ranking:', error?.message ?? error);
+        if (isMounted) {
+          setRankingProfiles([]);
+        }
+      } finally {
+        if (isMounted) {
+          setRankingLoading(false);
+        }
+      }
+    };
+
+    loadRanking();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -588,20 +649,49 @@ export default function GamePage() {
       <aside className="grid gap-3">
         <section className="rounded-[1.3rem] border border-[#eaded6] bg-white p-3.5 shadow-[0_12px_30px_rgba(128,43,56,0.08)] sm:p-4">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-base font-semibold text-[rgb(var(--color-accent))] sm:text-lg">Jugadores en la sala</h3>
-            <span className="text-sm font-medium text-emerald-600">3 en línea</span>
+            <h3 className="text-base font-semibold text-[rgb(var(--color-accent))] sm:text-lg">Ranking de usuarios</h3>
           </div>
 
           <div className="mt-3 grid gap-2.5 sm:mt-4 sm:gap-3">
-            {players.map((player) => (
-              <div key={player.name} className="flex items-center gap-2.5 rounded-2xl border border-[#f0e2db] bg-[#fffdfb] px-3 py-2.5">
-                <Avatar label={player.name.charAt(0)} tone={player.tone} />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-semibold text-[rgb(var(--color-neutral))]">{player.name}</div>
+            {rankingLoading ? (
+              <div className="rounded-2xl border border-[#f0e2db] bg-[#fffdfb] px-3 py-3 text-sm text-[rgb(var(--color-neutral))]/70">Cargando ranking...</div>
+            ) : null}
+
+            {!rankingLoading && rankingProfiles.length === 0 ? (
+              <div className="rounded-2xl border border-[#f0e2db] bg-[#fffdfb] px-3 py-3 text-sm text-[rgb(var(--color-neutral))]/70">Todavía no hay usuarios para mostrar.</div>
+            ) : null}
+
+            {(rankingProfiles.length ? rankingProfiles : players).map((player, indexRanking) => {
+              const isCurrentUser = user?.id && player.user_id === user.id;
+              const displayName = player.username || player.name || 'Usuario';
+              const initials = displayName.slice(0, 1).toUpperCase();
+              const xp = player.experience ?? player.xp ?? 0;
+
+              return (
+              <div
+                key={player.user_id ?? player.name ?? displayName}
+                className={[
+                  'flex items-center gap-2.5 rounded-2xl border px-3 py-2.5',
+                  isCurrentUser ? 'border-[rgba(128,43,56,0.28)] bg-[#fdf3ef]' : 'border-[#f0e2db] bg-[#fffdfb]',
+                ].join(' ')}
+              >
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#d95f76] to-[#8b2d3f] text-sm font-semibold text-white shadow-sm">
+                  {initials}
                 </div>
-                <div className="text-sm font-semibold text-[rgb(var(--color-neutral))]">{player.xp} XP</div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold text-[rgb(var(--color-neutral))]">
+                    {displayName}
+                    {isCurrentUser ? ' (Tú)' : ''}
+                  </div>
+                  <div className="text-xs text-[rgb(var(--color-neutral))]/65">
+                    Nivel {player.level ?? 1}
+                    {isCurrentUser ? ' · actual' : ''}
+                  </div>
+                </div>
+                <div className="text-sm font-semibold text-[rgb(var(--color-neutral))]">{xp} XP</div>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           <button className="mt-3 inline-flex w-full items-center justify-center rounded-2xl bg-[rgb(var(--color-accent))] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[rgb(var(--color-accent-dark))] sm:mt-4 sm:py-3">
