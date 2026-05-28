@@ -1,14 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../../services/supabase/client';
-
-const reviewItems = [
-  { id: 1, thumbnail: '🐱', word: 'ねこ', translation: 'gato', correct: true },
-  { id: 2, thumbnail: '🏫', word: '学校', translation: 'escuela', correct: true },
-  { id: 3, thumbnail: '🍎', word: 'りんご', translation: 'manzana', correct: true },
-  { id: 4, thumbnail: '🚗', word: '車', translation: 'coche', correct: false },
-  { id: 5, thumbnail: '💧', word: '水', translation: 'agua', correct: true },
-  { id: 6, thumbnail: '🌸', word: '花', translation: 'flor', correct: false },
-];
+import { useAuthSession } from '../../hooks/useAuthSession';
 
 const players = [
   { name: 'Hana (Tú)', xp: 2350, tone: 'from-[#d95f76] to-[#8b2d3f]' },
@@ -97,6 +90,22 @@ const getAcceptedAnswers = (answers, mode) => {
   return [...expanded];
 };
 
+const getAnswersFromWord = (word, mode) => {
+  const modeAnswers = word?.accepted_answers?.[mode];
+
+  if (Array.isArray(modeAnswers) && modeAnswers.length) {
+    return modeAnswers;
+  }
+
+  if (mode === 'translate') {
+    return [word?.japanese, word?.hiragana, word?.katakana, word?.romaji].filter(Boolean);
+  }
+
+  return [word?.translation, word?.romaji].filter(Boolean);
+};
+
+const getModeLabel = (value) => (value === 'translate' ? 'Traducir' : 'Reconocer');
+
 function Avatar({ label, tone }) {
   return (
     <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${tone} text-sm font-semibold text-white shadow-sm`}>
@@ -150,9 +159,12 @@ function KeyboardIcon() {
 }
 
 export default function GamePage() {
+  const { user } = useAuthSession();
   const [mode, setMode] = useState('recognize');
   const [deckData, setDeckData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [reviewItems, setReviewItems] = useState([]);
+  const [reviewLoading, setReviewLoading] = useState(true);
   const [answer, setAnswer] = useState('');
   const [feedback, setFeedback] = useState(null);
   const [index, setIndex] = useState(0);
@@ -165,34 +177,31 @@ export default function GamePage() {
 
     const loadWords = async () => {
       try {
-        const { data: kanjiType, error: typeError } = await supabase.from('word_types').select('id').eq('name', 'kanji').maybeSingle();
-        if (typeError) throw typeError;
-
-        let query = supabase.from('words').select('id,japanese,hiragana,romaji,translation,difficulty,type_id').limit(200);
-        if (kanjiType?.id) {
-          query = query.eq('type_id', kanjiType.id);
-        }
-
-        const { data, error } = await query;
+        const { data, error } = await supabase
+          .from('words')
+          .select('id,japanese,hiragana,katakana,romaji,translation,accepted_answers,difficulty,type_id')
+          .limit(200);
         if (error) throw error;
 
         const rows = data ?? [];
         const shuffled = [...rows].sort(() => Math.random() - 0.5);
 
         const recognize = shuffled.map((row) => ({
-          prompt: row.japanese || row.hiragana || row.romaji || row.translation,
-          answers: [row.translation, row.romaji].filter(Boolean),
+          wordId: row.id,
+          prompt: row.japanese || row.hiragana || row.katakana || row.romaji || row.translation,
+          answers: getAnswersFromWord(row, 'recognize'),
           instruction: 'Escribe el significado (español o romaji).',
         }));
 
         const translate = shuffled.map((row) => ({
+          wordId: row.id,
           prompt: row.translation || row.romaji || row.japanese,
-          answers: [row.japanese, row.hiragana, toKatakana(row.hiragana || ''), row.romaji].filter(Boolean),
+          answers: getAnswersFromWord(row, 'translate'),
           instruction: 'Escribe la palabra en japonés (hiragana, katakana o kanji).',
         }));
 
         if (isMounted) {
-          setDeckData({ recognize, translate });
+          setDeckData(recognize.length || translate.length ? { recognize, translate } : null);
         }
       } catch (error) {
         console.warn('No se pudo cargar el deck desde Supabase:', error?.message ?? error);
@@ -224,18 +233,71 @@ export default function GamePage() {
     []
   );
 
-  const deck = deckData?.[mode] ?? fallbackDeck[mode];
+  const activeDeckData = deckData?.[mode]?.length ? deckData : null;
+  const deck = activeDeckData?.[mode] ?? fallbackDeck[mode];
   const currentQuestion = deck[index] ?? deck[0];
-  const reviewItems = useMemo(() => {
-    const source = deckData?.recognize ?? fallbackDeck.recognize;
-    return source.slice(0, 6).map((item, itemIndex) => ({
-      id: itemIndex + 1,
-      thumbnail: '🀄',
-      word: item.prompt,
-      translation: item.answers[0] ?? '',
-      correct: true,
-    }));
-  }, [deckData, fallbackDeck]);
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadReviewItems = async () => {
+      if (!user?.id) {
+        if (isMounted) {
+          setReviewItems([]);
+          setReviewLoading(false);
+        }
+        return;
+      }
+
+      setReviewLoading(true);
+
+      try {
+        const { data, error } = await supabase
+          .from('progress')
+          .select(
+            'id,mode,correct,last_attempt,word:word_id(id,japanese,hiragana,katakana,romaji,translation)'
+          )
+          .eq('user_id', user.id)
+          .order('last_attempt', { ascending: false })
+          .limit(6);
+
+        if (error) throw error;
+
+        const items = (data ?? []).map((row) => {
+          const word = row.word ?? {};
+          const wordLabel = word.japanese || word.hiragana || word.katakana || word.romaji || word.translation || '—';
+          const translation = word.translation || word.romaji || word.japanese || word.hiragana || word.katakana || '';
+
+          return {
+            id: row.id,
+            thumbnail: '🀄',
+            word: wordLabel,
+            translation,
+            correct: Boolean(row.correct),
+            mode: row.mode,
+          };
+        });
+
+        if (isMounted) {
+          setReviewItems(items);
+        }
+      } catch (error) {
+        console.warn('No se pudo cargar el historial desde Supabase:', error?.message ?? error);
+        if (isMounted) {
+          setReviewItems([]);
+        }
+      } finally {
+        if (isMounted) {
+          setReviewLoading(false);
+        }
+      }
+    };
+
+    loadReviewItems();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
 
   const sessionStats = {
     streak,
@@ -273,7 +335,7 @@ export default function GamePage() {
     setCanAdvance(false);
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (canAdvance) {
@@ -283,6 +345,88 @@ export default function GamePage() {
     const normalizedAnswer = normalize(answer);
     const acceptedAnswers = getAcceptedAnswers(currentQuestion?.answers ?? [], mode);
     const isCorrect = acceptedAnswers.some((item) => item && normalize(item) === normalizedAnswer);
+
+    if (currentQuestion?.wordId) {
+      const modeLabel = getModeLabel(mode);
+      const translation = currentQuestion?.answers?.[0] ?? '';
+
+      setReviewItems((items) => {
+        const next = [
+          {
+            id: `${currentQuestion.wordId}-${mode}-${Date.now()}`,
+            thumbnail: '🀄',
+            word: currentQuestion?.prompt ?? '—',
+            translation,
+            correct: isCorrect,
+            mode,
+            modeLabel,
+          },
+          ...items.filter((item) => item.word !== currentQuestion?.prompt || item.mode !== mode),
+        ];
+
+        return next.slice(0, 6);
+      });
+    }
+
+    if (user?.id && currentQuestion?.wordId) {
+      const payload = {
+        user_id: user.id,
+        word_id: currentQuestion.wordId,
+        mode,
+        correct: isCorrect,
+        attempts: 1,
+        mastery_level: isCorrect ? 1 : 0,
+        last_attempt: new Date().toISOString(),
+      };
+
+      const { data: existing, error: fetchError } = await supabase
+        .from('progress')
+        .select('attempts,mastery_level')
+        .eq('user_id', user.id)
+        .eq('word_id', currentQuestion.wordId)
+        .eq('mode', mode)
+        .maybeSingle();
+
+      if (!fetchError) {
+        const attempts = (existing?.attempts ?? 0) + 1;
+        const masteryLevel = isCorrect ? (existing?.mastery_level ?? 0) + 1 : existing?.mastery_level ?? 0;
+
+        const { error: upsertError } = await supabase
+          .from('progress')
+          .upsert({
+            ...payload,
+            attempts,
+            mastery_level: masteryLevel,
+          }, {
+            onConflict: 'user_id,word_id,mode',
+          });
+
+        if (upsertError) {
+          console.warn('No se pudo guardar progreso:', upsertError.message);
+        } else {
+          const modeLabel = getModeLabel(mode);
+          const translation = currentQuestion?.answers?.[0] ?? '';
+          setReviewItems((items) => {
+            const next = [
+              {
+                id: `${currentQuestion.wordId}-${mode}-${Date.now()}`,
+                thumbnail: '🀄',
+                word: currentQuestion?.prompt ?? '—',
+                translation,
+                correct: isCorrect,
+                mode,
+                modeLabel,
+              },
+              ...items.filter((item) => item.word !== currentQuestion?.prompt || item.mode !== mode),
+            ];
+
+            return next.slice(0, 6);
+          });
+        }
+      } else {
+        console.warn('No se pudo leer progreso:', fetchError.message);
+      }
+    }
 
     if (isCorrect) {
       setFeedback({ tone: 'success', message: 'Correcto. Sigue con la siguiente pregunta.' });
@@ -314,42 +458,61 @@ export default function GamePage() {
   };
 
   return (
-    <section className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_340px] lg:gap-4">
-      <aside className="rounded-[1.8rem] bg-[rgb(var(--color-accent))] p-4 text-white shadow-[0_18px_40px_rgba(128,43,56,0.2)]">
+    <section className="grid gap-3 lg:grid-cols-[250px_minmax(0,1fr)_320px] lg:gap-4 xl:grid-cols-[260px_minmax(0,1fr)_320px]">
+      <aside className="rounded-[1.6rem] bg-[rgb(var(--color-accent))] p-3 text-white shadow-[0_16px_34px_rgba(128,43,56,0.18)] lg:p-4">
         <div className="px-2 pt-1">
-          <h2 className="text-2xl font-semibold tracking-tight">Repaso</h2>
-          <p className="mt-1 text-sm text-white/80">Últimas preguntas</p>
+          <h2 className="text-[1.35rem] font-semibold tracking-tight">Repaso</h2>
+          <p className="mt-1 text-xs text-white/80">Últimas preguntas</p>
         </div>
 
-          <div className="mt-4 grid gap-3">
-          {reviewItems.map((item) => (
-            <div key={item.id} className="flex items-center gap-3 rounded-2xl bg-white px-3 py-3 text-[rgb(var(--color-neutral))] shadow-sm">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#f6eadf] text-2xl shadow-inner">
-                {item.thumbnail}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-lg font-semibold leading-none text-[rgb(var(--color-accent))]">{item.word}</div>
-                <div className="mt-1 text-sm text-[rgb(var(--color-neutral))]/75">{item.translation}</div>
-              </div>
-              <div
-                className={[
-                  'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
-                  item.correct ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600',
-                ].join(' ')}
-              >
-                {item.correct ? '✓' : '✕'}
-              </div>
+        <div className="mt-3 grid gap-2.5">
+          {reviewLoading ? (
+            <div className="rounded-2xl bg-white px-3 py-4 text-center text-xs text-[rgb(var(--color-neutral))]/70 shadow-sm">
+              Cargando historial...
             </div>
-          ))}
+          ) : null}
+
+          {!reviewLoading && reviewItems.length === 0 ? (
+            <div className="rounded-2xl bg-white px-3 py-4 text-center text-xs text-[rgb(var(--color-neutral))]/70 shadow-sm">
+              Aun no hay respuestas registradas.
+            </div>
+          ) : null}
+
+          {!reviewLoading
+            ? reviewItems.map((item) => (
+                <div key={item.id} className="flex items-center gap-2.5 rounded-2xl bg-white px-3 py-2.5 text-[rgb(var(--color-neutral))] shadow-sm">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#f6eadf] text-xl shadow-inner">
+                    {item.thumbnail}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[1rem] font-semibold leading-none text-[rgb(var(--color-accent))]">{item.word}</div>
+                    <div className="mt-1 text-xs text-[rgb(var(--color-neutral))]/75">
+                      {item.mode ? getModeLabel(item.mode) : item.translation}
+                    </div>
+                  </div>
+                  <div
+                    className={[
+                      'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
+                      item.correct ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600',
+                    ].join(' ')}
+                  >
+                    {item.correct ? '✓' : '✕'}
+                  </div>
+                </div>
+              ))
+            : null}
         </div>
 
-        <button className="mt-4 inline-flex w-full items-center justify-center rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm transition-transform hover:-translate-y-0.5">
+        <Link
+          to="/historial"
+          className="mt-3 inline-flex w-full items-center justify-center rounded-2xl bg-white px-4 py-2.5 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm transition-transform hover:-translate-y-0.5"
+        >
           Ver todos
-        </button>
+        </Link>
       </aside>
 
-      <div className="grid gap-4">
-        <div className="flex items-center justify-between gap-4 px-2 py-1 text-sm font-medium text-[rgb(var(--color-neutral))]">
+      <div className="grid gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-1 text-xs font-medium text-[rgb(var(--color-neutral))] sm:text-sm">
           <span>Racha: {sessionStats.streak} 🔥</span>
           <span className="text-center">Pregunta {sessionStats.questionNumber} de {sessionStats.totalQuestions}</span>
           <span>Puntuación: {sessionStats.score} XP</span>
@@ -359,12 +522,12 @@ export default function GamePage() {
           <div className="h-full rounded-full bg-[rgb(var(--color-accent))]" style={{ width: `${sessionStats.progress}%` }} />
         </div>
 
-        <section className="rounded-[1.9rem] border border-[#eaded6] bg-white p-5 shadow-[0_18px_42px_rgba(128,43,56,0.08)] lg:p-6">
+        <section className="rounded-[1.6rem] border border-[#eaded6] bg-white p-4 shadow-[0_14px_32px_rgba(128,43,56,0.08)] sm:p-5 lg:p-5">
           {loading ? <p className="mb-4 text-center text-sm text-[rgb(var(--color-neutral))]/70">Cargando palabras desde Supabase...</p> : null}
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_240px] xl:items-center">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_210px] xl:items-center">
             <div className="flex items-start justify-center xl:justify-start">
               <div className={[
-                'pt-6 font-semibold leading-none text-[rgb(var(--color-accent))]',
+                'pt-2 font-semibold leading-none text-[rgb(var(--color-accent))] sm:pt-3',
                 promptSizeClass,
               ].join(' ')}>
                 {currentQuestion?.prompt ?? '...'}
@@ -376,12 +539,12 @@ export default function GamePage() {
             </div>
           </div>
 
-          <form className="mx-auto mt-4 max-w-2xl" onSubmit={handleSubmit}>
-            <p className="text-center text-lg font-semibold text-[rgb(var(--color-neutral))]">{currentQuestion?.instruction ?? 'Escribe la respuesta:'}</p>
+          <form className="mx-auto mt-3 max-w-2xl" onSubmit={handleSubmit}>
+            <p className="text-center text-base font-semibold text-[rgb(var(--color-neutral))] sm:text-lg">{currentQuestion?.instruction ?? 'Escribe la respuesta:'}</p>
 
-            <div className="relative mt-3">
+            <div className="relative mt-2.5">
               <input
-                className="w-full rounded-[1.2rem] border border-[rgba(128,43,56,0.22)] bg-[#fffdfb] px-5 py-4 pr-14 text-lg text-[rgb(var(--color-neutral))] outline-none transition focus:border-[rgb(var(--color-accent))] focus:ring-2 focus:ring-[rgba(128,43,56,0.12)]"
+                className="w-full rounded-[1.1rem] border border-[rgba(128,43,56,0.22)] bg-[#fffdfb] px-4 py-3.5 pr-14 text-base text-[rgb(var(--color-neutral))] outline-none transition placeholder:text-[rgb(var(--color-neutral))]/35 focus:border-[rgb(var(--color-accent))] focus:ring-2 focus:ring-[rgba(128,43,56,0.12)] sm:px-5 sm:py-4 sm:text-lg"
                 value={answer}
                 onChange={(event) => setAnswer(event.target.value)}
                 placeholder="Escribe aquí..."
@@ -389,7 +552,7 @@ export default function GamePage() {
               />
 
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                <div className="grid h-10 w-10 place-items-center rounded-xl bg-[#f6e7e0]">
+                <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#f6e7e0] sm:h-10 sm:w-10">
                   <KeyboardIcon />
                 </div>
               </div>
@@ -399,10 +562,10 @@ export default function GamePage() {
               <p className={['mt-3 text-center text-sm font-medium', feedback.tone === 'success' ? 'text-emerald-700' : 'text-red-600'].join(' ')}>{feedback.message}</p>
             ) : null}
 
-            <div className="mt-5 flex justify-center">
+            <div className="mt-4 flex justify-center sm:mt-5">
               <button
                 type="submit"
-                className="inline-flex min-w-36 items-center justify-center rounded-2xl bg-[rgb(var(--color-accent))] px-6 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(128,43,56,0.18)] transition hover:bg-[rgb(var(--color-accent-dark))]"
+                className="inline-flex min-w-32 items-center justify-center rounded-2xl bg-[rgb(var(--color-accent))] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(128,43,56,0.18)] transition hover:bg-[rgb(var(--color-accent-dark))] sm:min-w-36 sm:px-6 sm:py-3"
               >
                 Verificar
               </button>
@@ -410,28 +573,28 @@ export default function GamePage() {
           </form>
         </section>
 
-        <div className="grid grid-cols-2 gap-4 px-1">
-          <button type="button" onClick={handlePrev} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[rgba(128,43,56,0.28)] bg-white px-5 py-3 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm transition hover:bg-[#fcf4f0]">
+        <div className="grid grid-cols-2 gap-3 px-1 sm:gap-4">
+          <button type="button" onClick={handlePrev} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[rgba(128,43,56,0.28)] bg-white px-4 py-2.5 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm transition hover:bg-[#fcf4f0] sm:px-5 sm:py-3">
             <span aria-hidden="true">←</span>
             Atrás
           </button>
-          <button type="button" onClick={handleNext} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[rgba(128,43,56,0.28)] bg-white px-5 py-3 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm transition hover:bg-[#fcf4f0]">
+          <button type="button" onClick={handleNext} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[rgba(128,43,56,0.28)] bg-white px-4 py-2.5 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm transition hover:bg-[#fcf4f0] sm:px-5 sm:py-3">
             Siguiente
             <span aria-hidden="true">→</span>
           </button>
         </div>
       </div>
 
-      <aside className="grid gap-4">
-        <section className="rounded-[1.4rem] border border-[#eaded6] bg-white p-4 shadow-[0_14px_34px_rgba(128,43,56,0.08)]">
+      <aside className="grid gap-3">
+        <section className="rounded-[1.3rem] border border-[#eaded6] bg-white p-3.5 shadow-[0_12px_30px_rgba(128,43,56,0.08)] sm:p-4">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-lg font-semibold text-[rgb(var(--color-accent))]">Jugadores en la sala</h3>
+            <h3 className="text-base font-semibold text-[rgb(var(--color-accent))] sm:text-lg">Jugadores en la sala</h3>
             <span className="text-sm font-medium text-emerald-600">3 en línea</span>
           </div>
 
-          <div className="mt-4 grid gap-3">
+          <div className="mt-3 grid gap-2.5 sm:mt-4 sm:gap-3">
             {players.map((player) => (
-              <div key={player.name} className="flex items-center gap-3 rounded-2xl border border-[#f0e2db] bg-[#fffdfb] px-3 py-2.5">
+              <div key={player.name} className="flex items-center gap-2.5 rounded-2xl border border-[#f0e2db] bg-[#fffdfb] px-3 py-2.5">
                 <Avatar label={player.name.charAt(0)} tone={player.tone} />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-semibold text-[rgb(var(--color-neutral))]">{player.name}</div>
@@ -441,20 +604,20 @@ export default function GamePage() {
             ))}
           </div>
 
-          <button className="mt-4 inline-flex w-full items-center justify-center rounded-2xl bg-[rgb(var(--color-accent))] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[rgb(var(--color-accent-dark))]">
+          <button className="mt-3 inline-flex w-full items-center justify-center rounded-2xl bg-[rgb(var(--color-accent))] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[rgb(var(--color-accent-dark))] sm:mt-4 sm:py-3">
             Ver ranking completo
           </button>
         </section>
 
-        <section className="rounded-[1.4rem] border border-[#eaded6] bg-[#fbefe8] p-4 shadow-[0_14px_34px_rgba(128,43,56,0.08)]">
-          <h3 className="text-lg font-semibold text-[rgb(var(--color-accent))]">Modo de juego</h3>
+        <section className="rounded-[1.3rem] border border-[#eaded6] bg-[#fbefe8] p-3.5 shadow-[0_12px_30px_rgba(128,43,56,0.08)] sm:p-4">
+          <h3 className="text-base font-semibold text-[rgb(var(--color-accent))] sm:text-lg">Modo de juego</h3>
 
-          <div className="mt-4 grid gap-3">
+          <div className="mt-3 grid gap-2.5 sm:mt-4 sm:gap-3">
             {modeCards.map((mode) => (
               <div
                 key={mode.id}
                 className={[
-                  'rounded-2xl border p-4',
+                  'rounded-2xl border p-3.5 sm:p-4',
                   mode.active ? 'border-transparent bg-[rgb(var(--color-accent))] text-white shadow-md' : 'border-[#eaded6] bg-white text-[rgb(var(--color-neutral))]',
                 ].join(' ')}
                 role="button"
@@ -470,12 +633,12 @@ export default function GamePage() {
                   <span>{mode.label}</span>
                   {mode.crown ? <span aria-hidden="true">👑</span> : null}
                 </div>
-                <p className={['mt-1 text-sm', mode.active ? 'text-white/80' : 'text-[rgb(var(--color-neutral))]/70'].join(' ')}>{mode.description}</p>
+                <p className={['mt-1 text-xs sm:text-sm', mode.active ? 'text-white/80' : 'text-[rgb(var(--color-neutral))]/70'].join(' ')}>{mode.description}</p>
               </div>
             ))}
           </div>
 
-          <button className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[rgba(128,43,56,0.22)] bg-white px-4 py-3 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm transition hover:bg-[#fcf4f0]">
+          <button className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[rgba(128,43,56,0.22)] bg-white px-4 py-2.5 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm transition hover:bg-[#fcf4f0] sm:mt-4 sm:py-3">
             <span aria-hidden="true">⚙</span>
             Configuración del modo
           </button>
