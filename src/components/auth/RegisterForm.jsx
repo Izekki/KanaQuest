@@ -36,7 +36,7 @@ export default function RegisterForm() {
     if (error) {
       setMessage(error.message);
     } else {
-      setMessage('Account created. Check your email to confirm if required.');
+      setMessage('Cuenta creada. Revisa tu correo si necesitas confirmar el acceso.');
       setFormState(initialFormState);
     }
 
@@ -44,9 +44,9 @@ export default function RegisterForm() {
   };
 
   return (
-    <Card eyebrow="Auth" title="Create account" description="Register with Supabase to track your progress.">
+    <Card eyebrow="Autenticación" title="Crear cuenta" description="Crea tu cuenta para acceder y guardar tu progreso.">
       <form className="grid gap-4" onSubmit={handleSubmit}>
-        <FormField label="Username" htmlFor="register-username">
+        <FormField label="Nombre de usuario" htmlFor="register-username">
           <TextField
             id="register-username"
             name="username"
@@ -57,7 +57,7 @@ export default function RegisterForm() {
             required
           />
         </FormField>
-        <FormField label="Email" htmlFor="register-email">
+        <FormField label="Correo" htmlFor="register-email">
           <TextField
             id="register-email"
             name="email"
@@ -68,7 +68,7 @@ export default function RegisterForm() {
             required
           />
         </FormField>
-        <FormField label="Password" htmlFor="register-password">
+        <FormField label="Contraseña" htmlFor="register-password">
           <TextField
             id="register-password"
             name="password"
@@ -80,7 +80,7 @@ export default function RegisterForm() {
           />
         </FormField>
         <Button type="submit" disabled={loading}>
-          {loading ? 'Creating account...' : 'Create account'}
+          {loading ? 'Creando cuenta...' : 'Crear cuenta'}
         </Button>
         <FormStatus>{message}</FormStatus>
       </form>

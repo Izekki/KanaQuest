@@ -126,11 +126,16 @@ Track user progress per word.
 id
 user_id
 word_id
+status
 correct
 attempts
 last_attempt
 mastery_level
 ```
+
+Notes:
+- One row per user and word.
+- `status` represents the current learning state for that word, while `correct` and `mastery_level` remain useful for scoring and review logic.
 
 ---
 

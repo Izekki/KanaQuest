@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router-dom';
 import { useAuthSession } from '../../hooks/useAuthSession';
 
-export default function AuthRedirectRoute({ children, redirectTo = '/profile' }) {
+export default function AuthRedirectRoute({ children, redirectTo = '/game' }) {
   const { user, loading } = useAuthSession();
 
   if (loading) {

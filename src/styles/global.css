@@ -1,16 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Kosugi+Maru&family=Noto+Serif+JP:wght@500&display=swap');
+
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --color-background: 31 20 24;
-  --color-surface: 42 27 33;
-  --color-surface-alt: 57 36 44;
-  --color-accent: 191 84 104;
-  --color-accent-dark: 115 39 59;
+  --color-background: 253 248 245;
+  --color-surface: 255 255 255;
+  --color-surface-alt: 248 233 225;
+  --color-accent: 128 43 56;
+  --color-accent-dark: 99 33 43;
   --color-cream: 242 208 189;
   --color-muted-rose: 166 114 114;
-  --color-neutral: 242 242 242;
+  --color-neutral: 47 29 31;
 }
 
 html,
@@ -22,6 +26,54 @@ body,
 body {
   margin: 0;
   font-family: Inter, 'Noto Sans JP', system-ui, sans-serif;
-  background: rgb(var(--color-background));
+  background:
+    radial-gradient(circle at top left, rgba(242, 208, 189, 0.35), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(191, 84, 104, 0.08), transparent 30%),
+    rgb(var(--color-background));
   color: rgb(var(--color-neutral));
+}
+
+
+/*
+.font-jp {
+  font-family: 'Noto Serif JP', serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}::selection {
+  background: rgba(128, 43, 56, 0.16);
+  color: rgb(var(--color-accent));
+}
+  
+.font-jp {
+  font-family: 'Kosugi Maru', sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+.font-jp::selection {
+  background: rgba(128, 43, 56, 0.16);
+  color: rgb(var(--color-accent));
+}
+*/
+
+
+
+
+@keyframes petal-float {
+  0% {
+    transform: translate3d(0, -8px, 0) rotate(-16deg);
+    opacity: 0;
+  }
+
+  15% {
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: translate3d(24px, 36px, 0) rotate(22deg);
+    opacity: 0;
+  }
+}
+
+.animate-petal-float {
+  animation: petal-float linear infinite;
 }

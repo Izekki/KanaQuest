@@ -47,8 +47,25 @@ Ingest a term:
 pnpm run ingest:vocab -- --term "猫" --limit 5
 ```
 
+By default, imported `translation` values are converted to Spanish (`--translate-to es`). If you want to reseed vocabulary from scratch and remove older imported rows first, truncate `public.words` in Supabase; use `TRUNCATE public.words RESTART IDENTITY CASCADE;` if you also want to clear dependent `progress` and `review_queue` rows.
+
 Ingest multiple terms from file:
 
 ```bash
 pnpm run ingest:vocab -- --terms-file ./terms.txt --limit 10 --write-kanji-json
+```
+
+Quick verification in Supabase SQL editor (step 2):
+
+```sql
+select
+	japanese,
+	hiragana,
+	katakana,
+	romaji,
+	translation,
+	created_at
+from public.words
+order by created_at desc
+limit 30;
 ```
