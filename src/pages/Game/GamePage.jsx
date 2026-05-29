@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../services/supabase/client';
 import { useAuthSession } from '../../hooks/useAuthSession';
+import avatarRimuruRedPink from '../../img/avatar_rimuru_version_red-pink.svg';
 
 const players = [
   { name: 'Hana (Tú)', xp: 2350, tone: 'from-[#d95f76] to-[#8b2d3f]' },
@@ -87,33 +88,14 @@ function Avatar({ label, tone }) {
 
 function CatIllustration() {
   return (
-    <div className="relative flex h-[220px] w-[220px] items-center justify-center rounded-full bg-[#f5dbe0] shadow-[0_10px_25px_rgba(128,43,56,0.12)]">
-      <svg viewBox="0 0 220 220" className="h-[180px] w-[180px] drop-shadow-[0_10px_12px_rgba(128,43,56,0.15)]" aria-hidden="true">
-        <defs>
-          <linearGradient id="catFur" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#d7c0a7" />
-            <stop offset="50%" stopColor="#b99778" />
-            <stop offset="100%" stopColor="#8f6b53" />
-          </linearGradient>
-        </defs>
-        <ellipse cx="110" cy="117" rx="58" ry="68" fill="url(#catFur)" />
-        <path d="M68 64 89 94 76 98 58 74c4-5 6-8 10-10Z" fill="url(#catFur)" />
-        <path d="M152 64 131 94 144 98 162 74c-4-5-6-8-10-10Z" fill="url(#catFur)" />
-        <circle cx="110" cy="84" r="42" fill="#dfc8ab" />
-        <path d="M110 107c-11 0-18 6-18 12h36c0-6-7-12-18-12Z" fill="#6f4e3d" opacity="0.7" />
-        <circle cx="92" cy="83" r="5" fill="#4b3429" />
-        <circle cx="128" cy="83" r="5" fill="#4b3429" />
-        <path d="M86 78h-12l-10-7M134 78h12l10-7" stroke="#6f4e3d" strokeWidth="4" strokeLinecap="round" />
-        <path d="M99 92h22" stroke="#6f4e3d" strokeWidth="4" strokeLinecap="round" />
-        <path d="M110 101v12" stroke="#6f4e3d" strokeWidth="4" strokeLinecap="round" />
-        <path d="M78 56c8-8 17-12 32-13" stroke="#7f5d47" strokeWidth="5" strokeLinecap="round" />
-        <path d="M142 56c-8-8-17-12-32-13" stroke="#7f5d47" strokeWidth="5" strokeLinecap="round" />
-        <path d="M80 110c7-4 13-5 20-3M140 110c-7-4-13-5-20-3" stroke="#a0795e" strokeWidth="4" strokeLinecap="round" opacity="0.6" />
-        <path d="M76 145c10 11 25 17 34 17s24-6 34-17" stroke="#7a5d4b" strokeWidth="6" strokeLinecap="round" />
-        <path d="M93 122c4-4 9-6 17-6s13 2 17 6" stroke="#7c5a47" strokeWidth="5" strokeLinecap="round" opacity="0.9" />
-        <path d="M89 152c6 4 13 6 21 6s15-2 21-6" stroke="#6e4f40" strokeWidth="4" strokeLinecap="round" opacity="0.8" />
-        <path d="M79 92l-28-8M79 100l-30 0M141 92l28-8M141 100l30 0" stroke="#8f6a52" strokeWidth="3" strokeLinecap="round" opacity="0.5" />
-      </svg>
+    <div className="relative flex h-[220px] w-[220px] items-center justify-center overflow-hidden rounded-full bg-[#f5dbe0] shadow-[0_10px_25px_rgba(128,43,56,0.12)]">
+      <img
+        src={avatarRimuruRedPink}
+        alt="Avatar de Rimuru"
+        className="h-[130px] w-[130px] max-w-none object-contain drop-shadow-[0_10px_12px_rgba(128,43,56,0.15)]"
+        loading="eager"
+        decoding="async"
+      />
     </div>
   );
 }
