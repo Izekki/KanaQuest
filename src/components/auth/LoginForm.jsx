@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import FormField from '../forms/FormField';
 import FormStatus from '../forms/FormStatus';
 import TextField from '../forms/TextField';
@@ -39,9 +40,9 @@ export default function LoginForm() {
   };
 
   return (
-    <Card eyebrow="Auth" title="Sign in" description="Connect your Supabase account to resume progress.">
+    <Card eyebrow="Autenticación" title="Iniciar sesión" description="Inicia sesión con tu cuenta para continuar tu progreso.">
       <form className="grid gap-4" onSubmit={handleSubmit}>
-        <FormField label="Email" htmlFor="login-email">
+        <FormField label="Correo" htmlFor="login-email">
           <TextField
             id="login-email"
             name="email"
@@ -52,7 +53,7 @@ export default function LoginForm() {
             required
           />
         </FormField>
-        <FormField label="Password" htmlFor="login-password">
+        <FormField label="Contraseña" htmlFor="login-password">
           <TextField
             id="login-password"
             name="password"
@@ -64,7 +65,15 @@ export default function LoginForm() {
           />
         </FormField>
         <Button type="submit" disabled={loading}>
-          {loading ? 'Signing in...' : 'Sign in'}
+          {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+        </Button>
+        <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.25em] text-[rgb(var(--color-neutral))]/45">
+          <span className="h-px flex-1 bg-[#eaded6]" />
+          <span>Ó</span>
+          <span className="h-px flex-1 bg-[#eaded6]" />
+        </div>
+        <Button as={Link} to="/register" variant="secondary">
+          Regístrate
         </Button>
         <FormStatus>{message}</FormStatus>
       </form>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useAuthSession } from '../../hooks/useAuthSession';
 import { supabase } from '../../services/supabase/client';
+import toriiLogo from '../../img/torii.svg';
 
 const navItems = [
   { to: '/', label: 'Inicio' },
@@ -21,17 +22,6 @@ const petals = [
 ];
 
 const getStreakStorageKey = (userId) => `kanaquest-streak:${userId}`;
-
-function ToriiIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6 text-[rgb(var(--color-accent))]">
-      <path
-        fill="currentColor"
-        d="M4 5h16v2h-2v12h-2V7H8v12H6V7H4V5Zm1.5-2h13v2h-13V3Zm1 3h11v2h-11V6ZM9 10h6v2H9v-2Z"
-      />
-    </svg>
-  );
-}
 
 function PetalsLayer() {
   return (
@@ -95,8 +85,17 @@ export default function AppLayout({ children }) {
 
     loadProfile();
 
+    const handleProfileUpdated = (event) => {
+      const nextUsername = event?.detail?.username;
+      if (!isMounted) return;
+      setProfileName(nextUsername || 'Jugador');
+    };
+
+    window.addEventListener('kanaquest-profile-updated', handleProfileUpdated);
+
     return () => {
       isMounted = false;
+      window.removeEventListener('kanaquest-profile-updated', handleProfileUpdated);
     };
   }, [user?.id]);
 
@@ -150,9 +149,9 @@ export default function AppLayout({ children }) {
       <div className="relative z-10">
         <header className="px-4 pt-4 sm:px-6 lg:px-8">
           <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 rounded-[1.5rem] border border-[#eaded6] bg-white/85 px-4 py-3 shadow-[0_10px_30px_rgba(128,43,56,0.06)] backdrop-blur">
-            <Link className="flex items-center gap-3 text-sm font-semibold text-[rgb(var(--color-accent))]" to="/">
-              <ToriiIcon />
-              <span className="text-[1.05rem] tracking-tight">KanaQuest</span>
+            <Link className="flex items-center gap-2 text-sm font-semibold text-[rgb(var(--color-accent))]" to="/">
+              <img src={toriiLogo} alt="KanaQuest" className="h-[40.5px] w-[40.5px] shrink-0 object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(18%) sepia(34%) saturate(1700%) hue-rotate(318deg) brightness(88%) contrast(94%)' }} />
+              <span className="text-[1.05rem] leading-none tracking-tight">KanaQuest</span>
             </Link>
 
             <nav className="hidden items-center gap-10 text-sm font-medium text-[rgb(var(--color-accent))] md:flex">

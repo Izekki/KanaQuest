@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAuthSession } from '../../hooks/useAuthSession';
 import { supabase } from '../../services/supabase/client';
 
+const containsJapaneseScript = (value = '') => /[\u3040-\u30ff\u3400-\u9fff]/.test(value);
+
 const statusStyles = {
   correct: 'bg-emerald-100 text-emerald-700',
   wrong: 'bg-red-100 text-red-600',
@@ -185,7 +187,7 @@ export default function HistoryPage() {
           {pagedItems.map((item) => (
             <div key={item.id} className="flex items-center justify-between gap-4 rounded-2xl border border-[#eaded6] bg-[#fffdfb] p-4">
               <div>
-                <div className="text-lg font-semibold text-[rgb(var(--color-accent))]">{item.prompt}</div>
+                <div className={['text-lg font-semibold text-[rgb(var(--color-accent))]', containsJapaneseScript(item.prompt) ? 'font-jp' : ''].join(' ')}>{item.prompt}</div>
                 <div className="text-sm text-[rgb(var(--color-neutral))]/70">{item.translation}</div>
                 <div className="mt-1 text-xs uppercase tracking-[0.2em] text-[rgb(var(--color-neutral))]/50">
                   Intentos: {item.attempts}

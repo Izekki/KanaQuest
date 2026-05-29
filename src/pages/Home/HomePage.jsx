@@ -22,8 +22,8 @@ export default function HomePage() {
       <section className="rounded-[1.2rem] border border-[#eaded6] bg-white p-6 text-sm text-[rgb(var(--color-neutral))]/75 shadow-[0_10px_28px_rgba(128,43,56,0.06)]">
         <h2 className="text-lg font-semibold text-[rgb(var(--color-accent))]">¿Qué hago aquí?</h2>
         <ul className="mt-3 list-disc pl-5">
-          <li>Practica reconocimiento: muestra un kanji/kana y escribe su significado.</li>
-          <li>Practica traducción: escribe la palabra en japonés desde su significado en español/romaji.</li>
+          <li>Practica reconocimiento: muestra un kanji/kana y escribe su lectura/significado.</li>
+          <li>Practica traducción: escribe la palabra en japonés desde su significado en español.</li>
           <li>Revisa tu historial y tu progreso diario; el sistema guarda aciertos y errores.</li>
         </ul>
       </section>

@@ -78,6 +78,13 @@ export default function ProfilePage() {
       setInfo('Perfil actualizado.');
       // refresh local view
       setProfile((p) => ({ ...(p ?? {}), ...updates }));
+      window.dispatchEvent(
+        new CustomEvent('kanaquest-profile-updated', {
+          detail: {
+            username: updates.username || 'Jugador',
+          },
+        }),
+      );
     } catch (err) {
       console.warn(err);
       const msg = err?.message ?? String(err);
@@ -237,65 +244,48 @@ export default function ProfilePage() {
       <h1 className="mt-4 text-3xl font-semibold text-[rgb(var(--color-accent))] md:text-5xl">Mi perfil</h1>
 
       {profile ? (
-        <form onSubmit={handleSave} className="mt-6 grid gap-4 sm:grid-cols-3 sm:items-center">
-          <div className="col-span-1 flex items-center">
-            <div className="mr-4">
-              {avatarPreviewUrl ? (
-                // eslint-disable-next-line jsx-a11y/img-redundant-alt
-                <img src={avatarPreviewUrl} alt="avatar" className="h-20 w-20 rounded-full object-cover" />
-              ) : (
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f5d2dd,#b86773)] text-white">{(profile.username || 'J').slice(0,1).toUpperCase()}</div>
-              )}
-            </div>
-            <div>
-              <div className="text-sm text-[rgb(var(--color-neutral))]/80">Nivel</div>
-              <div className="text-xl font-semibold text-[rgb(var(--color-accent))]">{profile.level ?? 1}</div>
-              <div className="mt-2 text-sm text-[rgb(var(--color-neutral))]/70">Experiencia: {profile.experience ?? 0}</div>
-            </div>
-          </div>
+        <form onSubmit={handleSave} className="mt-6 grid gap-4">
+          <div className="grid gap-4 rounded-[1.5rem] border border-[#eaded6] bg-[#fcfaf8] p-5 shadow-[0_10px_22px_rgba(128,43,56,0.05)]">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="shrink-0">
+                  {avatarPreviewUrl ? (
+                    // eslint-disable-next-line jsx-a11y/img-redundant-alt
+                    <img src={avatarPreviewUrl} alt="avatar" className="h-20 w-20 rounded-full object-cover" />
+                  ) : (
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f5d2dd,#b86773)] text-xl font-semibold text-white">{(profile.username || 'J').slice(0, 1).toUpperCase()}</div>
+                  )}
+                </div>
 
-          <div className="col-span-2 grid gap-3">
-            <label className="text-xs text-[rgb(var(--color-accent))]/70">Nombre de usuario</label>
-            <input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="rounded-xl border border-[#eaded6] px-3 py-2 text-sm"
-              placeholder="Tu nombre público"
-              required
-            />
+                <div>
+                  <div className="text-sm text-[rgb(var(--color-neutral))]/80">Nivel</div>
+                  <div className="text-xl font-semibold text-[rgb(var(--color-accent))]">{profile.level ?? 1}</div>
+                  <div className="mt-2 text-sm text-[rgb(var(--color-neutral))]/70">Experiencia: {profile.experience ?? 0}</div>
+                </div>
+              </div>
 
-            <div className="flex items-center gap-3">
-              <button type="submit" disabled={saving} className="rounded-2xl bg-[rgb(var(--color-accent))] px-4 py-2 text-white">
+              <div className="grid gap-3 sm:min-w-[18rem] sm:max-w-[22rem] sm:flex-1 sm:justify-items-stretch">
+                <label className="text-xs text-[rgb(var(--color-accent))]/70">Nombre de usuario</label>
+                <input
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="rounded-xl border border-[#eaded6] px-3 py-2 text-sm"
+                  placeholder="Tu nombre público"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <button
+                type="submit"
+                disabled={saving}
+                className="inline-flex w-full items-center justify-center rounded-2xl bg-[rgb(var(--color-accent))] px-5 py-2.5 text-white transition hover:bg-[rgb(var(--color-accent-dark))] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+              >
                 {saving ? 'Guardando...' : 'Guardar cambios'}
               </button>
-              <div className="text-sm text-red-600">{error}</div>
-              <div className="text-sm text-[rgb(var(--color-accent))]">{info}</div>
-            </div>
-
-            <div className="mt-2 grid gap-2">
-              <label className="text-xs text-[rgb(var(--color-accent))]/70">Subir avatar local</label>
-              <p className="text-xs text-[rgb(var(--color-neutral))]/60">Solo se aceptan imágenes desde tu equipo. Se guarda una única foto por usuario.</p>
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) handleUploadAvatar(f);
-                }}
-                className="text-sm"
-              />
-              <div className="mt-2 flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleDeleteAvatar}
-                  disabled={saving}
-                  className="rounded-2xl bg-red-600 px-3 py-1 text-white text-sm"
-                >
-                  Eliminar avatar
-                </button>
-                <div className="text-sm text-red-600">{error}</div>
-                <div className="text-sm text-[rgb(var(--color-accent))]">{info}</div>
-              </div>
+              <div className="min-h-5 text-sm text-red-600">{error}</div>
+              <div className="min-h-5 text-sm text-[rgb(var(--color-accent))]">{info}</div>
             </div>
           </div>
         </form>

@@ -1,23 +1,21 @@
 import LoginForm from '../../components/auth/LoginForm';
-import Badge from '../../components/ui/Badge';
-import { useAuthSession } from '../../hooks/useAuthSession';
+import toriiLogo from '../../img/torii.svg';
 
 export default function LoginPage() {
-  const { user, loading } = useAuthSession();
-
   return (
     <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
       <LoginForm />
-      <section className="rounded-[1.75rem] border border-[#eaded6] bg-[#fbefe8] p-8 shadow-[0_14px_34px_rgba(128,43,56,0.08)]">
-        <p className="text-sm uppercase tracking-[0.35em] text-[rgb(var(--color-accent))]/70">Session</p>
-        <h2 className="mt-4 text-2xl font-semibold text-[rgb(var(--color-accent))]">Current auth state</h2>
-        <div className="mt-4 grid gap-3 text-sm text-[rgb(var(--color-neutral))]/80">
-          <div className="rounded-2xl bg-white p-4">
-            Status: <Badge variant="subtle">{loading ? 'Loading' : user ? 'Signed in' : 'Signed out'}</Badge>
-          </div>
-          <div className="rounded-2xl bg-white p-4">
-            User: {user?.email ?? 'No user session yet'}
-          </div>
+      <section className="flex min-h-[280px] items-center justify-center rounded-[1.75rem] border border-[#eaded6] bg-[#fbefe8] p-8 shadow-[0_14px_34px_rgba(128,43,56,0.08)]">
+        <div className="flex flex-col items-center gap-4">
+          <img
+            src={toriiLogo}
+            alt="KanaQuest"
+            className="w-[min(68vw,18.5rem)] max-w-full object-contain"
+            style={{ filter: 'brightness(0) saturate(100%) invert(18%) sepia(34%) saturate(1700%) hue-rotate(318deg) brightness(88%) contrast(94%)' }}
+          />
+          <span className="text-[1.9rem] font-semibold leading-none tracking-tight text-[rgb(var(--color-accent))]">
+            Kana Quest
+          </span>
         </div>
       </section>
     </div>

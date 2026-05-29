@@ -559,6 +559,7 @@ export default function GamePage() {
               <div className={[
                 'pt-2 font-semibold leading-none text-[rgb(var(--color-accent))] sm:pt-3',
                 promptSizeClass,
+                promptIsJapanese ? 'font-jp' : '',
               ].join(' ')}>
                 {currentQuestion?.prompt ?? '...'}
               </div>
@@ -648,7 +649,7 @@ export default function GamePage() {
                   {initials}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-semibold text-[rgb(var(--color-neutral))]">
+                  <div className={['truncate text-sm font-semibold text-[rgb(var(--color-neutral))]', containsJapaneseScript(displayName) ? 'font-jp' : ''].join(' ')}>
                     {displayName}
                     {isCurrentUser ? ' (Tú)' : ''}
                   </div>

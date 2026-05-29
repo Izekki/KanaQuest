@@ -1,3 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Kosugi+Maru&family=Noto+Serif+JP:wght@500&display=swap');
+
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -29,10 +33,28 @@ body {
   color: rgb(var(--color-neutral));
 }
 
-::selection {
+.font-jp {
+  font-family: 'Noto Serif JP', serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}::selection {
   background: rgba(128, 43, 56, 0.16);
   color: rgb(var(--color-accent));
 }
+/*
+.font-jp {
+  font-family: 'Kosugi Maru', sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+.font-jp::selection {
+  background: rgba(128, 43, 56, 0.16);
+  color: rgb(var(--color-accent));
+}
+*/
+
+
+
 
 @keyframes petal-float {
   0% {
