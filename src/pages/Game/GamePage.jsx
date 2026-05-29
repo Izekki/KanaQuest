@@ -9,37 +9,6 @@ const players = [
   { name: 'Yuki', xp: 1570, tone: 'from-[#c97b8a] to-[#7f4f63]' },
 ];
 
-const modeCards = [
-  {
-    id: 'recognize',
-    label: 'Reconocer',
-    crown: true,
-    active: true,
-    description: 'Imagen / Kanji → Escribir lectura',
-  },
-  {
-    id: 'translate',
-    label: 'Traducir',
-    crown: false,
-    active: false,
-    description: 'Kana / Kanji → Escribir significado',
-  },
-];
-
-const sessionStats = {
-  streak: 7,
-  questionNumber: 4,
-  totalQuestions: 10,
-  score: 2350,
-  progress: 40,
-};
-
-const currentQuestion = {
-  kanji: '猫',
-  reading: 'ねこ',
-  imageLabel: 'Gato atigrado amistoso',
-};
-
 const normalize = (value) => value.trim().toLowerCase().normalize('NFKC');
 
 const KATAKANA_START = 0x30a1;
@@ -247,17 +216,17 @@ export default function GamePage() {
         const rows = data ?? [];
         const shuffled = [...rows].sort(() => Math.random() - 0.5);
 
-        const recognize = shuffled.map((row) => ({
+         const recognize = shuffled.map((row) => ({
           wordId: row.id,
-          prompt: row.japanese || row.hiragana || row.katakana || row.romaji || row.translation,
-          answers: getAnswersFromWord(row, 'recognize'),
-          instruction: 'Escribe el significado (español o romaji).',
+          prompt: row.japanese || row.hiragana || row.katakana,
+          answers: [getAnswersFromWord(row, 'recognize'), getAnswersFromWord(row, 'translate')],
+          instruction: 'Escribe la lectura (hiragana o katakana).',
         }));
 
         const translate = shuffled.map((row) => ({
           wordId: row.id,
           prompt: row.translation || row.romaji || row.japanese,
-          answers: getAnswersFromWord(row, 'translate'),
+          answers: getAnswersFromWord(row, 'recognize') ,
           instruction: 'Escribe la palabra en japonés (hiragana, katakana o kanji).',
         }));
 
@@ -374,14 +343,14 @@ export default function GamePage() {
       label: 'Reconocer',
       crown: true,
       active: mode === 'recognize',
-      description: 'Kana / Kanji → significado',
+      description: 'Kana / Kanji → Lectura (hiragana o katakana)',
     },
     {
       id: 'translate',
       label: 'Traducir',
       crown: false,
       active: mode === 'translate',
-      description: 'Español / Romaji → palabra japonesa',
+      description: 'Español → palabra japonesa',
     },
   ];
 

@@ -7,8 +7,6 @@ const navItems = [
   { to: '/', label: 'Inicio' },
   { to: '/game', label: 'Aprender' },
   { to: '/historial', label: 'Historial' },
-  { to: '/profile', label: 'Perfil' },
-  { to: '/register', label: 'Desafíos' },
 ];
 
 const petals = [
@@ -203,10 +201,17 @@ export default function AppLayout({ children }) {
                     {user ? (
                       <>
                         <div className="px-3 py-2 text-xs uppercase tracking-[0.25em] text-[rgb(var(--color-accent))]/55">Sesión</div>
+                        <Link
+                          to="/profile"
+                          onClick={() => setMenuOpen(false)}
+                          className="flex w-full items-center rounded-xl px-3 py-2 text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea]"
+                        >
+                          Mi Perfil
+                        </Link>
                         <button
                           type="button"
                           onClick={handleSignOut}
-                          className="flex w-full items-center rounded-xl px-3 py-2 text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea]"
+                          className="mt-1 flex w-full items-center rounded-xl px-3 py-2 text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea]"
                         >
                           Cerrar sesión
                         </button>
