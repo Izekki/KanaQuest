@@ -33,6 +33,8 @@ body {
   color: rgb(var(--color-neutral));
 }
 
+
+/*
 .font-jp {
   font-family: 'Noto Serif JP', serif;
   font-optical-sizing: auto;
@@ -41,7 +43,7 @@ body {
   background: rgba(128, 43, 56, 0.16);
   color: rgb(var(--color-accent));
 }
-/*
+  
 .font-jp {
   font-family: 'Kosugi Maru', sans-serif;
   font-optical-sizing: auto;
