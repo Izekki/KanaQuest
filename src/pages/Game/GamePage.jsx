@@ -191,7 +191,7 @@ export default function GamePage() {
       try {
         const { data, error } = await supabase
           .from('words')
-          .select('id,japanese,hiragana,katakana,romaji,translation,accepted_answers,difficulty,type_id')
+          .select('id,japanese,hiragana,katakana,romaji,translation,accepted_answers,difficulty,type_id,level,experience_reward')
           .limit(200);
         if (error) throw error;
 
@@ -201,7 +201,7 @@ export default function GamePage() {
          const recognize = shuffled.map((row) => ({
           wordId: row.id,
           prompt: row.japanese || row.hiragana || row.katakana,
-          answers: [getAnswersFromWord(row, 'recognize'), getAnswersFromWord(row, 'translate')],
+          answers: getAnswersFromWord(row, 'recognize'),
           instruction: 'Escribe la lectura (hiragana o katakana).',
         }));
 
@@ -399,44 +399,71 @@ export default function GamePage() {
         .eq('mode', mode)
         .maybeSingle();
 
-      if (!fetchError) {
-        const attempts = (existing?.attempts ?? 0) + 1;
-        const masteryLevel = isCorrect ? (existing?.mastery_level ?? 0) + 1 : existing?.mastery_level ?? 0;
-
-        const { error: upsertError } = await supabase
-          .from('progress')
-          .upsert({
-            ...payload,
-            attempts,
-            mastery_level: masteryLevel,
-          }, {
-            onConflict: 'user_id,word_id,mode',
-          });
-
-        if (upsertError) {
-          console.warn('No se pudo guardar progreso:', upsertError.message);
-        } else {
-          const modeLabel = getModeLabel(mode);
-          const translation = currentQuestion?.answers?.[0] ?? '';
-          setReviewItems((items) => {
-            const next = [
-              {
-                id: `${currentQuestion.wordId}-${mode}-${Date.now()}`,
-                thumbnail: '🀄',
-                word: currentQuestion?.prompt ?? '—',
-                translation,
-                correct: isCorrect,
-                mode,
-                modeLabel,
-              },
-              ...items.filter((item) => item.word !== currentQuestion?.prompt || item.mode !== mode),
-            ];
-
-            return next.slice(0, 6);
-          });
-        }
-      } else {
+      if (fetchError) {
         console.warn('No se pudo leer progreso:', fetchError.message);
+      }
+
+      const attempts = (existing?.attempts ?? 0) + 1;
+      const masteryLevel = isCorrect ? (existing?.mastery_level ?? 0) + 1 : existing?.mastery_level ?? 0;
+
+      const { error: upsertError } = await supabase
+        .from('progress')
+        .upsert({
+          ...payload,
+          attempts,
+          mastery_level: masteryLevel,
+        }, {
+          onConflict: 'user_id,word_id,mode',
+        });
+
+      if (upsertError) {
+        console.warn('No se pudo guardar progreso:', upsertError.message);
+      }
+
+      if (isCorrect) {
+        const { error: awardError } = await supabase
+          .from('word_experience_awards')
+          .upsert(
+            {
+              user_id: user.id,
+              word_id: currentQuestion.wordId,
+            },
+            {
+              onConflict: 'user_id,word_id',
+              ignoreDuplicates: true,
+            },
+          );
+
+        if (awardError) {
+          console.warn('No se pudo registrar la experiencia de la palabra:', awardError.message);
+        }
+
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('username,level,experience')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (profileError) {
+          console.warn('No se pudo refrescar el perfil:', profileError.message);
+        } else if (profileData) {
+          window.dispatchEvent(
+            new CustomEvent('kanaquest-profile-updated', {
+              detail: profileData,
+            }),
+          );
+
+          setRankingProfiles((players) =>
+            players.map((player) =>
+              player.user_id === user.id
+                ? {
+                    ...player,
+                    ...profileData,
+                  }
+                : player,
+            ),
+          );
+        }
       }
     }
 

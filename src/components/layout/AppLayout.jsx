@@ -49,6 +49,7 @@ export default function AppLayout({ children }) {
   const { user } = useAuthSession();
   const [profileName, setProfileName] = useState('Jugador');
   const [profileLevel, setProfileLevel] = useState(1);
+  const [profileExperience, setProfileExperience] = useState(0);
   const [streak, setStreak] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -61,6 +62,7 @@ export default function AppLayout({ children }) {
         if (isMounted) {
           setProfileName('Jugador');
           setProfileLevel(1);
+          setProfileExperience(0);
         }
         return;
       }
@@ -68,7 +70,7 @@ export default function AppLayout({ children }) {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('username,level')
+          .select('username,level,experience')
           .eq('user_id', user.id)
           .maybeSingle();
 
@@ -77,6 +79,7 @@ export default function AppLayout({ children }) {
         if (isMounted && data) {
           setProfileName(data.username || 'Jugador');
           setProfileLevel(data.level ?? 1);
+          setProfileExperience(data.experience ?? 0);
         }
       } catch (error) {
         console.warn('No se pudo cargar el perfil:', error?.message ?? error);
@@ -87,8 +90,18 @@ export default function AppLayout({ children }) {
 
     const handleProfileUpdated = (event) => {
       const nextUsername = event?.detail?.username;
+      const nextLevel = event?.detail?.level;
+      const nextExperience = event?.detail?.experience;
       if (!isMounted) return;
-      setProfileName(nextUsername || 'Jugador');
+      if (nextUsername !== undefined) {
+        setProfileName(nextUsername || 'Jugador');
+      }
+      if (nextLevel !== undefined) {
+        setProfileLevel(nextLevel ?? 1);
+      }
+      if (nextExperience !== undefined) {
+        setProfileExperience(nextExperience ?? 0);
+      }
     };
 
     window.addEventListener('kanaquest-profile-updated', handleProfileUpdated);
@@ -188,7 +201,7 @@ export default function AppLayout({ children }) {
                   </div>
                   <div className="leading-tight">
                     <div className="text-sm font-semibold text-[rgb(var(--color-neutral))]">{profileName}</div>
-                    <div className="text-xs text-[rgb(var(--color-accent))]/70">Nivel {profileLevel}</div>
+                    <div className="text-xs text-[rgb(var(--color-accent))]/70">Nivel {profileLevel} · {profileExperience} XP</div>
                   </div>
                   <svg aria-hidden="true" viewBox="0 0 20 20" className={['h-4 w-4 text-[rgb(var(--color-accent))]/60 transition-transform', menuOpen ? 'rotate-180' : 'rotate-0'].join(' ')}>
                     <path fill="currentColor" d="M5.5 7.5 10 12l4.5-4.5 1.4 1.4L10 14.8 4.1 8.9z" />

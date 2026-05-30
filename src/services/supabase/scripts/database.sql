@@ -46,6 +46,9 @@ create table public.words (
     romaji text,
     translation text not null,
 
+    level integer not null default 1 check (level > 0),
+    experience_reward integer not null default 10 check (experience_reward > 0),
+
     type_id uuid references public.word_types(id),
 
     difficulty text check (
@@ -84,6 +87,69 @@ create table public.progress (
 
 alter table public.progress
 add constraint progress_user_word_mode_key unique (user_id, word_id, mode);
+
+
+-- =========================================
+-- WORD EXPERIENCE AWARDS TABLE
+-- =========================================
+
+create table public.word_experience_awards (
+    id uuid primary key default uuid_generate_v4(),
+
+    user_id uuid references auth.users(id) on delete cascade,
+    word_id uuid references public.words(id) on delete cascade,
+
+    awarded_at timestamp with time zone default now(),
+
+    constraint word_experience_awards_user_word_key unique (user_id, word_id)
+);
+
+
+-- =========================================
+-- LEVEL HELPERS
+-- =========================================
+
+create or replace function public.calculate_profile_level(p_experience integer)
+returns integer
+language sql
+immutable
+as $$
+    select greatest(1, floor(coalesce(p_experience, 0) / 100.0)::integer + 1);
+$$;
+
+
+create or replace function public.apply_word_experience_award()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+    reward_points integer := 0;
+begin
+    select coalesce(experience_reward, 0)
+    into reward_points
+    from public.words
+    where id = new.word_id;
+
+    if reward_points <= 0 then
+        return new;
+    end if;
+
+    update public.profiles
+    set experience = coalesce(experience, 0) + reward_points,
+        level = public.calculate_profile_level(coalesce(experience, 0) + reward_points)
+    where user_id = new.user_id;
+
+    return new;
+end;
+$$;
+
+
+create trigger word_experience_awards_apply_experience
+after insert on public.word_experience_awards
+for each row
+execute function public.apply_word_experience_award();
 
 
 -- =========================================
@@ -214,6 +280,21 @@ create policy "Users can update own progress"
 on public.progress
 for update
 using (auth.uid() = user_id);
+
+
+-- =========================================
+-- WORD EXPERIENCE AWARDS POLICIES
+-- =========================================
+
+create policy "Users can view own word experience awards"
+on public.word_experience_awards
+for select
+using (auth.uid() = user_id);
+
+create policy "Users can insert own word experience awards"
+on public.word_experience_awards
+for insert
+with check (auth.uid() = user_id);
 
 
 -- =========================================
