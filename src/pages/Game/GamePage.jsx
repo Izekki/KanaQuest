@@ -670,55 +670,70 @@ export default function GamePage() {
               <div className="rounded-2xl border border-[#f0e2db] bg-[#fffdfb] px-3 py-3 text-sm text-[rgb(var(--color-neutral))]/70">Todavía no hay usuarios para mostrar.</div>
             ) : null}
 
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-3 lg:items-stretch lg:gap-2">
-              {podiumRanking[1] ? (
-                <div className="order-2 rounded-[1.15rem] border border-[#eaded6] bg-[#fff8f4] px-3 py-2.5 shadow-[0_8px_20px_rgba(128,43,56,0.06)] lg:order-1 lg:flex-col lg:justify-between lg:py-3 lg:h-[210px] lg:translate-y-1 flex items-center gap-3">
-                  <div className="inline-flex items-center gap-1 rounded-full bg-[#dce9f4] px-2 py-0.5 text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.12em] sm:tracking-[0.2em] text-[#46688e]">
-                    <span aria-hidden="true">🥈</span>
-                    2do
-                  </div>
-                  <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-slate-300 to-slate-500 text-base font-semibold text-white shadow-sm ring-4 ring-[#eef5fb]">
-                    {(podiumRanking[1]?.username || podiumRanking[1]?.name || 'Usuario').slice(0, 1).toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold text-[rgb(var(--color-neutral))]">{podiumRanking[1]?.username || podiumRanking[1]?.name || 'Usuario'}</div>
-                    <div className="text-[11px] text-[rgb(var(--color-neutral))]/60">{podiumRanking[1]?.experience ?? podiumRanking[1]?.xp ?? 0} XP</div>
-                  </div>
-                </div>
-              ) : <div className="hidden lg:block" />}
+            <div className="grid grid-cols-3 items-end gap-1.5 sm:gap-3 lg:items-stretch lg:gap-2">
+  {/* 2DO LUGAR */}
+  {podiumRanking[1] ? (
+    <div className="order-2 flex h-[150px] flex-col items-center justify-between rounded-[1.15rem] border border-[#eaded6] bg-[#fff8f4] p-2 shadow-sm sm:h-[190px] lg:order-1 lg:h-[210px] lg:p-3 lg:translate-y-1">
+      <div className="inline-flex items-center gap-0.5 rounded-full bg-[#dce9f4] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-[#46688e] sm:text-[9px]">
+        <span aria-hidden="true">🥈</span>
+        <span className="hidden sm:inline">2do</span>
+      </div>
+      <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-slate-300 to-slate-500 text-xs font-semibold text-white shadow-sm ring-2 ring-[#eef5fb] sm:h-12 sm:w-12 sm:text-base sm:ring-4">
+        {(podiumRanking[1]?.username || podiumRanking[1]?.name || 'Usuario').slice(0, 1).toUpperCase()}
+      </div>
+      <div className="w-full min-w-0 text-center">
+        <div className="w-full truncate text-[0.65rem] font-bold text-[rgb(var(--color-neutral))] sm:text-[0.85rem]" title={podiumRanking[1]?.username || podiumRanking[1]?.name || 'Usuario'}>
+          {podiumRanking[1]?.username || podiumRanking[1]?.name || 'Usuario'}
+        </div>
+        <div className="truncate text-[9px] text-[rgb(var(--color-neutral))]/60 sm:text-[11px]">
+          {podiumRanking[1]?.experience ?? podiumRanking[1]?.xp ?? 0} XP
+        </div>
+      </div>
+    </div>
+  ) : <div className="order-2 hidden lg:block" />}
 
-              {podiumRanking[0] ? (
-                <div className="order-1 rounded-[1.15rem] border border-[#eaded6] bg-[#fff3ed] px-3 py-2.5 shadow-[0_12px_24px_rgba(128,43,56,0.1)] lg:order-2 lg:flex-col lg:justify-between lg:px-4 lg:py-4 lg:h-[210px] lg:-translate-y-1 lg:scale-[1.03] lg:origin-bottom flex items-center gap-3">
-                  <div className="inline-flex items-center gap-1 rounded-full bg-[#ffe5a1] px-2 py-0.5 text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.12em] sm:tracking-[0.2em] text-[#9d6d1d]">
-                    <span aria-hidden="true">👑</span>
-                    1ro
-                  </div>
-                  <div className="flex h-11 w-11 sm:h-14 sm:w-14 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-lg font-semibold text-white shadow-sm ring-4 ring-white">
-                    {(podiumRanking[0]?.username || podiumRanking[0]?.name || 'Usuario').slice(0, 1).toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold text-[rgb(var(--color-neutral))]">{podiumRanking[0]?.username || podiumRanking[0]?.name || 'Usuario'}</div>
-                    <div className="text-[11px] text-[rgb(var(--color-neutral))]/60">{podiumRanking[0]?.experience ?? podiumRanking[0]?.xp ?? 0} XP</div>
-                  </div>
-                </div>
-              ) : <div className="hidden lg:block" />}
+  {/* 1ER LUGAR */}
+  {podiumRanking[0] ? (
+    <div className="order-1 flex h-[170px] flex-col items-center justify-between rounded-[1.15rem] border border-[#eaded6] bg-[#fff3ed] p-2 shadow-md sm:h-[210px] lg:order-2 lg:h-[210px] lg:-translate-y-1 lg:scale-[1.03] lg:p-3 lg:shadow-[0_12px_24px_rgba(128,43,56,0.1)]">
+      <div className="inline-flex items-center gap-0.5 rounded-full bg-[#ffe5a1] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-[#9d6d1d] sm:text-[9px]">
+        <span aria-hidden="true">👑</span>
+        <span className="hidden sm:inline">1ro</span>
+      </div>
+      <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-sm font-semibold text-white shadow-sm ring-2 ring-white sm:h-14 sm:w-14 sm:text-lg sm:ring-4">
+        {(podiumRanking[0]?.username || podiumRanking[0]?.name || 'Usuario').slice(0, 1).toUpperCase()}
+      </div>
+      <div className="w-full min-w-0 text-center">
+        <div className="w-full truncate text-[0.65rem] font-bold text-[rgb(var(--color-neutral))] sm:text-[0.85rem]" title={podiumRanking[0]?.username || podiumRanking[0]?.name || 'Usuario'}>
+          {podiumRanking[0]?.username || podiumRanking[0]?.name || 'Usuario'}
+        </div>
+        <div className="truncate text-[9px] text-[rgb(var(--color-neutral))]/60 sm:text-[11px]">
+          {podiumRanking[0]?.experience ?? podiumRanking[0]?.xp ?? 0} XP
+        </div>
+      </div>
+    </div>
+  ) : <div className="order-1 hidden lg:block" />}
 
-              {podiumRanking[2] ? (
-                <div className="order-3 rounded-[1.15rem] border border-[#eaded6] bg-[#fff8f4] px-3 py-2.5 shadow-[0_8px_20px_rgba(128,43,56,0.06)] lg:flex-col lg:justify-between lg:py-3 lg:h-[210px] lg:translate-y-1 flex items-center gap-3">
-                  <div className="inline-flex items-center gap-1 rounded-full bg-[#efd4c8] px-2 py-0.5 text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.12em] sm:tracking-[0.2em] text-[#8c5348]">
-                    <span aria-hidden="true">🥉</span>
-                    3ro
-                  </div>
-                  <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-base font-semibold text-white shadow-sm ring-4 ring-[#f8eded]">
-                    {(podiumRanking[2]?.username || podiumRanking[2]?.name || 'Usuario').slice(0, 1).toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold text-[rgb(var(--color-neutral))]">{podiumRanking[2]?.username || podiumRanking[2]?.name || 'Usuario'}</div>
-                    <div className="text-[11px] text-[rgb(var(--color-neutral))]/60">{podiumRanking[2]?.experience ?? podiumRanking[2]?.xp ?? 0} XP</div>
-                  </div>
-                </div>
-              ) : <div className="hidden lg:block" />}
-            </div>
+  {/* 3ER LUGAR */}
+  {podiumRanking[2] ? (
+    <div className="order-3 flex h-[140px] flex-col items-center justify-between rounded-[1.15rem] border border-[#eaded6] bg-[#fff8f4] p-2 shadow-sm sm:h-[180px] lg:h-[210px] lg:p-3 lg:translate-y-1">
+      <div className="inline-flex items-center gap-0.5 rounded-full bg-[#efd4c8] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-[#8c5348] sm:text-[9px]">
+        <span aria-hidden="true">🥉</span>
+        <span className="hidden sm:inline">3ro</span>
+      </div>
+      <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-xs font-semibold text-white shadow-sm ring-2 ring-[#f8eded] sm:h-12 sm:w-12 sm:text-base sm:ring-4">
+        {(podiumRanking[2]?.username || podiumRanking[2]?.name || 'Usuario').slice(0, 1).toUpperCase()}
+      </div>
+      <div className="w-full min-w-0 text-center">
+        <div className="w-full truncate text-[0.65rem] font-bold text-[rgb(var(--color-neutral))] sm:text-[0.85rem]" title={podiumRanking[2]?.username || podiumRanking[2]?.name || 'Usuario'}>
+          {podiumRanking[2]?.username || podiumRanking[2]?.name || 'Usuario'}
+        </div>
+        <div className="truncate text-[9px] text-[rgb(var(--color-neutral))]/60 sm:text-[11px]">
+          {podiumRanking[2]?.experience ?? podiumRanking[2]?.xp ?? 0} XP
+        </div>
+      </div>
+    </div>
+  ) : <div className="order-3 hidden lg:block" />}
+</div>
 
             {listRanking.length ? (
               <div className="mt-2 space-y-2 border-t border-[#f0e2db] pt-4">
