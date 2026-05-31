@@ -89,11 +89,11 @@ function Avatar({ label, tone }) {
 
 function CatIllustration() {
   return (
-    <div className="relative flex h-[220px] w-[220px] items-center justify-center overflow-hidden rounded-full bg-[#f5dbe0] shadow-[0_10px_25px_rgba(128,43,56,0.12)]">
+    <div className="relative flex h-24 w-24 sm:h-[220px] sm:w-[220px] items-center justify-center overflow-hidden rounded-full bg-[#f5dbe0] shadow-[0_10px_25px_rgba(128,43,56,0.12)]">
       <img
         src={avatarRimuruRedPink}
         alt="Avatar de Rimuru"
-        className="h-[130px] w-[130px] max-w-none object-contain drop-shadow-[0_10px_12px_rgba(128,43,56,0.15)]"
+        className="h-16 w-16 sm:h-[130px] sm:w-[130px] max-w-none object-contain drop-shadow-[0_10px_12px_rgba(128,43,56,0.15)]"
         loading="eager"
         decoding="async"
       />
@@ -135,7 +135,7 @@ export default function GamePage() {
   );
 
   const podiumRanking = useMemo(() => rankingEntries.slice(0, 3), [rankingEntries]);
-  const listRanking = useMemo(() => rankingEntries.slice(3, 6), [rankingEntries]);
+  const listRanking = useMemo(() => rankingEntries.slice(3, 5), [rankingEntries]);
   const modalRanking = useMemo(() => rankingEntries.slice(0, 10), [rankingEntries]);
 
   useEffect(() => {
@@ -366,7 +366,8 @@ export default function GamePage() {
   ];
 
   const promptIsJapanese = containsJapaneseScript(currentQuestion?.prompt ?? '');
-  const promptSizeClass = promptIsJapanese ? 'text-[6.25rem] sm:text-[7.5rem]' : 'text-[2.4rem] sm:text-[3.2rem]';
+  // En móvil: kanji claramente mayor que el avatar; conservar tamaños previos en >= sm
+  const promptSizeClass = promptIsJapanese ? 'text-[8rem] sm:text-[7.5rem]' : 'text-[3rem] sm:text-[3.2rem]';
 
   const handleModeChange = (nextMode) => {
     setMode(nextMode);
@@ -526,7 +527,8 @@ export default function GamePage() {
   };
 
   return (
-    <section className="grid gap-3 lg:grid-cols-[250px_minmax(0,1fr)_320px] lg:gap-4 xl:grid-cols-[260px_minmax(0,1fr)_320px]">
+    <div className="mx-auto w-full max-w-[1400px] px-4 py-2 pb-20 lg:pb-0">
+      <section className="grid gap-3 lg:grid-cols-[250px_minmax(0,1fr)_320px] lg:gap-4 xl:grid-cols-[260px_minmax(0,1fr)_320px]">
       <aside className="rounded-[1.6rem] bg-[rgb(var(--color-accent))] p-3 text-white shadow-[0_16px_34px_rgba(128,43,56,0.18)] lg:p-4">
         <div className="px-2 pt-1">
           <h2 className="text-[1.35rem] font-semibold tracking-tight">Repaso</h2>
@@ -668,56 +670,50 @@ export default function GamePage() {
               <div className="rounded-2xl border border-[#f0e2db] bg-[#fffdfb] px-3 py-3 text-sm text-[rgb(var(--color-neutral))]/70">Todavía no hay usuarios para mostrar.</div>
             ) : null}
 
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_1.08fr_1fr] lg:items-end lg:gap-3">
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-3 lg:items-stretch lg:gap-2">
               {podiumRanking[1] ? (
-                <div className="order-2 flex min-h-[12.2rem] flex-col items-center justify-between gap-2 rounded-[1.15rem] border border-[#eaded6] bg-[#fff8f4] px-3 py-3 shadow-[0_8px_20px_rgba(128,43,56,0.06)] lg:order-1 lg:translate-y-1">
-                  <div className="inline-flex items-center gap-1 rounded-full bg-[#dce9f4] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[#46688e]">
+                <div className="order-2 rounded-[1.15rem] border border-[#eaded6] bg-[#fff8f4] px-3 py-2.5 shadow-[0_8px_20px_rgba(128,43,56,0.06)] lg:order-1 lg:flex-col lg:justify-between lg:py-3 lg:h-[210px] lg:translate-y-1 flex items-center gap-3">
+                  <div className="inline-flex items-center gap-1 rounded-full bg-[#dce9f4] px-2 py-0.5 text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.12em] sm:tracking-[0.2em] text-[#46688e]">
                     <span aria-hidden="true">🥈</span>
                     2do
                   </div>
-                  <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#5d95c7] to-[#2f5375] text-base font-semibold text-white shadow-sm ring-4 ring-[#eef5fb]">
+                  <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-slate-300 to-slate-500 text-base font-semibold text-white shadow-sm ring-4 ring-[#eef5fb]">
                     {(podiumRanking[1]?.username || podiumRanking[1]?.name || 'Usuario').slice(0, 1).toUpperCase()}
                   </div>
-                  <div className="w-full rounded-2xl bg-white/80 px-2 py-1.5 text-center shadow-[0_4px_12px_rgba(128,43,56,0.04)]">
-                    <div className="truncate text-[0.92rem] font-semibold text-[rgb(var(--color-neutral))]">
-                      {podiumRanking[1]?.username || podiumRanking[1]?.name || 'Usuario'}
-                    </div>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-[rgb(var(--color-neutral))]">{podiumRanking[1]?.username || podiumRanking[1]?.name || 'Usuario'}</div>
                     <div className="text-[11px] text-[rgb(var(--color-neutral))]/60">{podiumRanking[1]?.experience ?? podiumRanking[1]?.xp ?? 0} XP</div>
                   </div>
                 </div>
               ) : <div className="hidden lg:block" />}
 
               {podiumRanking[0] ? (
-                <div className="order-1 flex min-h-[13.6rem] flex-col items-center justify-between gap-2 rounded-[1.15rem] border border-[#eaded6] bg-[#fff3ed] px-4 py-4 shadow-[0_12px_24px_rgba(128,43,56,0.1)] lg:order-2 lg:-translate-y-1 lg:scale-[1.03] lg:origin-bottom">
-                  <div className="inline-flex items-center gap-1 rounded-full bg-[#ffe5a1] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[#9d6d1d]">
+                <div className="order-1 rounded-[1.15rem] border border-[#eaded6] bg-[#fff3ed] px-3 py-2.5 shadow-[0_12px_24px_rgba(128,43,56,0.1)] lg:order-2 lg:flex-col lg:justify-between lg:px-4 lg:py-4 lg:h-[210px] lg:-translate-y-1 lg:scale-[1.03] lg:origin-bottom flex items-center gap-3">
+                  <div className="inline-flex items-center gap-1 rounded-full bg-[#ffe5a1] px-2 py-0.5 text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.12em] sm:tracking-[0.2em] text-[#9d6d1d]">
                     <span aria-hidden="true">👑</span>
                     1ro
                   </div>
-                  <div className="flex h-[4.5rem] w-[4.5rem] items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#d95f76] to-[#8b2d3f] text-lg font-semibold text-white shadow-sm ring-4 ring-white sm:h-[5rem] sm:w-[5rem]">
+                  <div className="flex h-11 w-11 sm:h-14 sm:w-14 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-lg font-semibold text-white shadow-sm ring-4 ring-white">
                     {(podiumRanking[0]?.username || podiumRanking[0]?.name || 'Usuario').slice(0, 1).toUpperCase()}
                   </div>
-                  <div className="w-full rounded-2xl bg-white/85 px-3 py-1.5 text-center shadow-[0_4px_12px_rgba(128,43,56,0.05)]">
-                    <div className="truncate text-[0.95rem] font-semibold text-[rgb(var(--color-neutral))]">
-                      {podiumRanking[0]?.username || podiumRanking[0]?.name || 'Usuario'}
-                    </div>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-[rgb(var(--color-neutral))]">{podiumRanking[0]?.username || podiumRanking[0]?.name || 'Usuario'}</div>
                     <div className="text-[11px] text-[rgb(var(--color-neutral))]/60">{podiumRanking[0]?.experience ?? podiumRanking[0]?.xp ?? 0} XP</div>
                   </div>
                 </div>
               ) : <div className="hidden lg:block" />}
 
               {podiumRanking[2] ? (
-                <div className="order-3 flex min-h-[12.2rem] flex-col items-center justify-between gap-2 rounded-[1.15rem] border border-[#eaded6] bg-[#fff8f4] px-3 py-3 shadow-[0_8px_20px_rgba(128,43,56,0.06)] lg:translate-y-1">
-                  <div className="inline-flex items-center gap-1 rounded-full bg-[#efd4c8] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[#8c5348]">
+                <div className="order-3 rounded-[1.15rem] border border-[#eaded6] bg-[#fff8f4] px-3 py-2.5 shadow-[0_8px_20px_rgba(128,43,56,0.06)] lg:flex-col lg:justify-between lg:py-3 lg:h-[210px] lg:translate-y-1 flex items-center gap-3">
+                  <div className="inline-flex items-center gap-1 rounded-full bg-[#efd4c8] px-2 py-0.5 text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.12em] sm:tracking-[0.2em] text-[#8c5348]">
                     <span aria-hidden="true">🥉</span>
                     3ro
                   </div>
-                  <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#c97b8a] to-[#7f4f63] text-base font-semibold text-white shadow-sm ring-4 ring-[#f8eded]">
+                  <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-base font-semibold text-white shadow-sm ring-4 ring-[#f8eded]">
                     {(podiumRanking[2]?.username || podiumRanking[2]?.name || 'Usuario').slice(0, 1).toUpperCase()}
                   </div>
-                  <div className="w-full rounded-2xl bg-white/80 px-2 py-1.5 text-center shadow-[0_4px_12px_rgba(128,43,56,0.04)]">
-                    <div className="truncate text-[0.92rem] font-semibold text-[rgb(var(--color-neutral))]">
-                      {podiumRanking[2]?.username || podiumRanking[2]?.name || 'Usuario'}
-                    </div>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-[rgb(var(--color-neutral))]">{podiumRanking[2]?.username || podiumRanking[2]?.name || 'Usuario'}</div>
                     <div className="text-[11px] text-[rgb(var(--color-neutral))]/60">{podiumRanking[2]?.experience ?? podiumRanking[2]?.xp ?? 0} XP</div>
                   </div>
                 </div>
@@ -725,7 +721,7 @@ export default function GamePage() {
             </div>
 
             {listRanking.length ? (
-              <div className="mt-2 border-t border-[#f0e2db] pt-4 space-y-2">
+              <div className="mt-2 space-y-2 border-t border-[#f0e2db] pt-4">
                 {listRanking.map((player, indexRanking) => {
                   const isCurrentUser = user?.id && player.user_id === user.id;
                   const displayName = player.username || player.name || 'Usuario';
@@ -737,7 +733,9 @@ export default function GamePage() {
                       key={player.user_id ?? player.name ?? displayName}
                       className={[
                         'flex items-center gap-2.5 rounded-2xl border px-3 py-2.5',
-                        isCurrentUser ? 'border-[rgba(128,43,56,0.28)] bg-[#fdf3ef]' : 'border-[#f0e2db] bg-[#fffdfb]'
+                        isCurrentUser
+                          ? 'border-[rgba(128,43,56,0.46)] bg-[#fdf3ef] shadow-[0_8px_18px_rgba(128,43,56,0.08)]'
+                          : 'border-[#f0e2db] bg-[#fffdfb]'
                       ].join(' ')}
                     >
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--color-accent))] text-xs font-bold text-white shadow-sm">
@@ -747,9 +745,15 @@ export default function GamePage() {
                         {initials}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className={['truncate text-sm font-semibold text-[rgb(var(--color-neutral))]', containsJapaneseScript(displayName) ? 'font-jp' : ''].join(' ')}>
-                          {indexRanking + 4}. {displayName}
-                          {isCurrentUser ? ' (Tú)' : ''}
+                        <div className="flex items-center gap-2">
+                          <div className={['w-full min-w-0 truncate text-sm font-semibold text-[rgb(var(--color-neutral))]', containsJapaneseScript(displayName) ? 'font-jp' : ''].join(' ')}>
+                            {displayName}
+                          </div>
+                          {isCurrentUser ? (
+                            <span className="inline-flex shrink-0 items-center rounded-full bg-[rgb(var(--color-accent))]/12 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[rgb(var(--color-accent))]">
+                              Tú
+                            </span>
+                          ) : null}
                         </div>
                         <div className="text-xs text-[rgb(var(--color-neutral))]/65">
                           Nivel {player.level ?? 1}
@@ -842,6 +846,22 @@ export default function GamePage() {
                   const displayName = player.username || player.name || 'Usuario';
                   const initials = displayName.slice(0, 1).toUpperCase();
                   const xp = player.experience ?? player.xp ?? 0;
+                  const rankGradient =
+                    indexRanking === 0
+                      ? 'from-amber-400 to-amber-600'
+                      : indexRanking === 1
+                        ? 'from-slate-300 to-slate-500'
+                        : indexRanking === 2
+                          ? 'from-orange-400 to-orange-600'
+                          : 'from-[#d95f76] to-[#8b2d3f]';
+                  const rankBadgeClass =
+                    indexRanking === 0
+                      ? 'bg-gradient-to-br from-amber-400 to-amber-600'
+                      : indexRanking === 1
+                        ? 'bg-gradient-to-br from-slate-300 to-slate-500'
+                        : indexRanking === 2
+                          ? 'bg-gradient-to-br from-orange-400 to-orange-600'
+                          : 'bg-[rgb(var(--color-accent))]';
 
                   return (
                     <div
@@ -851,10 +871,16 @@ export default function GamePage() {
                         isCurrentUser ? 'border-[rgba(128,43,56,0.28)] bg-[#fdf3ef]' : 'border-[#f0e2db] bg-[#fffdfb]'
                       ].join(' ')}
                     >
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--color-accent))] text-sm font-bold text-white shadow-sm">
+                      <div className={[
+                        'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow-sm',
+                        rankBadgeClass,
+                      ].join(' ')}>
                         #{indexRanking + 1}
                       </div>
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#d95f76] to-[#8b2d3f] text-sm font-semibold text-white shadow-sm">
+                      <div className={[
+                        'flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br text-sm font-semibold text-white shadow-sm',
+                        rankGradient,
+                      ].join(' ')}>
                         {initials}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -876,6 +902,7 @@ export default function GamePage() {
           </div>
         </div>
       ) : null}
-    </section>
+      </section>
+    </div>
   );
 }

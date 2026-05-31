@@ -132,7 +132,7 @@ export default function HistoryPage() {
   }, [historyItems, page, pageSize]);
 
   return (
-    <section className="grid gap-5">
+    <section className="grid gap-5 pb-20 lg:pb-0">
       <div className="rounded-[1.75rem] border border-[#eaded6] bg-white p-6 shadow-[0_14px_34px_rgba(128,43,56,0.08)]">
         <p className="text-sm uppercase tracking-[0.35em] text-[rgb(var(--color-accent))]/70">Historial</p>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">

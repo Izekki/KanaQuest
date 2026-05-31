@@ -3,6 +3,7 @@ import { Link, NavLink } from 'react-router-dom';
 import { useAuthSession } from '../../hooks/useAuthSession';
 import { supabase } from '../../services/supabase/client';
 import toriiLogo from '../../img/torii.svg';
+import MobileNavigation from './MobileNavigation';
 
 const navItems = [
   { to: '/', label: 'Inicio' },
@@ -159,8 +160,8 @@ export default function AppLayout({ children }) {
   return (
     <main className="relative min-h-screen overflow-hidden bg-background text-neutral">
       <PetalsLayer />
-      <div className="relative z-10">
-        <header className="px-4 pt-4 sm:px-6 lg:px-8">
+      <div className="relative z-0">
+        <header className="relative z-50 px-4 pt-4 sm:px-6 lg:px-8">
           <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 rounded-[1.5rem] border border-[#eaded6] bg-white/85 px-4 py-3 shadow-[0_10px_30px_rgba(128,43,56,0.06)] backdrop-blur">
             <Link className="flex items-center gap-2 text-sm font-semibold text-[rgb(var(--color-accent))]" to="/">
               <img src={toriiLogo} alt="KanaQuest" className="h-[40.5px] w-[40.5px] shrink-0 object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(18%) sepia(34%) saturate(1700%) hue-rotate(318deg) brightness(88%) contrast(94%)' }} />
@@ -209,7 +210,7 @@ export default function AppLayout({ children }) {
                 </button>
 
                 {menuOpen ? (
-                  <div className="absolute right-0 top-full z-20 mt-2 w-52 overflow-hidden rounded-[1.1rem] border border-[#eaded6] bg-white p-2 shadow-[0_18px_35px_rgba(128,43,56,0.14)]">
+                  <div className="absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-[1.1rem] border border-[#eaded6] bg-white p-2 shadow-[0_18px_35px_rgba(128,43,56,0.14)]">
                     {user ? (
                       <>
                         <div className="px-3 py-2 text-xs uppercase tracking-[0.25em] text-[rgb(var(--color-accent))]/55">Sesión</div>
@@ -255,6 +256,7 @@ export default function AppLayout({ children }) {
         </header>
 
         <div className="mx-auto max-w-[1400px] px-4 py-4 sm:px-6 lg:px-8 lg:py-5">{children}</div>
+        <MobileNavigation />
       </div>
     </main>
   );
