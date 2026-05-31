@@ -29,7 +29,7 @@ export default function HomePage() {
       </section>
 
       <footer className="mt-6 rounded-[1rem] border border-[#eaded6] bg-white p-4 text-center text-sm text-[rgb(var(--color-neutral))]/70 shadow-[0_8px_20px_rgba(128,43,56,0.04)]">
-        Hecho por Julio A. Morales Romero — https://github.com/Izekki
+        @2026 KanaQuest. Todos los derechos reservados. | <a href="https://github.com/Izekki/KanaQuest" className="text-[rgb(var(--color-accent))] hover:underline">GitHub</a>
       </footer>
     </div>
   );
