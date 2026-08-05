@@ -1,68 +1,156 @@
-GET /v1/kanji/{list}
-Provides lists of kanji by category (see README for detailed information on which characters are in which list)
-string[]
-/v1/kanji/joyoList of Jōyō kanji
-/v1/kanji/jouyouList of Jōyō kanji
-/v1/kanji/jinmeiyoList of Jinmeiyō kanji
-/v1/kanji/jinmeiyouList of Jinmeiyō kanji
-/v1/kanji/heisigList of kanji which have a Heisig keyword
-/v1/kanji/kyouikuList of all Kyōiku kanji
-/v1/kanji/kyoikuList of all Kyōiku kanji
-/v1/kanji/grade-1List of Grade 1 Kyōiku kanji
-/v1/kanji/grade-2List of Grade 2 Kyōiku kanji
-/v1/kanji/grade-3List of Grade 3 Kyōiku kanji
-/v1/kanji/grade-4List of Grade 4 Kyōiku kanji
-/v1/kanji/grade-5List of Grade 5 Kyōiku kanji
-/v1/kanji/grade-6List of Grade 6 Kyōiku kanji
-/v1/kanji/grade-8List of Jōyō kanji excluding Kyōiku kanji
-/v1/kanji/jlpt-5List of JLPT N5 kanji
-/v1/kanji/jlpt-4List of JLPT N4 kanji
-/v1/kanji/jlpt-3List of JLPT N3 kanji
-/v1/kanji/jlpt-2List of JLPT N2 kanji
-/v1/kanji/jlpt-1List of JLPT N1 kanji
-/v1/kanji/allList of all 13,000+ available kanji
+# KanjiAPI.dev API Reference
 
+This document provides a clean and structured reference for the [kanjiapi.dev](https://kanjiapi.dev) API endpoints used in the KanaQuest ingestion and enrichment processes.
 
-GET /v1/kanji/{character}
-Provides general information about the supplied kanji character
-kanji
-fieldtypedescription
-"kanji":stringThe kanji itself
-"kun_readings":string[]A list of kun readings associated with the kanji
-"on_readings":string[]A list of on readings associated with the kanji
-"name_readings":string[]A list of readings that are only used in names associated with the kanji
-"meanings":string[]A list of English meanings associated with the kanji
-"stroke_count":numberThe number of strokes necessary to write the kanji
-"unicode":stringThe Unicode codepoint of the kanji
-"grade":1..6 | 8 | 9 | nullThe official grade of the kanji (1-6 for Kyōiku kanji, 8 for the remaining Jōyō kanji, 9 for Jinmeiyō kanji)
-"jlpt":1..4 | nullThe former JLPT test level for the kanji
-"heisig_en":string | nullThe Heisig keyword associated with the kanji for English
-"freq_mainichi_shinbun":number | nullA relative frequency ranking from an analysis of Mainichi Shinbun newspaper articles. The 2,501 most-used characters received a ranking (see the KANJIDIC project for more information)
-"unihan_cjk_compatibility_variant":string | undefinedIf the kanji is a compatibility variant character, the unified version of the character (see README.md Jinmeiyo section for more information)
-"notes":string[]Any notes about the kanji or its fields
+---
 
+## 1. Get Kanji List
 
-GET /v1/reading/{reading}
-Provides lists of kanji associated with the supplied reading
-reading
-fieldtypedescription
-"reading":stringThe reading itself
-"main_kanji":string[]A list of kanji that use the associated reading
-"name_kanji":string[]A list of kanji that use the associated reading exclusively in names
+Provides lists of kanji characters categorized by educational grade, JLPT level, or other groupings.
 
+* **Endpoint:** `GET https://kanjiapi.dev/v1/kanji/{list_name}`
+* **Response Type:** `string[]` (an array of kanji characters)
 
-GET /v1/words/{character}
-Provides a list of dictionary entries associated with the supplied kanji character
-word[]
-word
-fieldtypedescription
-"meanings":meaning[]A list of distinct meanings that the entry has
-"variants":variant[]A list of written variations for the entry
-meaning
-fieldtypedescription
-"glosses":string[]A list of English equivalent terms for the particular meaning
-variant
-fieldtypedescription
-"written":stringThe written form of the variant
-"pronounced":stringThe pronounced form of the variant (in kana)
-"priorities":string[]A list of strings designating frequency lists in which the variant appears
+### Available Lists
+
+| Category | Endpoint Path | Description |
+| :--- | :--- | :--- |
+| **Jōyō Kanji** | `/v1/kanji/joyo` or `/v1/kanji/jouyou` | List of all Jōyō kanji (commonly used characters). |
+| **Jinmeiyō Kanji** | `/v1/kanji/jinmeiyo` or `/v1/kanji/jinmeiyou` | List of Jinmeiyō kanji (used in personal names). |
+| **Kyōiku Kanji** | `/v1/kanji/kyoiku` or `/v1/kanji/kyouiku` | List of all Kyōiku kanji (taught in elementary school). |
+| **Grade Lists** | `/v1/kanji/grade-1` to `/v1/kanji/grade-6` <br> `/v1/kanji/grade-8` | Grade 1-6 (Kyōiku kanji by school year) and Grade 8 (Jōyō kanji taught in junior high). |
+| **JLPT Levels** | `/v1/kanji/jlpt-5` to `/v1/kanji/jlpt-1` | Kanji grouped by their former Japanese Language Proficiency Test levels (N5 to N1). |
+| **Heisig** | `/v1/kanji/heisig` | Kanji characters that have an associated Heisig keyword. |
+| **All Kanji** | `/v1/kanji/all` | List of all 13,000+ available kanji characters in the database. |
+
+---
+
+## 2. Get Kanji Details
+
+Provides general information about a specific kanji character, including its readings, meanings, stroke count, and grade/JLPT level.
+
+* **Endpoint:** `GET https://kanjiapi.dev/v1/kanji/{character}`
+* **Response Type:** `Object`
+
+### Response Fields
+
+| Field Name | Type | Description |
+| :--- | :--- | :--- |
+| `kanji` | `string` | The kanji character itself. |
+| `kun_readings` | `string[]` | List of Kun'yomi (Japanese) readings associated with the kanji. |
+| `on_readings` | `string[]` | List of On'yomi (Sino-Japanese) readings associated with the kanji. |
+| `name_readings` | `string[]` | List of readings used exclusively in names. |
+| `meanings` | `string[]` | List of English meanings associated with the kanji. |
+| `stroke_count` | `number` | The number of strokes required to write the kanji. |
+| `unicode` | `string` | The Unicode codepoint of the kanji character. |
+| `grade` | `number \| null` | Official grade (1-6 for elementary, 8 for junior high, 9 for Jinmeiyō). |
+| `jlpt` | `number \| null` | Former JLPT level (1 to 4, where 4 is the easiest/N5 equivalent). |
+| `heisig_en` | `string \| null` | Heisig keyword associated with the kanji in English. |
+| `freq_mainichi_shinbun` | `number \| null` | Frequency ranking based on Mainichi Shinbun newspaper occurrences (1 to 2501). |
+| `unihan_cjk_compatibility_variant` | `string \| undefined` | Unified version of the character if it is a compatibility variant. |
+| `notes` | `string[]` | Additional notes or caveats about the kanji character. |
+
+### Example Response (`GET /v1/kanji/蛍`)
+
+```json
+{
+  "kanji": "蛍",
+  "kun_readings": ["ほたる"],
+  "on_readings": ["ケイ"],
+  "name_readings": [],
+  "meanings": ["firefly"],
+  "stroke_count": 11,
+  "unicode": "86cd",
+  "grade": 8,
+  "jlpt": 1,
+  "heisig_en": "firefly",
+  "freq_mainichi_shinbun": 1785
+}
+```
+
+---
+
+## 3. Get Kanji by Reading
+
+Provides a list of kanji associated with a specific reading (hiragana or katakana).
+
+* **Endpoint:** `GET https://kanjiapi.dev/v1/reading/{reading}`
+* **Response Type:** `Object`
+
+### Response Fields
+
+| Field Name | Type | Description |
+| :--- | :--- | :--- |
+| `reading` | `string` | The query reading itself (e.g. "とう" or "ケイ"). |
+| `main_kanji` | `string[]` | List of kanji characters that use this reading. |
+| `name_kanji` | `string[]` | List of kanji characters that use this reading exclusively in names. |
+
+### Example Response (`GET /v1/reading/ケイ`)
+
+```json
+{
+  "reading": "ケイ",
+  "main_kanji": ["計", "形", "径", "茎", "佳", "契", "恵", "慶", "慧", "憩", "掲", "携", "敬", "景", "渓", "系", "経", "継", "繋", "罫", "荊", "蛍", "軽", "鶏", "芸", "迎", "鯨", "頃", "傾", "刑", "啓", "契", "桂"],
+  "name_kanji": []
+}
+```
+
+---
+
+## 4. Get Words for Kanji
+
+Provides a list of dictionary entries/words associated with the supplied kanji character.
+
+* **Endpoint:** `GET https://kanjiapi.dev/v1/words/{character}`
+* **Response Type:** `Object[]` (an array of word objects)
+
+### Response Structures
+
+#### `Word` Object
+
+| Field Name | Type | Description |
+| :--- | :--- | :--- |
+| `meanings` | `Meaning[]` | List of distinct meanings that the word has. |
+| `variants` | `Variant[]` | List of written variations (kanji/kana combinations) for the entry. |
+
+#### `Meaning` Object
+
+| Field Name | Type | Description |
+| :--- | :--- | :--- |
+| `glosses` | `string[]` | List of English equivalent terms or definitions for this meaning. |
+
+#### `Variant` Object
+
+| Field Name | Type | Description |
+| :--- | :--- | :--- |
+| `written` | `string` | The written form of the variant (contains kanji). |
+| `pronounced` | `string` | The pronunciation of the variant in kana. |
+| `priorities` | `string[]` | Frequency lists where the variant appears (e.g. `news1`, `ichi1`). |
+
+### Example Response (`GET /v1/words/蛍`)
+
+```json
+[
+  {
+    "meanings": [
+      {
+        "glosses": [
+          "firefly (Coleoptera: Lampyridae)"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "written": "蛍",
+        "pronounced": "ほたる",
+        "priorities": ["ichi1", "news1"]
+      },
+      {
+        "written": "螢",
+        "pronounced": "ほたる",
+        "priorities": []
+      }
+    ]
+  }
+]
+```

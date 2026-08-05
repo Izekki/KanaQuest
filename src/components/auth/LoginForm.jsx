@@ -5,7 +5,7 @@ import FormStatus from '../forms/FormStatus';
 import TextField from '../forms/TextField';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
-import { supabase } from '../../services/supabase/client';
+import { signIn } from '../../services/supabase/auth';
 
 const initialFormState = { email: '', password: '' };
 
@@ -24,10 +24,7 @@ export default function LoginForm() {
     setLoading(true);
     setMessage('');
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email: formState.email,
-      password: formState.password,
-    });
+    const { error } = await signIn(formState.email, formState.password);
 
     if (error) {
       setMessage(error.message);
