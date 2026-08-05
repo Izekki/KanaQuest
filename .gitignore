@@ -145,3 +145,9 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Development / AI Specifications & Plans
+AI_Development_Specification.md
+Frontend_Visual_System_and_Color_Palette.md
+Supabase_Architecture_Specification.md
+PROJECT_PLAN.md

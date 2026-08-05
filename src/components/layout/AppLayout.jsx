@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useAuthSession } from '../../hooks/useAuthSession';
-import { supabase } from '../../services/supabase/client';
+import { fetchUserProfile } from '../../services/supabase/progress';
+import { signOut } from '../../services/supabase/auth';
 import toriiLogo from '../../img/torii.svg';
 import MobileNavigation from './MobileNavigation';
 
@@ -69,11 +70,7 @@ export default function AppLayout({ children }) {
       }
 
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('username,level,experience')
-          .eq('user_id', user.id)
-          .maybeSingle();
+        const { data, error } = await fetchUserProfile(user.id);
 
         if (error) throw error;
 
@@ -152,7 +149,7 @@ export default function AppLayout({ children }) {
 
   const handleSignOut = async () => {
     setMenuOpen(false);
-    await supabase.auth.signOut();
+    await signOut();
   };
 
   const profileInitial = (profileName || 'J').slice(0, 1).toUpperCase();

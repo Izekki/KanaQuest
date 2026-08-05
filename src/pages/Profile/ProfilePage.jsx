@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthSession } from '../../hooks/useAuthSession';
-import { supabase } from '../../services/supabase/client';
+import { fetchUserProfile, updateUserProfile } from '../../services/supabase/progress';
+import { getSignedAvatarUrl, uploadAvatar, deleteAvatar } from '../../services/supabase/storage';
 
 export default function ProfilePage() {
   const { user, loading } = useAuthSession();
@@ -15,7 +16,7 @@ export default function ProfilePage() {
     if (!storedAvatar) return '';
 
     try {
-      const fn = await supabase.functions.invoke('get-signed-url', { body: { path: storedAvatar, expires: 60 } });
+      const fn = await getSignedAvatarUrl(storedAvatar, 60);
       return fn?.data?.signedUrl ?? '';
     } catch (err) {
       console.warn('No se pudo obtener signed url para avatar:', err);
@@ -28,11 +29,7 @@ export default function ProfilePage() {
     const load = async () => {
       if (!user?.id) return;
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('username,avatar_url,level,experience')
-          .eq('user_id', user.id)
-          .maybeSingle();
+        const { data, error } = await fetchUserProfile(user.id);
         if (error) throw error;
         if (!mounted) return;
         setProfile(data ?? null);
@@ -68,10 +65,7 @@ export default function ProfilePage() {
         username: username?.trim(),
       };
 
-      const { error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('user_id', user.id);
+      const { error } = await updateUserProfile(user.id, updates);
 
       if (error) throw error;
 
@@ -167,18 +161,13 @@ export default function ProfilePage() {
       // one avatar per user: always write to the same object key
       const path = `${user.id}/avatar.png`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(path, blob, { cacheControl: '3600', upsert: true });
+      const { error: uploadError } = await uploadAvatar(path, blob);
 
       if (uploadError) throw uploadError;
 
       const storagePath = path;
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: storagePath })
-        .eq('user_id', user.id);
+      const { error: updateError } = await updateUserProfile(user.id, { avatar_url: storagePath });
 
       if (updateError) throw updateError;
 
@@ -214,13 +203,13 @@ export default function ProfilePage() {
 
       const storedPath = profile.avatar_url;
 
-      const { error: removeError } = await supabase.storage.from('avatars').remove([storedPath]);
+      const { error: removeError } = await deleteAvatar(storedPath);
       if (removeError) {
         console.warn('Error removing avatar from storage:', removeError);
         // continue — we still unset the DB reference
       }
 
-      const { error: updateError } = await supabase.from('profiles').update({ avatar_url: null }).eq('user_id', user.id);
+      const { error: updateError } = await updateUserProfile(user.id, { avatar_url: null });
       if (updateError) throw updateError;
 
       setProfile((p) => ({ ...(p ?? {}), avatar_url: null }));

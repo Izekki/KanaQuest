@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuthSession } from '../../hooks/useAuthSession';
-import { supabase } from '../../services/supabase/client';
+import { fetchWordsForHistory } from '../../services/supabase/words';
+import { fetchUserProgress } from '../../services/supabase/progress';
 
 const containsJapaneseScript = (value = '') => /[\u3040-\u30ff\u3400-\u9fff]/.test(value);
 
@@ -44,14 +45,8 @@ export default function HistoryPage() {
 
       try {
         const [wordsResult, progressResult] = await Promise.all([
-          supabase
-            .from('words')
-            .select('id,japanese,hiragana,katakana,romaji,translation,created_at')
-            .order('created_at', { ascending: true }),
-          supabase
-            .from('progress')
-            .select('word_id,mode,correct,attempts,last_attempt')
-            .eq('user_id', user.id),
+          fetchWordsForHistory(),
+          fetchUserProgress(user.id),
         ]);
 
         if (wordsResult.error) throw wordsResult.error;

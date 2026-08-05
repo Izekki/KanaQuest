@@ -1,71 +1,72 @@
-# KanaQuest
+# KanaQuest 🌸
 
-KanaQuest is a frontend-first Japanese learning platform built with React, Vite, TailwindCSS, and Supabase.
+KanaQuest is a gamified, responsive web application designed for learning Japanese (**Hiragana, Katakana, Kanji, and vocabulary**) through active recall, visual association, and spaced repetition. Built with a modern, decoupled architecture, it offers users an interactive, progress-tracked, and competitive environment to master Japanese characters.
 
-## Start
+This project is fully deployed and active in production.
 
-```bash
-pnpm install
-pnpm dev
-```
+---
 
-## Build
+## 🎮 Core Gameplay & Learning Modes
 
-```bash
-pnpm build
-```
+KanaQuest features two main educational modes designed to reinforce vocabulary and character recognition:
 
-## Environment
+1. **Reconocer (Recognition)**
+   - **Goal:** Users identify a Japanese word or kanji and write its corresponding reading in Hiragana, Katakana, or Romaji (for beginners).
+   - **Tech Integration:** Features real-time input conversion using **Wanakana** to allow direct phonetic typing, normalizing inputs to ignore casing and spaces.
 
-Create a `.env` file with:
+2. **Traducir (Translation)**
+   - **Goal:** Users translate Japanese words into their semantic meaning in Spanish.
+   - **Educational Focus:** Reinforces word comprehension, vocabulary recall, and reading comprehension.
 
-```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
+---
 
-## Vocabulary ingestion (Jisho + KanjiAPI)
+## ✨ Key Features
 
-This project includes a local ingestion script for importing vocabulary into Supabase.
+- **Gamified Progression (XP & Levels):** Users earn Experience Points (XP) and level up as they answer correctly. Levels are calculated dynamically via custom PostgreSQL database functions.
+- **User Profile & Customization:** Personalized profiles show stats (XP, level, games played, accuracy). Users can change their usernames and upload profile avatars.
+- **Dynamic Leaderboard:** A real-time ranking panel showcases the top 10 players based on accumulated experience points.
+- **Streak Tracker:** Encourages daily active recall by tracking consecutive learning streaks.
+- **Historical Progress:** A dedicated "Palabras y Avances" dashboard tracks all attempts per word, detailing correct/failed rates and timestamps.
+- **Sakura Floating Particles:** Immerse users in a beautiful, Japanese-themed design with smooth, custom CSS floating petal animations.
 
-Required environment variables (set in your shell, not committed):
+---
 
-```
-SUPABASE_URL=your_supabase_url
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-```
+## 🛠️ Tech Stack & Services
 
-Dry run (no network, no Supabase write):
+### Frontend
+- **React (v18):** Declarative UI rendering, customized hooks, and state management.
+- **Vite:** Next-generation build tool for ultra-fast development and optimized production bundles.
+- **TailwindCSS:** A utility-first CSS framework used to build a clean, minimalist, soft dark theme.
+- **React Router (v6):** Client-side routing for seamless page navigation.
+- **Wanakana:** Utilized for client-side Japanese text detection and conversion.
 
-```bash
-pnpm run ingest:dry
-```
+### Backend & Services (Serverless)
+- **Supabase:** The core backend provider (no custom backend server is needed).
+  - **PostgreSQL Database:** Relational database storing user metadata, profiles, progress, and vocabulary words.
+  - **Supabase Auth:** Secure, persistent authentication managing user registration, login, and sessions.
+  - **Supabase Storage:** Storage buckets containing word images and user profile avatars.
+  - **Edge Functions:** Serverless functions to handle secure operations, such as generating temporary signed URLs for avatar images.
 
-Ingest a term:
+---
 
-```bash
-pnpm run ingest:vocab -- --term "猫" --limit 5
-```
+## 📐 Architecture & Clean Code Patterns
 
-By default, imported `translation` values are converted to Spanish (`--translate-to es`). If you want to reseed vocabulary from scratch and remove older imported rows first, truncate `public.words` in Supabase; use `TRUNCATE public.words RESTART IDENTITY CASCADE;` if you also want to clear dependent `progress` and `review_queue` rows.
+To maintain a highly scalable and professional codebase, KanaQuest follows these design constraints:
 
-Ingest multiple terms from file:
+- **MVC / Service Layer Separation:** Direct database queries inside components are forbidden. All database and API logic is encapsulated in modular models under `src/services/supabase/`:
+  - `auth.js` — Handles authentication, sessions, and state changes.
+  - `words.js` — Handles vocabulary fetching.
+  - `progress.js` — Handles profile CRUD, progress tracking, and leaderboard data.
+  - `storage.js` — Handles image uploads, removals, and signed URL generation.
+- **Row Level Security (RLS):** All Postgres tables enforce RLS policies. Public tables (like `words`) are read-only, whereas private tables (like `progress` or `profiles`) restrict modifications only to authenticated resource owners.
+- **Database Automation:** Profile experience points and levels are updated automatically in the database via triggers on the `word_experience_awards` table.
 
-```bash
-pnpm run ingest:vocab -- --terms-file ./terms.txt --limit 10 --write-kanji-json
-```
+---
 
-Quick verification in Supabase SQL editor (step 2):
+## 🗃️ Vocabulary Ingestion & Enrichment
 
-```sql
-select
-	japanese,
-	hiragana,
-	katakana,
-	romaji,
-	translation,
-	created_at
-from public.words
-order by created_at desc
-limit 30;
-```
+Vocabulary is populated using a local automated ingestion script (`scripts/ingest_vocab.js`) that:
+1. Queries the **Jisho API** to fetch authentic vocabulary, readings, and JLPT levels.
+2. Enrich character details by querying the **KanjiAPI.dev** service.
+3. Automatically translates English definitions to Spanish using translation endpoints.
+4. Inserts deduplicated entries securely using the Supabase Service Role Key.

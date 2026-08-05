@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../services/supabase/client';
+import { getSession, onAuthStateChange } from '../services/supabase/auth';
 
 export function useAuthSession() {
   const [session, setSession] = useState(null);
@@ -9,7 +9,7 @@ export function useAuthSession() {
     let mounted = true;
 
     const initializeSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
+      const { data, error } = await getSession();
 
       if (!mounted) {
         return;
@@ -24,7 +24,7 @@ export function useAuthSession() {
 
     initializeSession();
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: subscription } = onAuthStateChange((_event, nextSession) => {
       setSession(nextSession ?? null);
       setLoading(false);
     });

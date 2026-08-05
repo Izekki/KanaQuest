@@ -1,7 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import SessionProgressCard from '../../components/gameplay/SessionProgressCard';
-import { supabase } from '../../services/supabase/client';
+import { fetchWords } from '../../services/supabase/words';
+import {
+  fetchRankingProfiles,
+  fetchUserProfile,
+  fetchRecentProgress,
+  fetchProgressRecord,
+  upsertProgressRecord,
+  awardWordExperience,
+} from '../../services/supabase/progress';
 import { useAuthSession } from '../../hooks/useAuthSession';
 import avatarRimuruRedPink from '../../img/avatar_rimuru_version_red-pink.svg';
 
@@ -182,12 +190,7 @@ export default function GamePage() {
 
     const loadRanking = async () => {
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('user_id,username,avatar_url,level,experience,games_played,correct_answers,wrong_answers,created_at')
-          .order('experience', { ascending: false })
-          .order('level', { ascending: false })
-          .limit(10);
+        const { data, error } = await fetchRankingProfiles(10);
 
         if (error) throw error;
 
@@ -218,10 +221,7 @@ export default function GamePage() {
 
     const loadWords = async () => {
       try {
-        const { data, error } = await supabase
-          .from('words')
-          .select('id,japanese,hiragana,katakana,romaji,translation,accepted_answers,difficulty,type_id,level,experience_reward')
-          .limit(200);
+        const { data, error } = await fetchWords(200);
         if (error) throw error;
 
         const rows = data ?? [];
@@ -292,14 +292,7 @@ export default function GamePage() {
       setReviewLoading(true);
 
       try {
-        const { data, error } = await supabase
-          .from('progress')
-          .select(
-            'id,mode,correct,last_attempt,word:word_id(id,japanese,hiragana,katakana,romaji,translation)'
-          )
-          .eq('user_id', user.id)
-          .order('last_attempt', { ascending: false })
-          .limit(6);
+        const { data, error } = await fetchRecentProgress(user.id, 6);
 
         if (error) throw error;
 
@@ -421,13 +414,7 @@ export default function GamePage() {
         last_attempt: new Date().toISOString(),
       };
 
-      const { data: existing, error: fetchError } = await supabase
-        .from('progress')
-        .select('attempts,mastery_level')
-        .eq('user_id', user.id)
-        .eq('word_id', currentQuestion.wordId)
-        .eq('mode', mode)
-        .maybeSingle();
+      const { data: existing, error: fetchError } = await fetchProgressRecord(user.id, currentQuestion.wordId, mode);
 
       if (fetchError) {
         console.warn('No se pudo leer progreso:', fetchError.message);
@@ -436,43 +423,24 @@ export default function GamePage() {
       const attempts = (existing?.attempts ?? 0) + 1;
       const masteryLevel = isCorrect ? (existing?.mastery_level ?? 0) + 1 : existing?.mastery_level ?? 0;
 
-      const { error: upsertError } = await supabase
-        .from('progress')
-        .upsert({
-          ...payload,
-          attempts,
-          mastery_level: masteryLevel,
-        }, {
-          onConflict: 'user_id,word_id,mode',
-        });
+      const { error: upsertError } = await upsertProgressRecord({
+        ...payload,
+        attempts,
+        mastery_level: masteryLevel,
+      });
 
       if (upsertError) {
         console.warn('No se pudo guardar progreso:', upsertError.message);
       }
 
       if (isCorrect) {
-        const { error: awardError } = await supabase
-          .from('word_experience_awards')
-          .upsert(
-            {
-              user_id: user.id,
-              word_id: currentQuestion.wordId,
-            },
-            {
-              onConflict: 'user_id,word_id',
-              ignoreDuplicates: true,
-            },
-          );
+        const { error: awardError } = await awardWordExperience(user.id, currentQuestion.wordId);
 
         if (awardError) {
           console.warn('No se pudo registrar la experiencia de la palabra:', awardError.message);
         }
 
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('username,level,experience')
-          .eq('user_id', user.id)
-          .maybeSingle();
+        const { data: profileData, error: profileError } = await fetchUserProfile(user.id);
 
         if (profileError) {
           console.warn('No se pudo refrescar el perfil:', profileError.message);

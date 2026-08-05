@@ -4,7 +4,7 @@ import FormStatus from '../forms/FormStatus';
 import TextField from '../forms/TextField';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
-import { supabase } from '../../services/supabase/client';
+import { signUp } from '../../services/supabase/auth';
 
 const initialFormState = { email: '', password: '', username: '' };
 
@@ -23,15 +23,11 @@ export default function RegisterForm() {
     setLoading(true);
     setMessage('');
 
-    const { error } = await supabase.auth.signUp({
-      email: formState.email,
-      password: formState.password,
-      options: {
-        data: {
-          username: formState.username,
-        },
-      },
-    });
+    const { error } = await signUp(
+      formState.email,
+      formState.password,
+      formState.username
+    );
 
     if (error) {
       setMessage(error.message);
