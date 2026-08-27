@@ -55,27 +55,34 @@ export default function SentenceBuilderGame({
   const [selectedTopicId, setSelectedTopicId] = useState(initialTopicId || 'all');
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  useEffect(() => {
-    if (initialTopicId) {
-      setSelectedTopicId(initialTopicId);
-    }
-  }, [initialTopicId]);
-
   // Core Game State
   const [availableBlocks, setAvailableBlocks] = useState([]);
   const [placedBlocks, setPlacedBlocks] = useState([]);
   const [validationState, setValidationState] = useState('idle'); // 'idle' | 'correct' | 'incorrect'
   const [draggingBlockId, setDraggingBlockId] = useState(null);
 
-  // Metrics
+  // Metrics & Tracking
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [attempts, setAttempts] = useState(0);
+  const [failedSentences, setFailedSentences] = useState([]);
+  const [isGameOver, setIsGameOver] = useState(false);
 
-  // 1. Fetch topics and sentences on mount
+  useEffect(() => {
+    if (initialTopicId) {
+      setSelectedTopicId(initialTopicId);
+    }
+  }, [initialTopicId]);
+
+  // 1. Fetch topics and sentences on mount / topic change
   useEffect(() => {
     async function loadData() {
       setLoading(true);
+      setIsGameOver(false);
+      setFailedSentences([]);
+      setScore(0);
+      setStreak(0);
+      setAttempts(0);
       try {
         const [topicsRes, sentencesRes] = await Promise.all([
           fetchTopics(),
@@ -238,6 +245,12 @@ export default function SentenceBuilderGame({
       setValidationState('incorrect');
       setStreak(0);
 
+      // Track failed sentences for final session summary
+      setFailedSentences((prev) => {
+        if (prev.some((s) => s.id === currentSentence.id)) return prev;
+        return [...prev, currentSentence];
+      });
+
       if (userId) {
         await recordSentenceProgress({
           userId,
@@ -248,7 +261,7 @@ export default function SentenceBuilderGame({
     }
   };
 
-  // 6. Navigation and Reset
+  // 6. Navigation, Restart, and Finish
   const handleReset = () => {
     if (currentSentence) {
       initSentence(currentSentence);
@@ -258,8 +271,28 @@ export default function SentenceBuilderGame({
   const handleNext = () => {
     if (currentIndex < sentences.length - 1) {
       setCurrentIndex((prev) => prev + 1);
-    } else if (onFinishSession) {
-      onFinishSession({ score, total: sentences.length, attempts });
+    } else {
+      setIsGameOver(true);
+      if (onFinishSession) {
+        onFinishSession({
+          score,
+          total: sentences.length,
+          attempts,
+          failedCount: failedSentences.length,
+        });
+      }
+    }
+  };
+
+  const handleRestart = () => {
+    setScore(0);
+    setStreak(0);
+    setAttempts(0);
+    setFailedSentences([]);
+    setIsGameOver(false);
+    setCurrentIndex(0);
+    if (sentences.length > 0) {
+      initSentence(sentences[0]);
     }
   };
 
@@ -282,7 +315,140 @@ export default function SentenceBuilderGame({
         <p className="text-sm text-neutral/70">
           No se encontraron oraciones para el tema seleccionado. Prueba cambiando de tema o agregando oraciones a la base de datos.
         </p>
+        {onBackToLobby && (
+          <div className="pt-2">
+            <Button type="button" variant="primary" onClick={onBackToLobby}>
+              ← Volver al Lobby
+            </Button>
+          </div>
+        )}
       </Card>
+    );
+  }
+
+  // 7. Render Game Over / Session Summary Screen
+  if (isGameOver) {
+    const accuracy =
+      sentences.length > 0
+        ? Math.max(0, Math.round(((sentences.length - failedSentences.length) / sentences.length) * 100))
+        : 100;
+    const isPerfect = failedSentences.length === 0;
+
+    return (
+      <div className="w-full max-w-3xl mx-auto space-y-6 animate-fadeIn py-2">
+        {/* Main Victory Card */}
+        <div className="rounded-3xl border border-[#eaded6] bg-white/95 p-8 sm:p-10 shadow-[0_14px_40px_rgba(128,43,56,0.1)] text-center space-y-6">
+          <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-amber-100 via-rose-100 to-accent/20 text-4xl shadow-inner mx-auto">
+            {isPerfect ? '👑' : '🌸'}
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[rgb(var(--color-neutral))]">
+              {isPerfect ? '¡Lección Perfecta!' : '¡Lección Completada!'}
+            </h2>
+            <p className="text-sm sm:text-base text-[rgb(var(--color-neutral))]/70 max-w-md mx-auto">
+              Has terminado de construir todas las oraciones de esta sesión.
+            </p>
+          </div>
+
+          {/* Stats Bar Grid */}
+          <div className="grid grid-cols-3 gap-3 sm:gap-4 max-w-lg mx-auto pt-2">
+            <div className="rounded-2xl border border-[#eaded6] bg-[#faf6f4] p-4 text-center">
+              <span className="text-xl">⭐</span>
+              <div className="text-xl sm:text-2xl font-bold text-accent mt-1">+{score}</div>
+              <div className="text-[11px] uppercase font-bold tracking-wider text-[rgb(var(--color-neutral))]/60">
+                Puntaje Total
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-[#eaded6] bg-[#faf6f4] p-4 text-center">
+              <span className="text-xl">🎯</span>
+              <div className="text-xl sm:text-2xl font-bold text-emerald-700 mt-1">{accuracy}%</div>
+              <div className="text-[11px] uppercase font-bold tracking-wider text-[rgb(var(--color-neutral))]/60">
+                Precisión
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-[#eaded6] bg-[#faf6f4] p-4 text-center">
+              <span className="text-xl">⛩️</span>
+              <div className="text-xl sm:text-2xl font-bold text-[rgb(var(--color-neutral))] mt-1">
+                {sentences.length}
+              </div>
+              <div className="text-[11px] uppercase font-bold tracking-wider text-[rgb(var(--color-neutral))]/60">
+                Oraciones
+              </div>
+            </div>
+          </div>
+
+          {/* Review of Failed Sentences or Perfect Message */}
+          {isPerfect ? (
+            <div className="rounded-2xl border border-emerald-300 bg-emerald-50/90 p-5 text-emerald-900 text-sm font-medium text-center">
+              🎉 <strong className="font-bold">¡Perfecto! Ningún error.</strong> Has completado todas las oraciones de forma impecable.
+            </div>
+          ) : (
+            <div className="space-y-4 pt-4 border-t border-[#eaded6]/60 text-left">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-[rgb(var(--color-neutral))] flex items-center gap-2">
+                  <span>📝</span> Oraciones para Repasar ({failedSentences.length})
+                </h3>
+                <span className="text-xs text-[rgb(var(--color-neutral))]/60">
+                  Escucha la pronunciación correcta
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {failedSentences.map((sentence, idx) => (
+                  <div
+                    key={sentence.id || idx}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-amber-200/80 bg-amber-50/50 p-4 transition hover:bg-amber-50"
+                  >
+                    <div className="space-y-1">
+                      <div className="text-xs font-semibold text-[rgb(var(--color-neutral))]/65">
+                        "{sentence.translation}"
+                      </div>
+                      <div className="text-lg font-bold text-[rgb(var(--color-neutral))] font-sans">
+                        {sentence.full_japanese}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => speakJapanese(sentence.full_japanese, 0.85)}
+                      className="self-start sm:self-center inline-flex items-center gap-1.5 rounded-xl border border-[#eaded6] bg-white px-3 py-2 text-xs font-semibold text-accent shadow-sm hover:bg-[#f8ebe6] transition-colors cursor-pointer"
+                      title="Escuchar pronunciación"
+                    >
+                      <span>🔊</span> Escuchar
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            {onBackToLobby && (
+              <Button
+                type="button"
+                variant="primary"
+                onClick={onBackToLobby}
+                className="w-full sm:w-auto px-8"
+              >
+                ← Volver al Lobby
+              </Button>
+            )}
+
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleRestart}
+              className="w-full sm:w-auto px-6"
+            >
+              ↻ Repetir Lección
+            </Button>
+          </div>
+        </div>
+      </div>
     );
   }
 
