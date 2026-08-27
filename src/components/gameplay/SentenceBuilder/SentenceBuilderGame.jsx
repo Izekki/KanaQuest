@@ -19,6 +19,24 @@ function shuffleArray(array) {
 }
 
 /**
+ * Speaks Japanese text using the native Web Speech API
+ * @param {string} text
+ * @param {number} [rate=0.85]
+ */
+function speakJapanese(text, rate = 0.85) {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ja-JP';
+    utterance.rate = rate;
+    window.speechSynthesis.speak(utterance);
+  } catch (err) {
+    console.warn('Speech synthesis error:', err);
+  }
+}
+
+/**
  * SentenceBuilderGame Component
  *
  * Main game controller for the Sentence Builder mode in KanaQuest.
@@ -205,6 +223,9 @@ export default function SentenceBuilderGame({
       setScore((prev) => prev + 10);
       setStreak((prev) => prev + 1);
 
+      // Pronounce full Japanese sentence via Web Speech API (rate: 0.85, lang: ja-JP)
+      speakJapanese(currentSentence.full_japanese, 0.85);
+
       if (userId) {
         await recordSentenceProgress({
           userId,
@@ -333,8 +354,18 @@ export default function SentenceBuilderGame({
 
         {/* Feedback Message */}
         {validationState === 'correct' && (
-          <div className="rounded-2xl border border-emerald-300 bg-emerald-50 p-4 text-emerald-800 text-sm font-medium animate-fadeIn">
-            🎉 ¡Excelente! Orden correcto: <strong className="font-bold">{currentSentence.full_japanese}</strong>
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-300 bg-emerald-50 p-4 text-emerald-800 text-sm font-medium animate-fadeIn">
+            <div className="text-left">
+              🎉 ¡Excelente! Orden correcto: <strong className="font-bold text-base ml-1">{currentSentence.full_japanese}</strong>
+            </div>
+            <button
+              type="button"
+              onClick={() => speakJapanese(currentSentence.full_japanese, 0.85)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm hover:bg-emerald-100 transition-colors cursor-pointer"
+              title="Volver a escuchar pronunciación"
+            >
+              <span>🔊</span> Escuchar
+            </button>
           </div>
         )}
 

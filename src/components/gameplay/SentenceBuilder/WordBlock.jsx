@@ -17,17 +17,32 @@ export default function WordBlock({
   isDragging = false,
 }) {
   const hiraganaText = block.words?.hiragana || block.hiragana || '—';
+  const partOfSpeech = (block.words?.part_of_speech || block.part_of_speech || block.words?.word_types?.name || '').toLowerCase();
   const isFixed = block.is_fixed;
 
-  // Determine state-based styles
-  let stateClasses = 'border-cream/80 bg-surface text-neutral hover:border-accent hover:shadow-md active:scale-95';
+  // 1. Determine semantic color theme before validation
+  let semanticClasses = 'border-[#eaded6] bg-white text-[rgb(var(--color-neutral))] hover:border-accent hover:shadow-[0_4px_14px_rgba(128,43,56,0.08)]';
+
+  if (partOfSpeech === 'noun' || partOfSpeech === 'proper_noun') {
+    // Sustantivos: tono azul suave
+    semanticClasses = 'border-blue-200 bg-blue-50/60 text-blue-800 hover:border-blue-400 hover:bg-blue-50 hover:shadow-[0_4px_14px_rgba(37,99,235,0.12)]';
+  } else if (partOfSpeech === 'particle') {
+    // Partículas: tono ámbar / naranja suave
+    semanticClasses = 'border-amber-200 bg-amber-50/60 text-amber-800 hover:border-amber-400 hover:bg-amber-50 hover:shadow-[0_4px_14px_rgba(217,119,6,0.12)]';
+  } else if (partOfSpeech === 'verb' || partOfSpeech === 'auxiliary') {
+    // Verbos: tono verde esmeralda suave
+    semanticClasses = 'border-emerald-200 bg-emerald-50/60 text-emerald-800 hover:border-emerald-400 hover:bg-emerald-50 hover:shadow-[0_4px_14px_rgba(5,150,105,0.12)]';
+  }
+
+  // 2. Override with validation or fixed state if active
+  let stateClasses = semanticClasses;
 
   if (validationState === 'correct') {
-    stateClasses = 'border-emerald-500 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-400 shadow-emerald-200';
+    stateClasses = 'border-emerald-500 bg-emerald-100/90 text-emerald-950 ring-2 ring-emerald-400 shadow-md shadow-emerald-200/60';
   } else if (validationState === 'incorrect') {
-    stateClasses = 'border-rose-500 bg-rose-50 text-rose-900 ring-2 ring-rose-400 shadow-rose-200 animate-pulse';
+    stateClasses = 'border-rose-500 bg-rose-100/90 text-rose-950 ring-2 ring-rose-400 shadow-md shadow-rose-200/60 animate-pulse';
   } else if (isFixed) {
-    stateClasses = 'border-amber-400/80 bg-amber-50/70 text-neutral opacity-90 cursor-default';
+    stateClasses = 'border-amber-400 bg-amber-50 text-amber-900 opacity-90 cursor-default ring-1 ring-amber-300';
   }
 
   const handleDragStart = (e) => {
@@ -56,7 +71,7 @@ export default function WordBlock({
       className={[
         'group relative inline-flex items-center justify-center select-none',
         'rounded-2xl border-2 px-4 py-3 min-w-[72px] sm:min-w-[84px]',
-        'font-medium transition-all duration-200 cursor-grab active:cursor-grabbing',
+        'font-medium transition-all duration-200 cursor-grab active:cursor-grabbing active:scale-95 shadow-sm',
         isDragging ? 'opacity-40 scale-95' : 'opacity-100',
         stateClasses,
       ].join(' ')}
