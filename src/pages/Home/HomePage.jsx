@@ -15,7 +15,6 @@ export default function HomePage() {
 
         <div className="mt-6 flex flex-wrap gap-3">
           <Link to="/game" className="inline-flex items-center justify-center rounded-2xl bg-[rgb(var(--color-accent))] px-5 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-opacity">Comenzar</Link>
-          <Link to="/sentence-builder" className="inline-flex items-center justify-center rounded-2xl border border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent))]/5 px-5 py-3 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm hover:bg-[rgb(var(--color-accent))]/10 transition-colors">Constructor de Oraciones ⛩️</Link>
           <Link to="/historial" className="inline-flex items-center justify-center rounded-2xl border border-[#eaded6] bg-white px-5 py-3 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm hover:bg-[#fbf7f4] transition-colors">Ver historial</Link>
         </div>
       </section>
