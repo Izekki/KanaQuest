@@ -20,6 +20,22 @@ function shuffleArray(array) {
 }
 
 /**
+ * Resolves the display text of a word block (Hiragana -> Katakana -> Japanese fallback)
+ */
+function getBlockText(block) {
+  if (!block) return '';
+  return (
+    block.words?.hiragana ||
+    block.hiragana ||
+    block.words?.katakana ||
+    block.katakana ||
+    block.words?.japanese ||
+    block.japanese ||
+    ''
+  );
+}
+
+/**
  * Speaks Japanese text using the native Web Speech API
  * @param {string} text
  * @param {number} [rate=0.85]
@@ -223,8 +239,28 @@ export default function SentenceBuilderGame({
 
     setAttempts((prev) => prev + 1);
 
-    // Verify sequential display_order: block at index i must have display_order === i + 1
-    const isCorrect = placedBlocks.every((block, idx) => block.display_order === idx + 1);
+    const sortedExpectedBlocks = [...(currentSentence.sentence_blocks || [])].sort(
+      (a, b) => a.display_order - b.display_order
+    );
+
+    // Verify sequential correctness: allows interchangeable duplicate words (e.g. multiple identical 'は' particles)
+    const isCorrect =
+      placedBlocks.length === sortedExpectedBlocks.length &&
+      placedBlocks.every((block, idx) => {
+        const expectedBlock = sortedExpectedBlocks[idx];
+        if (!expectedBlock) return false;
+
+        // 1. Direct display_order match
+        if (block.display_order === expectedBlock.display_order) return true;
+
+        // 2. Same vocabulary word (word_id)
+        if (block.word_id && expectedBlock.word_id && block.word_id === expectedBlock.word_id) {
+          return true;
+        }
+
+        // 3. Exact text content match
+        return getBlockText(block) === getBlockText(expectedBlock);
+      });
 
     if (isCorrect) {
       setValidationState('correct');
