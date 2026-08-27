@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { fetchSentences, recordSentenceProgress, fetchTopics } from '../../../services/supabase/sentences';
 import SentenceDropZone from './SentenceDropZone';
 import WordBank from './WordBank';
+import GrammarColorLegend from './GrammarColorLegend';
 import Button from '../../ui/Button';
 import Badge from '../../ui/Badge';
 import Card from '../../ui/Card';
@@ -286,124 +287,134 @@ export default function SentenceBuilderGame({
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
-      {/* Header & Stats Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-surface/90 border border-cream/50 p-4 sm:p-6 shadow-sm">
-        <div className="flex items-center gap-3">
-          <Badge variant="accent">
-            Oración {currentIndex + 1} de {sentences.length}
-          </Badge>
-          {currentSentence.topics && (
-            <Badge variant="cream">
-              {currentSentence.topics.title_es}
-            </Badge>
-          )}
-        </div>
-
-        <div className="flex items-center gap-4 text-sm font-semibold text-neutral">
-          <span>Puntaje: <strong className="text-accent">{score}</strong></span>
-          <span>Racha: <strong className="text-emerald-700">🔥 {streak}</strong></span>
-        </div>
-      </div>
-
-      {/* Main Prompt Card */}
-      <div className="rounded-3xl border border-cream/80 bg-surface p-6 sm:p-8 shadow-md text-center space-y-4">
-        <div className="text-xs uppercase font-bold tracking-[0.2em] text-neutral/50">
-          Traduce y construye la oración en japonés
-        </div>
-
-        {/* Spanish Translation Prompt */}
-        <h2 className="text-2xl sm:text-3xl font-bold text-neutral">
-          "{currentSentence.translation}"
-        </h2>
-
-        {/* Optional Image */}
-        {currentSentence.image_url && (
-          <img
-            src={currentSentence.image_url}
-            alt={currentSentence.translation}
-            className="mx-auto h-36 rounded-2xl object-cover shadow-sm border border-cream/30"
-          />
-        )}
-
-        {/* Drop Zone (Response Construction Area) */}
-        <div className="pt-4">
-          <SentenceDropZone
-            placedBlocks={placedBlocks}
-            totalRequired={totalBlocksCount}
-            validationState={validationState}
-            onDropToPlaced={handleDropToPlaced}
-            onBlockClick={handleBlockClick}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            draggingBlockId={draggingBlockId}
-          />
-        </div>
-
-        {/* Word Bank (Available Options) */}
-        <div className="pt-2">
-          <WordBank
-            availableBlocks={availableBlocks}
-            onDropToAvailable={handleDropToAvailable}
-            onBlockClick={handleBlockClick}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            draggingBlockId={draggingBlockId}
-          />
-        </div>
-
-        {/* Feedback Message */}
-        {validationState === 'correct' && (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-300 bg-emerald-50 p-4 text-emerald-800 text-sm font-medium animate-fadeIn">
-            <div className="text-left">
-              🎉 ¡Excelente! Orden correcto: <strong className="font-bold text-base ml-1">{currentSentence.full_japanese}</strong>
+    <div className="w-full max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Main Interactive Construction Zone (Left Column) */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Header & Stats Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-surface/90 border border-cream/50 p-4 sm:p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <Badge variant="accent">
+                Oración {currentIndex + 1} de {sentences.length}
+              </Badge>
+              {currentSentence.topics && (
+                <Badge variant="cream">
+                  {currentSentence.topics.title_es}
+                </Badge>
+              )}
             </div>
-            <button
-              type="button"
-              onClick={() => speakJapanese(currentSentence.full_japanese, 0.85)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm hover:bg-emerald-100 transition-colors cursor-pointer"
-              title="Volver a escuchar pronunciación"
-            >
-              <span>🔊</span> Escuchar
-            </button>
+
+            <div className="flex items-center gap-4 text-sm font-semibold text-neutral">
+              <span>Puntaje: <strong className="text-accent">{score}</strong></span>
+              <span>Racha: <strong className="text-emerald-700">🔥 {streak}</strong></span>
+            </div>
           </div>
-        )}
 
-        {validationState === 'incorrect' && (
-          <div className="rounded-2xl border border-rose-300 bg-rose-50 p-4 text-rose-800 text-sm font-medium animate-shake">
-            ❌ El orden de las palabras no es el correcto. ¡Inténtalo de nuevo!
+          {/* Main Prompt Card */}
+          <div className="rounded-3xl border border-cream/80 bg-surface p-6 sm:p-8 shadow-md text-center space-y-4">
+            <div className="text-xs uppercase font-bold tracking-[0.2em] text-neutral/50">
+              Traduce y construye la oración en japonés
+            </div>
+
+            {/* Spanish Translation Prompt */}
+            <h2 className="text-2xl sm:text-3xl font-bold text-neutral">
+              "{currentSentence.translation}"
+            </h2>
+
+            {/* Optional Image */}
+            {currentSentence.image_url && (
+              <img
+                src={currentSentence.image_url}
+                alt={currentSentence.translation}
+                className="mx-auto h-36 rounded-2xl object-cover shadow-sm border border-cream/30"
+              />
+            )}
+
+            {/* Drop Zone (Response Construction Area) */}
+            <div className="pt-4">
+              <SentenceDropZone
+                placedBlocks={placedBlocks}
+                totalRequired={totalBlocksCount}
+                validationState={validationState}
+                onDropToPlaced={handleDropToPlaced}
+                onBlockClick={handleBlockClick}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                draggingBlockId={draggingBlockId}
+              />
+            </div>
+
+            {/* Word Bank (Available Options) */}
+            <div className="pt-2">
+              <WordBank
+                availableBlocks={availableBlocks}
+                onDropToAvailable={handleDropToAvailable}
+                onBlockClick={handleBlockClick}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                draggingBlockId={draggingBlockId}
+              />
+            </div>
+
+            {/* Feedback Message */}
+            {validationState === 'correct' && (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-300 bg-emerald-50 p-4 text-emerald-800 text-sm font-medium animate-fadeIn">
+                <div className="text-left">
+                  🎉 ¡Excelente! Orden correcto: <strong className="font-bold text-base ml-1">{currentSentence.full_japanese}</strong>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => speakJapanese(currentSentence.full_japanese, 0.85)}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm hover:bg-emerald-100 transition-colors cursor-pointer"
+                  title="Volver a escuchar pronunciación"
+                >
+                  <span>🔊</span> Escuchar
+                </button>
+              </div>
+            )}
+
+            {validationState === 'incorrect' && (
+              <div className="rounded-2xl border border-rose-300 bg-rose-50 p-4 text-rose-800 text-sm font-medium animate-shake">
+                ❌ El orden de las palabras no es el correcto. ¡Inténtalo de nuevo!
+              </div>
+            )}
+
+            {/* Actions Bar */}
+            <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleReset}
+                disabled={placedBlocks.length === 0 && validationState === 'idle'}
+              >
+                ↺ Reiniciar Fichas
+              </Button>
+
+              {validationState !== 'correct' ? (
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={checkAnswer}
+                  disabled={placedBlocks.length === 0}
+                >
+                  ✓ Comprobar Respuesta
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={handleNext}
+                >
+                  {currentIndex < sentences.length - 1 ? 'Siguiente Oración ➔' : 'Finalizar Sesión 🏁'}
+                </Button>
+              )}
+            </div>
           </div>
-        )}
+        </div>
 
-        {/* Actions Bar */}
-        <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={handleReset}
-            disabled={placedBlocks.length === 0 && validationState === 'idle'}
-          >
-            ↺ Reiniciar Fichas
-          </Button>
-
-          {validationState !== 'correct' ? (
-            <Button
-              type="button"
-              variant="primary"
-              onClick={checkAnswer}
-              disabled={placedBlocks.length === 0}
-            >
-              ✓ Comprobar Respuesta
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="primary"
-              onClick={handleNext}
-            >
-              {currentIndex < sentences.length - 1 ? 'Siguiente Oración ➔' : 'Finalizar Sesión 🏁'}
-            </Button>
-          )}
+        {/* Right Sidebar Column: Grammar Color Legend */}
+        <div className="lg:col-span-4 sticky top-6 space-y-6">
+          <GrammarColorLegend />
         </div>
       </div>
     </div>

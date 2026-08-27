@@ -23,15 +23,18 @@ export default function WordBlock({
   // 1. Determine semantic color theme before validation
   let semanticClasses = 'border-[#eaded6] bg-white text-[rgb(var(--color-neutral))] hover:border-accent hover:shadow-[0_4px_14px_rgba(128,43,56,0.08)]';
 
-  if (partOfSpeech === 'noun' || partOfSpeech === 'proper_noun') {
-    // Sustantivos: tono azul suave
+  if (partOfSpeech === 'noun' || partOfSpeech === 'proper_noun' || partOfSpeech === 'pronoun') {
+    // Sustantivos y pronombres: tono azul suave
     semanticClasses = 'border-blue-200 bg-blue-50/60 text-blue-800 hover:border-blue-400 hover:bg-blue-50 hover:shadow-[0_4px_14px_rgba(37,99,235,0.12)]';
-  } else if (partOfSpeech === 'particle') {
-    // Partículas: tono ámbar / naranja suave
+  } else if (partOfSpeech === 'particle' || partOfSpeech === 'prefix') {
+    // Partículas y prefijos: tono ámbar / naranja suave
     semanticClasses = 'border-amber-200 bg-amber-50/60 text-amber-800 hover:border-amber-400 hover:bg-amber-50 hover:shadow-[0_4px_14px_rgba(217,119,6,0.12)]';
   } else if (partOfSpeech === 'verb' || partOfSpeech === 'auxiliary') {
-    // Verbos: tono verde esmeralda suave
-    semanticClasses = 'border-emerald-200 bg-emerald-50/60 text-emerald-800 hover:border-emerald-400 hover:bg-emerald-50 hover:shadow-[0_4px_14px_rgba(5,150,105,0.12)]';
+    // Verbos y auxiliares: tono púrpura / violeta suave (diferenciado del verde de victoria)
+    semanticClasses = 'border-purple-200 bg-purple-50/70 text-purple-800 hover:border-purple-400 hover:bg-purple-50 hover:shadow-[0_4px_14px_rgba(147,51,234,0.12)]';
+  } else if (partOfSpeech === 'adjective') {
+    // Adjetivos: tono fucsia / rosa suave
+    semanticClasses = 'border-fuchsia-200 bg-fuchsia-50/60 text-fuchsia-800 hover:border-fuchsia-400 hover:bg-fuchsia-50 hover:shadow-[0_4px_14px_rgba(217,70,239,0.12)]';
   }
 
   // 2. Override with validation or fixed state if active
