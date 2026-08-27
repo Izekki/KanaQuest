@@ -16,7 +16,15 @@ export default function WordBlock({
   onDragEnd,
   isDragging = false,
 }) {
-  const hiraganaText = block.words?.hiragana || block.hiragana || '—';
+  // Reading priority: 1) hiragana -> 2) katakana -> 3) japanese -> 4) fallback
+  const displayText =
+    block.words?.hiragana ||
+    block.hiragana ||
+    block.words?.katakana ||
+    block.katakana ||
+    block.words?.japanese ||
+    block.japanese ||
+    '—';
   const partOfSpeech = (block.words?.part_of_speech || block.part_of_speech || block.words?.word_types?.name || '').toLowerCase();
   const isFixed = block.is_fixed;
 
@@ -79,9 +87,9 @@ export default function WordBlock({
         stateClasses,
       ].join(' ')}
     >
-      {/* Block Text - STRICTLY HIRAGANA */}
+      {/* Block Text - Reading Priority: Hiragana -> Katakana -> Japanese */}
       <span className="text-xl sm:text-2xl font-bold tracking-wide font-sans text-center">
-        {hiraganaText}
+        {displayText}
       </span>
 
       {/* Fixed Block Pin Indicator */}
