@@ -1,0 +1,1094 @@
+[
+  {
+    "topic_title_es": "Tema 1: Saludos y expresiones básicas",
+    "topic_title_jp": "あいさつと基本的な表現",
+    "difficulty_level": 1,
+    "full_japanese": "おはようございます。",
+    "translation": "Buenos días.",
+    "blocks": [
+      {
+        "hiragana": "おはよう",
+        "part_of_speech": "expression"
+      },
+      {
+        "hiragana": "ございます",
+        "part_of_speech": "verb"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 1: Saludos y expresiones básicas",
+    "topic_title_jp": "あいさつと基本的な表現",
+    "difficulty_level": 1,
+    "full_japanese": "こんにちは。",
+    "translation": "Hola.",
+    "blocks": [
+      {
+        "hiragana": "こんにち",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "は",
+        "part_of_speech": "particle"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 1: Saludos y expresiones básicas",
+    "topic_title_jp": "あいさつと基本的な表現",
+    "difficulty_level": 1,
+    "full_japanese": "こんばんは。",
+    "translation": "Buenas noches.",
+    "blocks": [
+      {
+        "hiragana": "こんばん",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "は",
+        "part_of_speech": "particle"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 1: Saludos y expresiones básicas",
+    "topic_title_jp": "あいさつと基本的な表現",
+    "difficulty_level": 1,
+    "full_japanese": "おやすみなさい。",
+    "translation": "Buenas noches (al acostarse).",
+    "blocks": [
+      {
+        "hiragana": "おやすみ",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "なさい",
+        "part_of_speech": "verb"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 1: Saludos y expresiones básicas",
+    "topic_title_jp": "あいさつと基本的な表現",
+    "difficulty_level": 1,
+    "full_japanese": "ありがとうございます。",
+    "translation": "Gracias.",
+    "blocks": [
+      {
+        "hiragana": "ありがとう",
+        "part_of_speech": "expression"
+      },
+      {
+        "hiragana": "ございます",
+        "part_of_speech": "verb"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 1: Saludos y expresiones básicas",
+    "topic_title_jp": "あいさつと基本的な表現",
+    "difficulty_level": 1,
+    "full_japanese": "どういたしまして。",
+    "translation": "De nada.",
+    "blocks": [
+      {
+        "hiragana": "どういたしまして",
+        "part_of_speech": "expression"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 1: Saludos y expresiones básicas",
+    "topic_title_jp": "あいさつと基本的な表現",
+    "difficulty_level": 1,
+    "full_japanese": "すみません。",
+    "translation": "Disculpe / Perdón.",
+    "blocks": [
+      {
+        "hiragana": "すみません",
+        "part_of_speech": "expression"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 1: Saludos y expresiones básicas",
+    "topic_title_jp": "あいさつと基本的な表現",
+    "difficulty_level": 1,
+    "full_japanese": "ごめんなさい。",
+    "translation": "Lo siento.",
+    "blocks": [
+      {
+        "hiragana": "ごめんなさい",
+        "part_of_speech": "expression"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 1: Saludos y expresiones básicas",
+    "topic_title_jp": "あいさつと基本的な表現",
+    "difficulty_level": 1,
+    "full_japanese": "おげんきですか？",
+    "translation": "¿Cómo está usted? / ¿Cómo estás?",
+    "blocks": [
+      {
+        "hiragana": "お",
+        "part_of_speech": "prefix"
+      },
+      {
+        "hiragana": "げんき",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "です",
+        "part_of_speech": "copula"
+      },
+      {
+        "hiragana": "か",
+        "part_of_speech": "particle"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 1: Saludos y expresiones básicas",
+    "topic_title_jp": "あいさつと基本的な表現",
+    "difficulty_level": 1,
+    "full_japanese": "はい、げんきです。",
+    "translation": "Sí, estoy bien.",
+    "blocks": [
+      {
+        "hiragana": "はい",
+        "part_of_speech": "interjection"
+      },
+      {
+        "hiragana": "げんき",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "です",
+        "part_of_speech": "copula"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 2: Presentaciones, nacionalidades y familia",
+    "topic_title_jp": "自己紹介、国籍と家族",
+    "difficulty_level": 1,
+    "full_japanese": "わたしはまりあです。",
+    "translation": "Yo soy Maria.",
+    "blocks": [
+      {
+        "hiragana": "わたし",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "は",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "まりあ",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "です",
+        "part_of_speech": "copula"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 2: Presentaciones, nacionalidades y familia",
+    "topic_title_jp": "自己紹介、国籍と家族",
+    "difficulty_level": 1,
+    "full_japanese": "わたしはスペインじんです。",
+    "translation": "Yo soy español.",
+    "blocks": [
+      {
+        "hiragana": "わたし",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "は",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "すぺいんじん",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "です",
+        "part_of_speech": "copula"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 2: Presentaciones, nacionalidades y familia",
+    "topic_title_jp": "自己紹介、国籍と家族",
+    "difficulty_level": 1,
+    "full_japanese": "これはわたしのちちです。",
+    "translation": "Este es mi padre.",
+    "blocks": [
+      {
+        "hiragana": "これ",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "は",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "わたし",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "の",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "ちち",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "です",
+        "part_of_speech": "copula"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 2: Presentaciones, nacionalidades y familia",
+    "topic_title_jp": "自己紹介、国籍と家族",
+    "difficulty_level": 1,
+    "full_japanese": "あれはわたしのははです。",
+    "translation": "Esa es mi madre.",
+    "blocks": [
+      {
+        "hiragana": "あれ",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "は",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "わたし",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "の",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "はは",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "です",
+        "part_of_speech": "copula"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 2: Presentaciones, nacionalidades y familia",
+    "topic_title_jp": "自己紹介、国籍と家族",
+    "difficulty_level": 1,
+    "full_japanese": "わたしはにほんじんではありません。",
+    "translation": "Yo no soy japonés.",
+    "blocks": [
+      {
+        "hiragana": "わたし",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "は",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "にほんじん",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "で",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "は",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "ありません",
+        "part_of_speech": "verb"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 2: Presentaciones, nacionalidades y familia",
+    "topic_title_jp": "自己紹介、国籍と家族",
+    "difficulty_level": 1,
+    "full_japanese": "たなかさんはがくせいですか？",
+    "translation": "¿El señor Tanaka es estudiante?",
+    "blocks": [
+      {
+        "hiragana": "たなかさん",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "は",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "がくせい",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "です",
+        "part_of_speech": "copula"
+      },
+      {
+        "hiragana": "か",
+        "part_of_speech": "particle"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 2: Presentaciones, nacionalidades y familia",
+    "topic_title_jp": "自己紹介、国籍と家族",
+    "difficulty_level": 1,
+    "full_japanese": "はい、がくせいです。",
+    "translation": "Sí, es estudiante.",
+    "blocks": [
+      {
+        "hiragana": "はい",
+        "part_of_speech": "interjection"
+      },
+      {
+        "hiragana": "がくせい",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "です",
+        "part_of_speech": "copula"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 2: Presentaciones, nacionalidades y familia",
+    "topic_title_jp": "自己紹介、国籍と家族",
+    "difficulty_level": 1,
+    "full_japanese": "わたしのあにはかいしゃいんです。",
+    "translation": "Mi hermano mayor es empleado de oficina.",
+    "blocks": [
+      {
+        "hiragana": "わたし",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "の",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "あに",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "は",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "かいしゃいん",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "です",
+        "part_of_speech": "copula"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 2: Presentaciones, nacionalidades y familia",
+    "topic_title_jp": "自己紹介、国籍と家族",
+    "difficulty_level": 1,
+    "full_japanese": "いもうとはこうこうせいです。",
+    "translation": "Mi hermana menor es estudiante de secundaria.",
+    "blocks": [
+      {
+        "hiragana": "いもうと",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "は",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "こうこうせい",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "です",
+        "part_of_speech": "copula"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 2: Presentaciones, nacionalidades y familia",
+    "topic_title_jp": "自己紹介、国籍と家族",
+    "difficulty_level": 1,
+    "full_japanese": "わたしはメキシコからきました。",
+    "translation": "Yo vine de México.",
+    "blocks": [
+      {
+        "hiragana": "わたし",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "は",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "めきしこ",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "から",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "きました",
+        "part_of_speech": "verb"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 3: Comida favorita y pedir en restaurante",
+    "topic_title_jp": "好きな食べ物とレストランでの注文",
+    "difficulty_level": 1,
+    "full_japanese": "わたしのすきなたべものはすしです。",
+    "translation": "Mi comida favorita es sushi.",
+    "blocks": [
+      {
+        "hiragana": "わたし",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "の",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "すき",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "な",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "たべもの",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "は",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "すし",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "です",
+        "part_of_speech": "copula"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 3: Comida favorita y pedir en restaurante",
+    "topic_title_jp": "好きな食べ物とレストランでの注文",
+    "difficulty_level": 1,
+    "full_japanese": "ラーメンがすきです。",
+    "translation": "Me gusta el ramen.",
+    "blocks": [
+      {
+        "hiragana": "らーめん",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "が",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "すき",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "です",
+        "part_of_speech": "copula"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 3: Comida favorita y pedir en restaurante",
+    "topic_title_jp": "好きな食べ物とレストランでの注文",
+    "difficulty_level": 1,
+    "full_japanese": "てんぷらをください。",
+    "translation": "Deme tempura, por favor.",
+    "blocks": [
+      {
+        "hiragana": "てんぷら",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "を",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "ください",
+        "part_of_speech": "verb"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 3: Comida favorita y pedir en restaurante",
+    "topic_title_jp": "好きな食べ物とレストランでの注文",
+    "difficulty_level": 1,
+    "full_japanese": "みずをください。",
+    "translation": "Deme agua, por favor.",
+    "blocks": [
+      {
+        "hiragana": "みず",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "を",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "ください",
+        "part_of_speech": "verb"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 3: Comida favorita y pedir en restaurante",
+    "topic_title_jp": "好きな食べ物とレストランでの注文",
+    "difficulty_level": 1,
+    "full_japanese": "メニューをみせてください。",
+    "translation": "Por favor, muéstreme el menú.",
+    "blocks": [
+      {
+        "hiragana": "めにゅー",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "を",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "みせて",
+        "part_of_speech": "verb"
+      },
+      {
+        "hiragana": "ください",
+        "part_of_speech": "verb"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 3: Comida favorita y pedir en restaurante",
+    "topic_title_jp": "好きな食べ物とレストランでの注文",
+    "difficulty_level": 1,
+    "full_japanese": "これはなんですか？",
+    "translation": "¿Qué es esto?",
+    "blocks": [
+      {
+        "hiragana": "これ",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "は",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "なん",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "です",
+        "part_of_speech": "copula"
+      },
+      {
+        "hiragana": "か",
+        "part_of_speech": "particle"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 3: Comida favorita y pedir en restaurante",
+    "topic_title_jp": "好きな食べ物とレストランでの注文",
+    "difficulty_level": 1,
+    "full_japanese": "おいしいですね。",
+    "translation": "Está delicioso, ¿verdad?",
+    "blocks": [
+      {
+        "hiragana": "おいしい",
+        "part_of_speech": "adjective"
+      },
+      {
+        "hiragana": "です",
+        "part_of_speech": "copula"
+      },
+      {
+        "hiragana": "ね",
+        "part_of_speech": "particle"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 3: Comida favorita y pedir en restaurante",
+    "topic_title_jp": "好きな食べ物とレストランでの注文",
+    "difficulty_level": 1,
+    "full_japanese": "すしをたべます。",
+    "translation": "Como sushi.",
+    "blocks": [
+      {
+        "hiragana": "すし",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "を",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "たべます",
+        "part_of_speech": "verb"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 3: Comida favorita y pedir en restaurante",
+    "topic_title_jp": "好きな食べ物とレストランでの注文",
+    "difficulty_level": 1,
+    "full_japanese": "ちゃをのみます。",
+    "translation": "Bebo té.",
+    "blocks": [
+      {
+        "hiragana": "ちゃ",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "を",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "のみます",
+        "part_of_speech": "verb"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 3: Comida favorita y pedir en restaurante",
+    "topic_title_jp": "好きな食べ物とレストランでの注文",
+    "difficulty_level": 1,
+    "full_japanese": "ラーメンとぎょうざをおねがいします。",
+    "translation": "Ramen y gyōza, por favor.",
+    "blocks": [
+      {
+        "hiragana": "らーめん",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "と",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "ぎょうざ",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "を",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "おねがい",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "します",
+        "part_of_speech": "verb"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 4: Vivienda",
+    "topic_title_jp": "うち",
+    "difficulty_level": 1,
+    "full_japanese": "つくえのうえにほんがあります。",
+    "translation": "Encima del escritorio hay un libro.",
+    "blocks": [
+      {
+        "hiragana": "つくえ",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "の",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "うえ",
+        "part_of_speech": "position"
+      },
+      {
+        "hiragana": "に",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "ほん",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "が",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "あります",
+        "part_of_speech": "verb"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 4: Vivienda",
+    "topic_title_jp": "うち",
+    "difficulty_level": 1,
+    "full_japanese": "いすのしたにねこがいます。",
+    "translation": "Debajo de la silla hay un gato.",
+    "blocks": [
+      {
+        "hiragana": "いす",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "の",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "した",
+        "part_of_speech": "position"
+      },
+      {
+        "hiragana": "に",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "ねこ",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "が",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "います",
+        "part_of_speech": "verb"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 4: Vivienda",
+    "topic_title_jp": "うち",
+    "difficulty_level": 1,
+    "full_japanese": "ほんのとなりにぺんがあります。",
+    "translation": "Al lado del libro hay un bolígrafo.",
+    "blocks": [
+      {
+        "hiragana": "ほん",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "の",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "となり",
+        "part_of_speech": "position"
+      },
+      {
+        "hiragana": "に",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "ぺん",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "が",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "あります",
+        "part_of_speech": "verb"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 4: Vivienda",
+    "topic_title_jp": "うち",
+    "difficulty_level": 1,
+    "full_japanese": "まどのまえにつくえがあります。",
+    "translation": "Delante de la ventana hay un escritorio.",
+    "blocks": [
+      {
+        "hiragana": "まど",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "の",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "まえ",
+        "part_of_speech": "position"
+      },
+      {
+        "hiragana": "に",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "つくえ",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "が",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "あります",
+        "part_of_speech": "verb"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 4: Vivienda",
+    "topic_title_jp": "うち",
+    "difficulty_level": 1,
+    "full_japanese": "いえのうしろにくるまがあります。",
+    "translation": "Detrás de la casa hay un coche.",
+    "blocks": [
+      {
+        "hiragana": "いえ",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "の",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "うしろ",
+        "part_of_speech": "position"
+      },
+      {
+        "hiragana": "に",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "くるま",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "が",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "あります",
+        "part_of_speech": "verb"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 4: Vivienda",
+    "topic_title_jp": "うち",
+    "difficulty_level": 1,
+    "full_japanese": "つくえのみぎにほんがあります。",
+    "translation": "A la derecha del escritorio hay un libro.",
+    "blocks": [
+      {
+        "hiragana": "つくえ",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "の",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "みぎ",
+        "part_of_speech": "position"
+      },
+      {
+        "hiragana": "に",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "ほん",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "が",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "あります",
+        "part_of_speech": "verb"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 4: Vivienda",
+    "topic_title_jp": "うち",
+    "difficulty_level": 1,
+    "full_japanese": "つくえのひだりにいすがあります。",
+    "translation": "A la izquierda del escritorio hay una silla.",
+    "blocks": [
+      {
+        "hiragana": "つくえ",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "の",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "ひだり",
+        "part_of_speech": "position"
+      },
+      {
+        "hiragana": "に",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "いす",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "が",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "あります",
+        "part_of_speech": "verb"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 4: Vivienda",
+    "topic_title_jp": "うち",
+    "difficulty_level": 1,
+    "full_japanese": "つくえといすのあいだにねこがいます。",
+    "translation": "Entre el escritorio y la silla hay un gato.",
+    "blocks": [
+      {
+        "hiragana": "つくえ",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "と",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "いす",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "の",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "あいだ",
+        "part_of_speech": "position"
+      },
+      {
+        "hiragana": "に",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "ねこ",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "が",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "います",
+        "part_of_speech": "verb"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 4: Vivienda",
+    "topic_title_jp": "うち",
+    "difficulty_level": 1,
+    "full_japanese": "たなのうえにえがあります。",
+    "translation": "Encima de la estantería hay un cuadro.",
+    "blocks": [
+      {
+        "hiragana": "たな",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "の",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "うえ",
+        "part_of_speech": "position"
+      },
+      {
+        "hiragana": "に",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "え",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "が",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "あります",
+        "part_of_speech": "verb"
+      }
+    ]
+  },
+  {
+    "topic_title_es": "Tema 4: Vivienda",
+    "topic_title_jp": "うち",
+    "difficulty_level": 1,
+    "full_japanese": "いえのとなりにこうえんがあります。",
+    "translation": "Al lado de la casa hay un parque.",
+    "blocks": [
+      {
+        "hiragana": "いえ",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "の",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "となり",
+        "part_of_speech": "position"
+      },
+      {
+        "hiragana": "に",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "こうえん",
+        "part_of_speech": "noun"
+      },
+      {
+        "hiragana": "が",
+        "part_of_speech": "particle"
+      },
+      {
+        "hiragana": "あります",
+        "part_of_speech": "verb"
+      }
+    ]
+  }
+]

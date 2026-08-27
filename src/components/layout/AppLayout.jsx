@@ -9,6 +9,7 @@ import MobileNavigation from './MobileNavigation';
 const navItems = [
   { to: '/', label: 'Inicio' },
   { to: '/game', label: 'Aprender' },
+  { to: '/sentence-builder', label: 'Constructor' },
   { to: '/historial', label: 'Historial' },
 ];
 

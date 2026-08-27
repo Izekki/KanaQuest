@@ -9,6 +9,7 @@ import HistoryPage from './pages/History/HistoryPage';
 import LoginPage from './pages/Login/LoginPage';
 import RegisterPage from './pages/Register/RegisterPage';
 import ProfilePage from './pages/Profile/ProfilePage';
+import SentenceBuilderPage from './pages/SentenceBuilder/SentenceBuilderPage';
 
 export default function App() {
   return (
@@ -27,6 +28,16 @@ export default function App() {
           <ProtectedRoute>
             <AppLayout>
               <GamePage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/sentence-builder"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <SentenceBuilderPage />
             </AppLayout>
           </ProtectedRoute>
         }

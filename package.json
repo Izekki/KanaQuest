@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "ingest:vocab": "node scripts/ingest_vocab.js",
-    "ingest:dry": "node scripts/ingest_vocab.js --dry-run"
+    "ingest:dry": "node scripts/ingest_vocab.js --dry-run",
+    "seed:sentences": "node scripts/seed_sentences.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",

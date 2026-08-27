@@ -151,3 +151,10 @@ AI_Development_Specification.md
 Frontend_Visual_System_and_Color_Palette.md
 Supabase_Architecture_Specification.md
 PROJECT_PLAN.md
+Supabase Schema Expansion Sentence Builder.md
+
+# Supabase generated schema summaries & temp files
+supabase_schema_summary.*
+docs/schema/
+supabase/.temp/
+
