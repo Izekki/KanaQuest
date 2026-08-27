@@ -24,12 +24,23 @@ function shuffleArray(array) {
  * Main game controller for the Sentence Builder mode in KanaQuest.
  * Handles state management, drag & drop, Supabase data fetching, and answer validation.
  */
-export default function SentenceBuilderGame({ userId = null, onFinishSession = null }) {
+export default function SentenceBuilderGame({
+  userId = null,
+  initialTopicId = null,
+  onBackToLobby = null,
+  onFinishSession = null,
+}) {
   const [loading, setLoading] = useState(true);
   const [sentences, setSentences] = useState([]);
   const [topics, setTopics] = useState([]);
-  const [selectedTopicId, setSelectedTopicId] = useState('all');
+  const [selectedTopicId, setSelectedTopicId] = useState(initialTopicId || 'all');
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (initialTopicId) {
+      setSelectedTopicId(initialTopicId);
+    }
+  }, [initialTopicId]);
 
   // Core Game State
   const [availableBlocks, setAvailableBlocks] = useState([]);

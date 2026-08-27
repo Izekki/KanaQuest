@@ -11,6 +11,88 @@ export async function fetchTopics() {
 }
 
 /**
+ * Fetch all topics with their total sentence count and user progress.
+ *
+ * @param {string} [userId] - Optional user UUID to compute completion progress
+ * @returns {Promise<{ data: Array<Object>|null, error: any }>}
+ */
+export async function fetchTopicsWithProgress(userId = null) {
+  try {
+    const { data: topics, error } = await supabase
+      .from('topics')
+      .select(`
+        id,
+        title_es,
+        title_jp,
+        difficulty_level,
+        created_at,
+        sentences (
+          id
+        )
+      `)
+      .order('difficulty_level', { ascending: true })
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    // Build progress lookup map if user is logged in
+    let progressMap = {};
+    if (userId) {
+      const { data: progressList, error: progError } = await supabase
+        .from('sentence_progress')
+        .select('sentence_id, correct, attempts')
+        .eq('user_id', userId);
+
+      if (!progError && progressList) {
+        progressList.forEach((p) => {
+          progressMap[p.sentence_id] = p;
+        });
+      }
+    }
+
+    const formattedTopics = (topics || []).map((topic) => {
+      const sentences = topic.sentences || [];
+      const totalSentences = sentences.length;
+      const completedSentences = sentences.filter(
+        (s) => progressMap[s.id]?.correct
+      ).length;
+      const progressPercentage =
+        totalSentences > 0 ? Math.round((completedSentences / totalSentences) * 100) : 0;
+
+      return {
+        id: topic.id,
+        title_es: topic.title_es,
+        title_jp: topic.title_jp,
+        difficulty_level: topic.difficulty_level ?? 1,
+        created_at: topic.created_at,
+        total_sentences: totalSentences,
+        completed_sentences: completedSentences,
+        progress_percentage: progressPercentage,
+        is_completed: totalSentences > 0 && completedSentences === totalSentences,
+      };
+    });
+
+    return { data: formattedTopics, error: null };
+  } catch (err) {
+    console.error('Error fetching topics with progress:', err);
+    return { data: null, error: err };
+  }
+}
+
+/**
+ * Fetch a single topic by UUID
+ * @param {string} topicId
+ */
+export async function fetchTopicById(topicId) {
+  if (!topicId) return { data: null, error: 'Topic ID is required' };
+  return await supabase
+    .from('topics')
+    .select('id, title_es, title_jp, difficulty_level, created_at')
+    .eq('id', topicId)
+    .single();
+}
+
+/**
  * Fetch sentences along with their ordered word blocks and word details.
  * Joins: sentences -> sentence_blocks -> words -> word_types
  *
