@@ -107,7 +107,9 @@ export default function SentenceBuilderGame({
 
         if (topicsRes.data) setTopics(topicsRes.data);
         if (sentencesRes.data && sentencesRes.data.length > 0) {
-          setSentences(sentencesRes.data);
+          // Shuffle sentences so every practice session has a randomized question order
+          const shuffledSentences = shuffleArray(sentencesRes.data);
+          setSentences(shuffledSentences);
           setCurrentIndex(0);
         } else {
           setSentences([]);
@@ -327,8 +329,11 @@ export default function SentenceBuilderGame({
     setFailedSentences([]);
     setIsGameOver(false);
     setCurrentIndex(0);
-    if (sentences.length > 0) {
-      initSentence(sentences[0]);
+    // Re-shuffle sentences so the user gets a fresh order when repeating
+    const shuffled = shuffleArray(sentences);
+    setSentences(shuffled);
+    if (shuffled.length > 0) {
+      initSentence(shuffled[0]);
     }
   };
 
