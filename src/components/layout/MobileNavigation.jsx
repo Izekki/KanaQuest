@@ -31,7 +31,18 @@ export default function MobileNavigation() {
                 isGame ? 'filter-none' : 'grayscale opacity-70',
               ].join(' ')}
             />
-            <span>Jugar</span>
+            <span>Aprender</span>
+          </Link>
+
+          <Link
+            to="/sentence-builder"
+            className={[
+              'flex flex-col items-center gap-1 py-2 transition-colors',
+              pathname === '/sentence-builder' ? 'text-[rgb(var(--color-accent))]' : 'text-gray-400',
+            ].join(' ')}
+          >
+            <span className="text-xl leading-none">✍️</span>
+            <span>Constructor</span>
           </Link>
 
           <Link

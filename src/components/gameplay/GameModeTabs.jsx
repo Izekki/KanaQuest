@@ -1,11 +1,12 @@
 const modes = [
-  { id: 'recognize', label: 'Reconocer', description: 'Read the character or image' },
-  { id: 'translate', label: 'Traducir', description: 'Translate the word to meaning' },
+  { id: 'recognize', label: 'Reconocer', description: 'Lee el carácter o imagen' },
+  { id: 'translate', label: 'Traducir', description: 'Traduce la palabra al significado' },
+  { id: 'sentence_builder', label: 'Constructor', description: 'Construye oraciones con bloques' },
 ];
 
 export default function GameModeTabs({ value, onChange }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className="grid gap-3 sm:grid-cols-3">
       {modes.map((mode) => {
         const active = value === mode.id;
 
