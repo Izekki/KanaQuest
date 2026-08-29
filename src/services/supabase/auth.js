@@ -31,3 +31,11 @@ export async function getUser() {
 export function onAuthStateChange(callback) {
   return supabase.auth.onAuthStateChange(callback);
 }
+
+export async function resetPasswordForEmail(email, options) {
+  return await supabase.auth.resetPasswordForEmail(email, options);
+}
+
+export async function updateUser(data) {
+  return await supabase.auth.updateUser(data);
+}
