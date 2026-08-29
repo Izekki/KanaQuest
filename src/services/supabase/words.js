@@ -10,6 +10,6 @@ export async function fetchWords(limit = 200) {
 export async function fetchWordsForHistory() {
   return await supabase
     .from('words')
-    .select('id,japanese,hiragana,katakana,romaji,translation,created_at')
+    .select('id,japanese,hiragana,katakana,romaji,translation,difficulty,level,part_of_speech,experience_reward,created_at')
     .order('created_at', { ascending: true });
 }
