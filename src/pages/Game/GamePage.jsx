@@ -434,8 +434,8 @@ export default function GamePage() {
         
         {/* LEFT COLUMN: Main Practice Flow */}
         <div className="w-full max-w-2xl mx-auto lg:max-w-none space-y-3.5">
-          {/* Mode Selector Pills and Quick Links */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5">
+          {/* Mode Selector Pills */}
+          <div className="flex items-center justify-start gap-2.5">
             <div className="flex items-center gap-1 rounded-2xl bg-[#fbf5f2] p-1 border border-[#eaded6] shadow-xs">
               {[
                 { id: 'recognize', label: 'Reconocer' },
@@ -464,15 +464,6 @@ export default function GamePage() {
                 Parejas 🎴
               </button>
             </div>
-
-            {/* Quick Link to Historial */}
-            <Link
-              to="/historial"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#eaded6] bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-[#6b2832] shadow-xs transition hover:bg-white hover:shadow-sm"
-            >
-              <span>Historial</span>
-              <span aria-hidden="true">⏱</span>
-            </Link>
           </div>
 
           {/* Top Progress Bar Component */}

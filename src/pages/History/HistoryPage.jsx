@@ -259,7 +259,7 @@ export default function HistoryPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-xs sm:text-sm uppercase tracking-[0.35em] text-[rgb(var(--color-accent))]/70">
-              Historial & Avances
+              Vocabulario & Avances
             </p>
             <h1 className="mt-1 text-2xl sm:text-3xl font-bold text-[rgb(var(--color-accent))] md:text-4xl">
               Palabras y Progreso

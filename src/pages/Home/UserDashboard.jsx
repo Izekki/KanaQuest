@@ -272,11 +272,11 @@ export default function UserDashboard({ user }) {
           {/* Footer Action: History Link */}
           <div className="pt-2">
             <Link
-              to="/historial"
+              to="/vocabulario"
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#6b2832]/30 bg-[#fffdfb] px-4 py-2.5 text-xs sm:text-sm font-semibold text-[#6b2832] shadow-2xs transition-all hover:bg-[#faece9] hover:border-[#6b2832]/50 active:scale-98"
             >
-              <span>Ver historial completo</span>
-              <span aria-hidden="true">⏱</span>
+              <span>Ver vocabulario</span>
+              <span aria-hidden="true">📖</span>
             </Link>
           </div>
         </aside>
