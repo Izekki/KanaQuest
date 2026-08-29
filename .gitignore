@@ -157,4 +157,6 @@ Supabase Schema Expansion Sentence Builder.md
 supabase_schema_summary.*
 docs/schema/
 supabase/.temp/
+correcion.sql
+*.patch.sql
 
