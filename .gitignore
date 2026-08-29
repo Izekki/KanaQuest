@@ -163,3 +163,11 @@ correcion.sql
 # Agent skills & runtime
 .agents/
 skills-lock.json
+
+# Video projects & renders
+videos/
+renders/
+*.mp4
+*.mov
+*.webm
+
