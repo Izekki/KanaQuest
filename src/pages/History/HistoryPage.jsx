@@ -127,11 +127,11 @@ export default function HistoryPage() {
   }, [historyItems, page, pageSize]);
 
   return (
-    <section className="grid gap-5 pb-20 lg:pb-0">
-      <div className="rounded-[1.75rem] border border-[#eaded6] bg-white p-6 shadow-[0_14px_34px_rgba(128,43,56,0.08)]">
-        <p className="text-sm uppercase tracking-[0.35em] text-[rgb(var(--color-accent))]/70">Historial</p>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-3xl font-semibold text-[rgb(var(--color-accent))] md:text-4xl">Palabras y avances</h1>
+    <section className="grid gap-5 w-full max-w-7xl mx-auto">
+      <div className="rounded-[1.75rem] border border-[#eaded6] bg-white p-4 sm:p-6 shadow-[0_14px_34px_rgba(128,43,56,0.08)]">
+        <p className="text-xs sm:text-sm uppercase tracking-[0.35em] text-[rgb(var(--color-accent))]/70">Historial</p>
+        <div className="mt-2 sm:mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-[rgb(var(--color-accent))] md:text-4xl">Palabras y avances</h1>
           <div className="flex gap-2">
             {['recognize', 'translate'].map((option) => (
               <button
@@ -139,10 +139,10 @@ export default function HistoryPage() {
                 type="button"
                 onClick={() => setMode(option)}
                 className={[
-                  'rounded-full px-4 py-2 text-sm font-semibold transition',
+                  'rounded-full px-4 py-2.5 min-h-[44px] text-xs sm:text-sm font-semibold transition active:scale-98',
                   mode === option
-                    ? 'bg-[rgb(var(--color-accent))] text-white'
-                    : 'border border-[#eaded6] bg-white text-[rgb(var(--color-accent))]',
+                    ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
+                    : 'border border-[#eaded6] bg-white text-[rgb(var(--color-accent))] hover:bg-[#fbf7f4]',
                 ].join(' ')}
               >
                 {option === 'recognize' ? 'Reconocer' : 'Traducir'}
@@ -150,27 +150,27 @@ export default function HistoryPage() {
             ))}
           </div>
         </div>
-        <div className="mt-4 grid gap-3 text-sm text-[rgb(var(--color-neutral))]/70 sm:grid-cols-4">
-          <div className="rounded-2xl bg-[#f9efe9] p-4">
-            <div>Total</div>
-            <div className="mt-1 text-2xl font-semibold text-[rgb(var(--color-accent))]">{totals.total}</div>
+        <div className="mt-4 grid grid-cols-2 gap-2.5 sm:gap-3 text-xs sm:text-sm text-[rgb(var(--color-neutral))]/70 sm:grid-cols-4">
+          <div className="rounded-2xl bg-[#f9efe9] p-3 sm:p-4">
+            <div className="text-xs text-[rgb(var(--color-neutral))]/75">Total</div>
+            <div className="mt-1 text-xl sm:text-2xl font-bold text-[rgb(var(--color-accent))]">{totals.total}</div>
           </div>
-          <div className="rounded-2xl bg-[#f3f9f3] p-4">
-            <div>Correctas</div>
-            <div className="mt-1 text-2xl font-semibold text-emerald-700">{totals.correct}</div>
+          <div className="rounded-2xl bg-[#f3f9f3] p-3 sm:p-4">
+            <div className="text-xs text-emerald-800/80">Correctas</div>
+            <div className="mt-1 text-xl sm:text-2xl font-bold text-emerald-700">{totals.correct}</div>
           </div>
-          <div className="rounded-2xl bg-[#fdf1f1] p-4">
-            <div>Falladas</div>
-            <div className="mt-1 text-2xl font-semibold text-red-600">{totals.wrong}</div>
+          <div className="rounded-2xl bg-[#fdf1f1] p-3 sm:p-4">
+            <div className="text-xs text-red-800/80">Falladas</div>
+            <div className="mt-1 text-xl sm:text-2xl font-bold text-red-600">{totals.wrong}</div>
           </div>
-          <div className="rounded-2xl bg-[#fef6e6] p-4">
-            <div>Pendientes</div>
-            <div className="mt-1 text-2xl font-semibold text-amber-700">{totals.pending}</div>
+          <div className="rounded-2xl bg-[#fef6e6] p-3 sm:p-4">
+            <div className="text-xs text-amber-800/80">Pendientes</div>
+            <div className="mt-1 text-xl sm:text-2xl font-bold text-amber-700">{totals.pending}</div>
           </div>
         </div>
       </div>
 
-      <div className="rounded-[1.75rem] border border-[#eaded6] bg-white p-6 shadow-[0_14px_34px_rgba(128,43,56,0.08)]">
+      <div className="rounded-[1.75rem] border border-[#eaded6] bg-white p-4 sm:p-6 shadow-[0_14px_34px_rgba(128,43,56,0.08)]">
         {loading ? (
           <p className="text-sm text-[rgb(var(--color-neutral))]/70">Cargando historial...</p>
         ) : null}
@@ -178,17 +178,17 @@ export default function HistoryPage() {
           <p className="text-sm text-[rgb(var(--color-neutral))]/70">Aun no hay palabras para mostrar.</p>
         ) : null}
 
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <div className="mt-4 grid gap-3 sm:gap-4 md:grid-cols-2">
           {pagedItems.map((item) => (
-            <div key={item.id} className="flex items-center justify-between gap-4 rounded-2xl border border-[#eaded6] bg-[#fffdfb] p-4">
-              <div>
-                <div className={['text-lg font-semibold text-[rgb(var(--color-accent))]', containsJapaneseScript(item.prompt) ? 'font-jp' : ''].join(' ')}>{item.prompt}</div>
-                <div className="text-sm text-[rgb(var(--color-neutral))]/70">{item.translation}</div>
-                <div className="mt-1 text-xs uppercase tracking-[0.2em] text-[rgb(var(--color-neutral))]/50">
+            <div key={item.id} className="flex items-center justify-between gap-3 sm:gap-4 rounded-2xl border border-[#eaded6] bg-[#fffdfb] p-3.5 sm:p-4">
+              <div className="min-w-0 flex-1">
+                <div className={['text-base sm:text-lg font-semibold text-[rgb(var(--color-accent))] truncate', containsJapaneseScript(item.prompt) ? 'font-jp' : ''].join(' ')}>{item.prompt}</div>
+                <div className="text-xs sm:text-sm text-[rgb(var(--color-neutral))]/70 truncate">{item.translation}</div>
+                <div className="mt-1 text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[rgb(var(--color-neutral))]/50">
                   Intentos: {item.attempts}
                 </div>
               </div>
-              <span className={['rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em]', statusStyles[item.status]].join(' ')}>
+              <span className={['shrink-0 rounded-full px-2.5 sm:px-3 py-1 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.15em]', statusStyles[item.status]].join(' ')}>
                 {statusLabels[item.status]}
               </span>
             </div>
@@ -196,15 +196,15 @@ export default function HistoryPage() {
         </div>
 
         {historyItems.length > pageSize ? (
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-            <div className="text-sm text-[rgb(var(--color-neutral))]/70">
-              Pagina {page} de {totalPages}
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-xs sm:text-sm text-[rgb(var(--color-neutral))]/70 text-center sm:text-left">
+              Página {page} de {totalPages}
             </div>
-            <div className="flex gap-2">
+            <div className="flex justify-center gap-2">
               <button
                 type="button"
                 onClick={() => setPage((current) => Math.max(1, current - 1))}
-                className="rounded-full border border-[#eaded6] bg-white px-4 py-2 text-sm font-semibold text-[rgb(var(--color-accent))]"
+                className="inline-flex min-h-[44px] items-center justify-center rounded-full border border-[#eaded6] bg-white px-5 py-2 text-xs sm:text-sm font-semibold text-[rgb(var(--color-accent))] active:scale-98 transition-colors disabled:opacity-40"
                 disabled={page === 1}
               >
                 Anterior
@@ -212,7 +212,7 @@ export default function HistoryPage() {
               <button
                 type="button"
                 onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-                className="rounded-full bg-[rgb(var(--color-accent))] px-4 py-2 text-sm font-semibold text-white"
+                className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[rgb(var(--color-accent))] px-5 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm active:scale-98 transition-colors disabled:opacity-40"
                 disabled={page === totalPages}
               >
                 Siguiente

@@ -494,13 +494,13 @@ export default function SentenceBuilderGame({
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    <div className="w-full max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
         {/* Main Interactive Construction Zone (Left Column) */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className="lg:col-span-8 space-y-4 sm:space-y-6 w-full min-w-0">
           {/* Header & Stats Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-surface/90 border border-cream/50 p-4 sm:p-6 shadow-sm">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-4 rounded-2xl sm:rounded-3xl bg-surface/90 border border-cream/50 p-3.5 sm:p-5 shadow-sm">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <Badge variant="accent">
                 Oración {currentIndex + 1} de {sentences.length}
               </Badge>
@@ -511,20 +511,20 @@ export default function SentenceBuilderGame({
               )}
             </div>
 
-            <div className="flex items-center gap-4 text-sm font-semibold text-neutral">
+            <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm font-semibold text-neutral">
               <span>Puntaje: <strong className="text-accent">{score}</strong></span>
               <span>Racha: <strong className="text-emerald-700">🔥 {streak}</strong></span>
             </div>
           </div>
 
           {/* Main Prompt Card */}
-          <div className="rounded-3xl border border-cream/80 bg-surface p-6 sm:p-8 shadow-md text-center space-y-4">
-            <div className="text-xs uppercase font-bold tracking-[0.2em] text-neutral/50">
+          <div className="rounded-2xl sm:rounded-3xl border border-cream/80 bg-surface p-4 sm:p-6 md:p-8 shadow-md text-center space-y-4">
+            <div className="text-[11px] sm:text-xs uppercase font-bold tracking-[0.2em] text-neutral/50">
               Traduce y construye la oración en japonés
             </div>
 
             {/* Spanish Translation Prompt */}
-            <h2 className="text-2xl sm:text-3xl font-bold text-neutral">
+            <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-neutral leading-snug px-1">
               "{currentSentence.translation}"
             </h2>
 
@@ -533,12 +533,12 @@ export default function SentenceBuilderGame({
               <img
                 src={currentSentence.image_url}
                 alt={currentSentence.translation}
-                className="mx-auto h-36 rounded-2xl object-cover shadow-sm border border-cream/30"
+                className="mx-auto h-28 sm:h-36 rounded-2xl object-cover shadow-sm border border-cream/30"
               />
             )}
 
             {/* Drop Zone (Response Construction Area) */}
-            <div className="pt-4">
+            <div className="pt-2 sm:pt-4">
               <SentenceDropZone
                 placedBlocks={placedBlocks}
                 totalRequired={totalBlocksCount}
@@ -565,14 +565,14 @@ export default function SentenceBuilderGame({
 
             {/* Feedback Message */}
             {validationState === 'correct' && (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-300 bg-emerald-50 p-4 text-emerald-800 text-sm font-medium animate-fadeIn">
-                <div className="text-left">
-                  🎉 ¡Excelente! Orden correcto: <strong className="font-bold text-base ml-1">{currentSentence.full_japanese}</strong>
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-300 bg-emerald-50 p-3.5 sm:p-4 text-emerald-800 text-sm font-medium animate-fadeIn">
+                <div className="text-left text-xs sm:text-sm">
+                  🎉 ¡Excelente! Orden correcto: <strong className="font-bold text-sm sm:text-base ml-1">{currentSentence.full_japanese}</strong>
                 </div>
                 <button
                   type="button"
                   onClick={() => speakJapanese(currentSentence.full_japanese, 0.85)}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm hover:bg-emerald-100 transition-colors cursor-pointer"
+                  className="inline-flex min-h-[36px] items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm hover:bg-emerald-100 transition-colors cursor-pointer"
                   title="Volver a escuchar pronunciación"
                 >
                   <span>🔊</span> Escuchar
@@ -581,18 +581,19 @@ export default function SentenceBuilderGame({
             )}
 
             {validationState === 'incorrect' && (
-              <div className="rounded-2xl border border-rose-300 bg-rose-50 p-4 text-rose-800 text-sm font-medium animate-shake">
+              <div className="rounded-2xl border border-rose-300 bg-rose-50 p-3.5 sm:p-4 text-rose-800 text-xs sm:text-sm font-medium animate-shake">
                 ❌ El orden de las palabras no es el correcto. ¡Inténtalo de nuevo!
               </div>
             )}
 
             {/* Actions Bar */}
-            <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-2 sm:pt-4">
               <Button
                 type="button"
                 variant="secondary"
                 onClick={handleReset}
                 disabled={placedBlocks.length === 0 && validationState === 'idle'}
+                className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 text-sm font-semibold"
               >
                 ↺ Reiniciar Fichas
               </Button>
@@ -603,6 +604,7 @@ export default function SentenceBuilderGame({
                   variant="primary"
                   onClick={checkAnswer}
                   disabled={placedBlocks.length === 0}
+                  className="w-full sm:w-auto min-h-[44px] px-6 py-2.5 text-sm font-semibold"
                 >
                   ✓ Comprobar Respuesta
                 </Button>
@@ -611,6 +613,7 @@ export default function SentenceBuilderGame({
                   type="button"
                   variant="primary"
                   onClick={handleNext}
+                  className="w-full sm:w-auto min-h-[44px] px-6 py-2.5 text-sm font-semibold"
                 >
                   {currentIndex < sentences.length - 1 ? 'Siguiente Oración ➔' : 'Finalizar Sesión 🏁'}
                 </Button>
@@ -620,7 +623,7 @@ export default function SentenceBuilderGame({
         </div>
 
         {/* Right Sidebar Column: Grammar Color Legend */}
-        <div className="lg:col-span-4 sticky top-6 space-y-6">
+        <div className="lg:col-span-4 lg:sticky lg:top-6 space-y-4 sm:space-y-6 w-full">
           <GrammarColorLegend />
         </div>
       </div>

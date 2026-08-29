@@ -55,11 +55,11 @@ export default function GrammarColorLegend({ className = '' }) {
   return (
     <aside
       className={[
-        'rounded-3xl border border-[#eaded6] bg-white/95 p-5 sm:p-6 shadow-[0_10px_30px_rgba(128,43,56,0.06)] backdrop-blur-sm transition-all',
+        'rounded-2xl sm:rounded-3xl border border-[#eaded6] bg-white/95 p-4 sm:p-6 shadow-[0_10px_30px_rgba(128,43,56,0.06)] backdrop-blur-sm transition-all',
         className,
       ].join(' ')}
     >
-      {/* Card Header with Collapse Toggle on Mobile */}
+      {/* Card Header with Collapse Toggle on Mobile/Tablet */}
       <div className="flex items-center justify-between pb-3 border-b border-[#eaded6]/60">
         <div className="flex items-center gap-2.5">
           <span className="text-xl">🎨</span>
@@ -76,7 +76,7 @@ export default function GrammarColorLegend({ className = '' }) {
         <button
           type="button"
           onClick={() => setIsExpanded((prev) => !prev)}
-          className="lg:hidden inline-flex items-center justify-center rounded-lg p-1.5 text-xs text-accent hover:bg-[#f9efea] transition-colors"
+          className="lg:hidden inline-flex min-h-[36px] items-center justify-center rounded-xl px-2.5 py-1 text-xs font-semibold text-accent hover:bg-[#f9efea] active:scale-95 transition-all"
           aria-label={isExpanded ? 'Contraer guía' : 'Expandir guía'}
         >
           {isExpanded ? '▲ Ocultar' : '▼ Ver Guía'}

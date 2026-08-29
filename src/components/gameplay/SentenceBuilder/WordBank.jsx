@@ -54,8 +54,8 @@ export default function WordBank({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={[
-          'min-h-[110px] w-full rounded-3xl border border-cream/40 bg-surface/50 p-4 sm:p-6',
-          'flex flex-wrap items-center justify-center gap-3 transition-all duration-200',
+          'min-h-[90px] sm:min-h-[110px] w-full rounded-3xl border border-cream/40 bg-surface/50 p-3 sm:p-5 md:p-6',
+          'flex flex-wrap items-center justify-center gap-2 sm:gap-3 transition-all duration-200 overflow-hidden',
           isOver ? 'border-accent bg-accent/5 ring-2 ring-accent/20' : '',
         ].join(' ')}
       >

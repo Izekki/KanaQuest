@@ -60,20 +60,20 @@ export default function SentenceBuilderLobby() {
   };
 
   return (
-    <div className="w-full space-y-8 py-4">
+    <div className="w-full max-w-7xl mx-auto space-y-6 sm:space-y-8 py-2 sm:py-4">
       {/* Header & Breadcrumb */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <Link
             to="/game"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-accent hover:text-accentDark transition-colors"
+            className="inline-flex min-h-[36px] items-center gap-2 text-sm font-semibold text-accent hover:text-accentDark transition-colors"
           >
             <span>←</span> Volver a Modos de Juego
           </Link>
-          <h1 className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-[rgb(var(--color-neutral))]">
+          <h1 className="mt-1 sm:mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-[rgb(var(--color-neutral))]">
             Constructor de Oraciones ⛩️
           </h1>
-          <p className="mt-1 text-sm text-[rgb(var(--color-neutral))]/70">
+          <p className="mt-1 text-xs sm:text-sm text-[rgb(var(--color-neutral))]/70">
             Selecciona un tema para practicar la estructura y gramática japonesa ordenando fichas.
           </p>
         </div>
@@ -96,11 +96,11 @@ export default function SentenceBuilderLobby() {
 
       {/* Error state */}
       {error && (
-        <div className="rounded-2xl border border-red-200 bg-red-50/80 p-6 text-center text-red-800 shadow-sm backdrop-blur-sm">
+        <div className="rounded-2xl border border-red-200 bg-red-50/80 p-5 sm:p-6 text-center text-red-800 shadow-sm backdrop-blur-sm">
           <p className="font-semibold">{error}</p>
           <button
             onClick={loadTopics}
-            className="mt-3 inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white shadow-sm hover:bg-accentDark transition-colors"
+            className="mt-3 inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-white shadow-sm hover:bg-accentDark transition-colors"
           >
             Reintentar
           </button>
@@ -109,11 +109,11 @@ export default function SentenceBuilderLobby() {
 
       {/* Loading Skeleton */}
       {loading && (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-2">
           {[1, 2, 3, 4].map((n) => (
             <div
               key={n}
-              className="animate-pulse rounded-2xl border border-[#eaded6] bg-white/70 p-6 shadow-sm space-y-4"
+              className="animate-pulse rounded-2xl border border-[#eaded6] bg-white/70 p-5 sm:p-6 shadow-sm space-y-4"
             >
               <div className="flex items-center justify-between">
                 <div className="h-6 w-28 rounded-full bg-neutral/10" />
@@ -131,7 +131,7 @@ export default function SentenceBuilderLobby() {
 
       {/* Topics Grid */}
       {!loading && !error && (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-2">
           {topics.map((topic) => {
             const diffConfig = getDifficultyConfig(topic.difficulty_level);
 
@@ -139,7 +139,7 @@ export default function SentenceBuilderLobby() {
               <div
                 key={topic.id}
                 onClick={() => handleSelectTopic(topic.id)}
-                className="group relative flex flex-col justify-between rounded-2xl border border-[#eaded6] bg-white/90 p-6 shadow-[0_10px_30px_rgba(128,43,56,0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_18px_40px_rgba(128,43,56,0.12)] cursor-pointer"
+                className="group relative flex flex-col justify-between rounded-2xl border border-[#eaded6] bg-white/90 p-4 sm:p-6 shadow-[0_10px_30px_rgba(128,43,56,0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_18px_40px_rgba(128,43,56,0.12)] cursor-pointer"
               >
                 <div>
                   {/* Top Row: Difficulty & Status */}
