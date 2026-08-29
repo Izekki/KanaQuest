@@ -8,7 +8,7 @@ export default function MobileNavigation() {
   const isGame = pathname === '/game' || pathname.startsWith('/game');
   const isPairMatch = pathname === '/pair-match' || pathname === '/par-parejas';
   const isSentenceBuilder = pathname === '/sentence-builder' || pathname.startsWith('/sentence-builder');
-  const isHistory = pathname === '/historial' || pathname.startsWith('/historial');
+  const isHistory = pathname === '/historial' || pathname.startsWith('/historial') || pathname === '/vocabulario' || pathname.startsWith('/vocabulario');
 
   return (
     <nav
@@ -59,7 +59,7 @@ export default function MobileNavigation() {
           </Link>
 
           <Link
-            to="/historial"
+            to="/vocabulario"
             className={[
               'flex flex-col items-center justify-center gap-1 py-1.5 min-h-[48px] rounded-xl transition-colors active:scale-95',
               isHistory ? 'text-[rgb(var(--color-accent))] font-bold' : 'text-neutral/60 hover:text-neutral',
@@ -67,13 +67,13 @@ export default function MobileNavigation() {
           >
             <img
               src={sandClockIcon}
-              alt="Historial"
+              alt="Vocabulario"
               className={[
                 'h-5 w-5 transition-all',
                 isHistory ? 'filter-none scale-110' : 'grayscale opacity-60',
               ].join(' ')}
             />
-            <span className="text-[10px] leading-tight">Historial</span>
+            <span className="text-[10px] leading-tight">Vocabulario</span>
           </Link>
         </div>
       </div>

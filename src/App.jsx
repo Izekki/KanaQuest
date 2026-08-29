@@ -136,6 +136,16 @@ export default function App() {
         }
       />
       <Route
+        path="/vocabulario"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <HistoryPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/historial"
         element={
           <ProtectedRoute>
