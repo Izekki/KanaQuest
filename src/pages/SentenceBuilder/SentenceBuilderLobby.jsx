@@ -193,11 +193,27 @@ export default function SentenceBuilderLobby() {
                   </div>
 
                   {/* Action Link button */}
-                  <div className="mt-4 flex items-center justify-end">
-                    <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-accent group-hover:text-accentDark transition-colors">
-                      {topic.completed_sentences > 0 ? 'Continuar Práctica' : 'Comenzar Lección'}
-                      <span className="transition-transform group-hover:translate-x-1">→</span>
+                  <div className="mt-4 flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-[rgb(var(--color-neutral))]/60">
+                      {topic.progress_percentage}% dominado
                     </span>
+                    {topic.is_completed || topic.progress_percentage >= 100 ? (
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-[#fbf0ec] border border-[#e3b8b1] px-4 py-2 text-xs font-semibold text-[#6b2832] shadow-2xs transition-all hover:bg-[#faece9] active:scale-98"
+                      >
+                        <span>Repasar Lección</span>
+                        <span aria-hidden="true" className="transition-transform group-hover:rotate-45">↺</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-[#6b2832] px-4 py-2 text-xs font-semibold text-white shadow-xs transition-all hover:bg-[#581f27] active:scale-98"
+                      >
+                        <span>{topic.completed_sentences > 0 ? 'Continuar Lección' : 'Comenzar Lección'}</span>
+                        <span aria-hidden="true" className="transition-transform group-hover:translate-x-0.5">→</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

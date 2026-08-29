@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useAuthSession } from '../../hooks/useAuthSession';
-import { fetchUserProfile, updateUserProfile } from '../../services/supabase/progress';
+import { fetchUserProfile, fetchUserProgress, updateUserProfile } from '../../services/supabase/progress';
 import { getSignedAvatarUrl, uploadAvatar, deleteAvatar } from '../../services/supabase/storage';
+
+const getStreakStorageKey = (userId) => `kanaquest-streak:${userId}`;
 
 export default function ProfilePage() {
   const { user, loading } = useAuthSession();
   const [profile, setProfile] = useState(null);
   const [username, setUsername] = useState('');
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState('');
+  const [streak, setStreak] = useState(0);
+  const [learnedCount, setLearnedCount] = useState(0);
+  const [practicedCount, setPracticedCount] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -29,12 +34,24 @@ export default function ProfilePage() {
     const load = async () => {
       if (!user?.id) return;
       try {
-        const { data, error } = await fetchUserProfile(user.id);
-        if (error) throw error;
+        const [profileRes, progressRes] = await Promise.all([
+          fetchUserProfile(user.id),
+          fetchUserProgress(user.id),
+        ]);
+
+        if (profileRes.error) throw profileRes.error;
         if (!mounted) return;
-        setProfile(data ?? null);
-        setUsername(data?.username ?? '');
-        setAvatarPreviewUrl(await resolveAvatarPreviewUrl(data?.avatar_url ?? ''));
+
+        setProfile(profileRes.data ?? null);
+        setUsername(profileRes.data?.username ?? '');
+        setAvatarPreviewUrl(await resolveAvatarPreviewUrl(profileRes.data?.avatar_url ?? ''));
+
+        if (progressRes.data) {
+          const rows = progressRes.data;
+          setPracticedCount(rows.length);
+          const learned = rows.filter((r) => r.correct || (r.mastery_level ?? 0) >= 1).length;
+          setLearnedCount(learned);
+        }
       } catch (err) {
         setError('No se pudo cargar el perfil.');
         console.warn(err);
@@ -46,6 +63,15 @@ export default function ProfilePage() {
     return () => {
       mounted = false;
     };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setStreak(0);
+      return;
+    }
+    const saved = Number(sessionStorage.getItem(getStreakStorageKey(user.id)) ?? 0);
+    setStreak(Number.isFinite(saved) ? saved : 0);
   }, [user?.id]);
 
   const handleSave = async (e) => {
@@ -129,7 +155,6 @@ export default function ProfilePage() {
         );
       };
       img.onerror = (err) => reject(err);
-      // Force CORS anonymous to allow drawing from blob urls
       img.crossOrigin = 'anonymous';
       const reader = new FileReader();
       reader.onload = () => {
@@ -155,20 +180,14 @@ export default function ProfilePage() {
 
     try {
       setSaving(true);
-      // sanitize by re-encoding the image in the browser
       const blob = await processImage(file);
-
-      // one avatar per user: always write to the same object key
       const path = `${user.id}/avatar.png`;
 
       const { error: uploadError } = await uploadAvatar(path, blob);
-
       if (uploadError) throw uploadError;
 
       const storagePath = path;
-
       const { error: updateError } = await updateUserProfile(user.id, { avatar_url: storagePath });
-
       if (updateError) throw updateError;
 
       const previewUrl = await resolveAvatarPreviewUrl(storagePath);
@@ -200,13 +219,10 @@ export default function ProfilePage() {
 
     try {
       setSaving(true);
-
       const storedPath = profile.avatar_url;
-
       const { error: removeError } = await deleteAvatar(storedPath);
       if (removeError) {
         console.warn('Error removing avatar from storage:', removeError);
-        // continue — we still unset the DB reference
       }
 
       const { error: updateError } = await updateUserProfile(user.id, { avatar_url: null });
@@ -224,60 +240,133 @@ export default function ProfilePage() {
   };
 
   if (loading) {
-    return <div>Cargando sesión...</div>;
+    return (
+      <div className="flex min-h-[300px] items-center justify-center">
+        <div className="text-sm font-semibold text-[#6b2832]">Cargando perfil...</div>
+      </div>
+    );
   }
 
   return (
-    <section className="w-full max-w-4xl mx-auto rounded-[1.75rem] border border-[#eaded6] bg-white p-4 sm:p-8 shadow-[0_14px_34px_rgba(128,43,56,0.08)]">
-      <p className="text-xs sm:text-sm uppercase tracking-[0.35em] text-[rgb(var(--color-accent))]/70">Perfil</p>
-      <h1 className="mt-2 sm:mt-4 text-2xl sm:text-3xl font-semibold text-[rgb(var(--color-accent))] md:text-5xl">Mi perfil</h1>
+    <section className="w-full max-w-4xl mx-auto rounded-[1.75rem] border border-[#eaded6] bg-white p-4 sm:p-8 shadow-[0_14px_34px_rgba(128,43,56,0.06)] space-y-6">
+      <div>
+        <p className="text-xs sm:text-sm uppercase tracking-[0.35em] text-[#6b2832]/70 font-semibold">Perfil</p>
+        <h1 className="mt-1 sm:mt-2 text-2xl sm:text-3xl font-extrabold text-[#6b2832] md:text-4xl">Mi perfil</h1>
+        <p className="mt-1 text-xs sm:text-sm text-[rgb(var(--color-neutral))]/70">
+          Gestiona tu información pública, avatar y revisa tus estadísticas globales de aprendizaje.
+        </p>
+      </div>
 
       {profile ? (
-        <form onSubmit={handleSave} className="mt-5 sm:mt-6 grid gap-4">
-          <div className="grid gap-4 rounded-[1.5rem] border border-[#eaded6] bg-[#fcfaf8] p-4 sm:p-6 shadow-[0_10px_22px_rgba(128,43,56,0.05)]">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-5">
+          {/* Main Profile Info Card */}
+          <form onSubmit={handleSave} className="grid gap-4 rounded-[1.5rem] border border-[#eaded6] bg-[#fcfaf8] p-4 sm:p-6 shadow-[0_10px_22px_rgba(128,43,56,0.04)]">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
-                <div className="shrink-0">
+                <div className="shrink-0 relative group">
                   {avatarPreviewUrl ? (
-                    // eslint-disable-next-line jsx-a11y/img-redundant-alt
-                    <img src={avatarPreviewUrl} alt="avatar" className="h-16 w-16 sm:h-20 sm:w-20 rounded-full object-cover shadow-sm" />
+                    <img src={avatarPreviewUrl} alt="avatar" className="h-16 w-16 sm:h-20 sm:w-20 rounded-full object-cover shadow-sm ring-2 ring-[#e3b8b1]" />
                   ) : (
-                    <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f5d2dd,#b86773)] text-xl font-semibold text-white shadow-sm">{(profile.username || 'J').slice(0, 1).toUpperCase()}</div>
+                    <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f5d2dd,#b86773)] text-xl font-bold text-white shadow-sm ring-2 ring-[#e3b8b1]">
+                      {(profile.username || 'J').slice(0, 1).toUpperCase()}
+                    </div>
                   )}
                 </div>
 
                 <div>
-                  <div className="text-xs sm:text-sm text-[rgb(var(--color-neutral))]/80">Nivel</div>
-                  <div className="text-xl sm:text-2xl font-bold text-[rgb(var(--color-accent))]">{profile.level ?? 1}</div>
-                  <div className="mt-1 text-xs sm:text-sm text-[rgb(var(--color-neutral))]/70">Experiencia: {profile.experience ?? 0} XP</div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-[rgb(var(--color-neutral))]/70">Nivel de Jugador</div>
+                  <div className="text-xl sm:text-2xl font-bold text-[#6b2832]">Nivel {profile.level ?? 1}</div>
+                  <div className="mt-0.5 text-xs text-[rgb(var(--color-neutral))]/70 font-mono font-medium">
+                    {profile.experience ?? 0} XP acumulados
+                  </div>
                 </div>
               </div>
 
-              <div className="grid gap-2 sm:min-w-[18rem] sm:max-w-[22rem] sm:flex-1 sm:justify-items-stretch">
-                <label className="text-xs font-semibold text-[rgb(var(--color-accent))]/80">Nombre de usuario</label>
+              <div className="grid gap-1.5 sm:min-w-[18rem] sm:max-w-[22rem] sm:flex-1 sm:justify-items-stretch">
+                <label className="text-xs font-bold text-[#6b2832]">Nombre de usuario</label>
                 <input
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="rounded-xl border border-[#eaded6] bg-white px-3.5 py-2.5 min-h-[44px] text-sm text-[rgb(var(--color-neutral))] outline-none focus:border-[rgb(var(--color-accent))] focus:ring-2 focus:ring-[rgba(128,43,56,0.12)]"
+                  className="rounded-xl border border-[#eaded6] bg-white px-3.5 py-2.5 min-h-[44px] text-sm text-[rgb(var(--color-neutral))] outline-none focus:border-[#6b2832] focus:ring-2 focus:ring-[rgba(107,40,50,0.12)] transition"
                   placeholder="Tu nombre público"
                   required
                 />
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2 border-t border-[#eaded6]/60">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-3 border-t border-[#eaded6]/70">
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex min-h-[44px] w-full sm:w-auto items-center justify-center rounded-2xl bg-[rgb(var(--color-accent))] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[rgb(var(--color-accent-dark))] disabled:cursor-not-allowed disabled:opacity-70 active:scale-98 shadow-sm"
+                className="inline-flex min-h-[44px] w-full sm:w-auto items-center justify-center rounded-xl bg-[#6b2832] px-6 py-2.5 text-xs sm:text-sm font-semibold text-white transition hover:bg-[#581f27] disabled:cursor-not-allowed disabled:opacity-70 active:scale-98 shadow-xs"
               >
                 {saving ? 'Guardando...' : 'Guardar cambios'}
               </button>
               {error ? <div className="text-xs sm:text-sm text-red-600 font-medium">{error}</div> : null}
               {info ? <div className="text-xs sm:text-sm text-emerald-700 font-medium">{info}</div> : null}
             </div>
+          </form>
+
+          {/* User Statistics Grid */}
+          <div className="space-y-3">
+            <h3 className="text-sm sm:text-base font-bold text-[#6b2832]">Estadísticas de Aprendizaje</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              {/* Racha */}
+              <div className="flex items-center gap-3.5 rounded-2xl border border-[#f2e6df] bg-[#fcfaf8] p-4 shadow-2xs transition hover:bg-white">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#fbeae5] text-xl shadow-inner border border-[#f2d2cc]">
+                  🔥
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-[rgb(var(--color-neutral))]/60">
+                    Racha Actual
+                  </div>
+                  <div className="text-base sm:text-lg font-extrabold text-[#6b2832]">
+                    {streak} {streak === 1 ? 'día activo' : 'días activos'}
+                  </div>
+                  <div className="text-[10px] text-[rgb(var(--color-neutral))]/60 truncate">
+                    {streak > 0 ? '¡Racha de estudio activa!' : '¡Inicia tu racha hoy!'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Total XP */}
+              <div className="flex items-center gap-3.5 rounded-2xl border border-[#f2e6df] bg-[#fcfaf8] p-4 shadow-2xs transition hover:bg-white">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#fff6e6] text-xl shadow-inner border border-[#fae2be]">
+                  ⭐
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-[rgb(var(--color-neutral))]/60">
+                    Total Experiencia
+                  </div>
+                  <div className="text-base sm:text-lg font-extrabold text-[#6b2832] font-mono">
+                    {profile.experience ?? 0} <span className="text-xs font-normal text-[rgb(var(--color-neutral))]/60">XP</span>
+                  </div>
+                  <div className="text-[10px] text-[rgb(var(--color-neutral))]/60 truncate">
+                    Nivel {profile.level ?? 1} de maestría
+                  </div>
+                </div>
+              </div>
+
+              {/* Palabras Dominadas */}
+              <div className="flex items-center gap-3.5 rounded-2xl border border-[#f2e6df] bg-[#fcfaf8] p-4 shadow-2xs transition hover:bg-white">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#edf4f0] text-xl shadow-inner border border-[#d2e4d8]">
+                  📚
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-[rgb(var(--color-neutral))]/60">
+                    Palabras Dominadas
+                  </div>
+                  <div className="text-base sm:text-lg font-extrabold text-emerald-800">
+                    {learnedCount} aprendidas
+                  </div>
+                  <div className="text-[10px] text-[rgb(var(--color-neutral))]/60 truncate">
+                    {practicedCount} practicadas en total
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </form>
+        </div>
       ) : (
         <div className="mt-6 text-sm text-[rgb(var(--color-neutral))]/70">No se encontró perfil. Usa el registro o crea un perfil en la base de datos.</div>
       )}
