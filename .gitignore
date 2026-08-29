@@ -160,3 +160,6 @@ supabase/.temp/
 correcion.sql
 *.patch.sql
 
+# Agent skills & runtime
+.agents/
+skills-lock.json

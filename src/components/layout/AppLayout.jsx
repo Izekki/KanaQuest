@@ -12,7 +12,7 @@ const navItems = [
   { to: '/game', label: 'Aprender' },
   { to: '/pair-match', label: 'Par-Parejas' },
   { to: '/sentence-builder', label: 'Constructor' },
-  { to: '/vocabulario', label: 'Vocabulario' },
+  { to: '/vocabulary', label: 'Vocabulario' },
 ];
 
 const petals = [

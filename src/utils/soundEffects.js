@@ -184,3 +184,20 @@ export function playSyntheticComplete() {
     console.debug('Audio playback error:', err);
   }
 }
+
+/**
+ * Native Web Speech API Text-to-Speech synthesizer
+ */
+export function playCardAudio(text, lang = 'ja') {
+  if (isSoundMuted()) return;
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  try {
+    window.speechSynthesis.cancel(); // Detiene cualquier audio en curso para evitar solapamientos
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang === 'ja' ? 'ja-JP' : 'es-MX';
+    utterance.rate = 0.95; // Velocidad de pronunciación clara
+    window.speechSynthesis.speak(utterance);
+  } catch (err) {
+    console.debug('Speech synthesis error:', err);
+  }
+}

@@ -8,7 +8,7 @@ export default function MobileNavigation() {
   const isGame = pathname === '/game' || pathname.startsWith('/game');
   const isPairMatch = pathname === '/pair-match' || pathname === '/par-parejas';
   const isSentenceBuilder = pathname === '/sentence-builder' || pathname.startsWith('/sentence-builder');
-  const isHistory = pathname === '/historial' || pathname.startsWith('/historial') || pathname === '/vocabulario' || pathname.startsWith('/vocabulario');
+  const isHistory = pathname === '/vocabulary' || pathname.startsWith('/vocabulary') || pathname === '/vocabulario' || pathname.startsWith('/vocabulario') || pathname === '/historial' || pathname.startsWith('/historial');
 
   return (
     <nav
@@ -59,7 +59,7 @@ export default function MobileNavigation() {
           </Link>
 
           <Link
-            to="/vocabulario"
+            to="/vocabulary"
             className={[
               'flex flex-col items-center justify-center gap-1 py-1.5 min-h-[48px] rounded-xl transition-colors active:scale-95',
               isHistory ? 'text-[rgb(var(--color-accent))] font-bold' : 'text-neutral/60 hover:text-neutral',
