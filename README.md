@@ -23,6 +23,10 @@ KanaQuest features three main educational modes designed to reinforce vocabulary
    - **Interactive Mechanics:** Fluid drag-and-drop and click-to-place interactions with instant validation and error highlighting.
    - **Curriculum:** Sentences organized by difficulty and thematic topics (Greetings, Introductions & Family, Dining & Restaurants, Housing & Locations).
 
+4. **Par-Parejas (Memory Match 🎴)**
+   - **Goal:** Memory-matching card game where users flip and match Japanese characters/kanji with their corresponding Spanish translations.
+   - **Interactive Mechanics:** 3D flip card animations, difficulty tiers (Principiante, Intermedio, Avanzado), live timer, attempt counter, accuracy calculation, and direct XP awards.
+
 ---
 
 ## ✨ Key Features
@@ -32,6 +36,7 @@ KanaQuest features three main educational modes designed to reinforce vocabulary
 - **Dynamic Leaderboard:** A real-time ranking panel showcases the top 10 players based on accumulated experience points.
 - **Streak Tracker:** Encourages daily active recall by tracking consecutive learning streaks.
 - **Historical Progress:** Dedicated progress dashboards for vocabulary recall and sentence construction attempts.
+- **Interactive Audio Feedback:** Latency-free synthesized sound effects (flips, success chords, error feedback, victory fanfares) powered by the native Web Audio API with global sound toggle.
 - **Sakura Floating Particles:** Immerse users in a beautiful, Japanese-themed design with smooth, custom CSS floating petal animations.
 
 ---
@@ -43,6 +48,7 @@ KanaQuest features three main educational modes designed to reinforce vocabulary
 - **Vite:** Next-generation build tool for ultra-fast development and optimized production bundles.
 - **TailwindCSS:** A utility-first CSS framework used to build a clean, minimalist, soft dark theme.
 - **React Router (v6):** Client-side routing for seamless page navigation.
+- **Web Audio API:** Latency-free synthetic audio generation for tactile audio feedback without external audio asset downloads.
 - **Wanakana:** Utilized for client-side Japanese text detection and conversion.
 
 ### Backend & Services (Serverless)

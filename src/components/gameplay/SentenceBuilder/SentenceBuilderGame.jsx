@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { fetchSentences, recordSentenceProgress, fetchTopics } from '../../../services/supabase/sentences';
+import { useSoundEffects } from '../../../hooks/useSoundEffects';
 import SentenceDropZone from './SentenceDropZone';
 import WordBank from './WordBank';
 import GrammarColorLegend from './GrammarColorLegend';
@@ -65,6 +66,7 @@ export default function SentenceBuilderGame({
   onBackToLobby = null,
   onFinishSession = null,
 }) {
+  const { playFlip, playSuccess, playError, playComplete } = useSoundEffects();
   const [loading, setLoading] = useState(true);
   const [sentences, setSentences] = useState([]);
   const [topics, setTopics] = useState([]);
@@ -165,6 +167,8 @@ export default function SentenceBuilderGame({
     if (validationState === 'correct') return; // Locked once answered correctly
     if (block.is_fixed) return; // Cannot move fixed blocks
 
+    playFlip();
+
     if (location === 'available') {
       // Move from available to placed
       setAvailableBlocks((prev) => prev.filter((b) => b.id !== block.id));
@@ -190,6 +194,7 @@ export default function SentenceBuilderGame({
   const handleDropToPlaced = (dragData, targetIndex) => {
     const { blockId, location, index: sourceIndex } = dragData;
     setValidationState('idle');
+    playFlip();
 
     if (location === 'available') {
       // Dragged from bank into placed zone
@@ -224,6 +229,7 @@ export default function SentenceBuilderGame({
     const block = placedBlocks.find((b) => b.id === blockId);
     if (!block || block.is_fixed) return;
 
+    playFlip();
     setPlacedBlocks((prev) => prev.filter((b) => b.id !== blockId));
     setAvailableBlocks((prev) => [...prev, block]);
     setValidationState('idle');
@@ -235,6 +241,7 @@ export default function SentenceBuilderGame({
 
     // Must place all blocks first
     if (placedBlocks.length !== totalBlocksCount) {
+      playError();
       setValidationState('incorrect');
       return;
     }
@@ -265,6 +272,7 @@ export default function SentenceBuilderGame({
       });
 
     if (isCorrect) {
+      playSuccess();
       setValidationState('correct');
       setScore((prev) => prev + 10);
       setStreak((prev) => prev + 1);
@@ -280,6 +288,7 @@ export default function SentenceBuilderGame({
         });
       }
     } else {
+      playError();
       setValidationState('incorrect');
       setStreak(0);
 
@@ -301,6 +310,7 @@ export default function SentenceBuilderGame({
 
   // 6. Navigation, Restart, and Finish
   const handleReset = () => {
+    playFlip();
     if (currentSentence) {
       initSentence(currentSentence);
     }
@@ -308,8 +318,10 @@ export default function SentenceBuilderGame({
 
   const handleNext = () => {
     if (currentIndex < sentences.length - 1) {
+      playFlip();
       setCurrentIndex((prev) => prev + 1);
     } else {
+      playComplete();
       setIsGameOver(true);
       if (onFinishSession) {
         onFinishSession({

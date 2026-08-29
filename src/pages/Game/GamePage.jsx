@@ -1,16 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import SessionProgressCard from '../../components/gameplay/SessionProgressCard';
 import { fetchWords } from '../../services/supabase/words';
 import {
   fetchRankingProfiles,
   fetchUserProfile,
   fetchRecentProgress,
-  fetchProgressRecord,
-  upsertProgressRecord,
-  awardWordExperience,
+  submitWordAnswer,
 } from '../../services/supabase/progress';
 import { useAuthSession } from '../../hooks/useAuthSession';
+import { useSoundEffects } from '../../hooks/useSoundEffects';
 import avatarRimuruRedPink from '../../img/avatar_rimuru_version_red-pink.svg';
 
 const players = [
@@ -125,6 +124,8 @@ export default function GamePage() {
   const [mode, setMode] = useState('recognize');
   const [deckData, setDeckData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { playFlip, playSuccess, playError } = useSoundEffects();
   const [rankingProfiles, setRankingProfiles] = useState([]);
   const [rankingLoading, setRankingLoading] = useState(true);
   const [rankingModalOpen, setRankingModalOpen] = useState(false);
@@ -242,10 +243,13 @@ export default function GamePage() {
         }));
 
         if (isMounted) {
-          setDeckData(recognize.length || translate.length ? { recognize, translate } : null);
+          setDeckData({ recognize, translate });
         }
       } catch (error) {
-        console.warn('No se pudo cargar el deck desde Supabase:', error?.message ?? error);
+        console.warn('No se pudo cargar el mazo de Supabase:', error?.message ?? error);
+        if (isMounted) {
+          setDeckData(null);
+        }
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -263,8 +267,9 @@ export default function GamePage() {
   const fallbackDeck = useMemo(
     () => ({
       recognize: [
-        { prompt: '猫', answers: ['gato', 'neko', 'cat'], instruction: 'Escribe el significado (español o romaji).' },
-        { prompt: '水', answers: ['agua', 'mizu', 'water'], instruction: 'Escribe el significado (español o romaji).' },
+        { prompt: 'あ', answers: ['a'], instruction: 'Escribe la lectura (romaji o kana).' },
+        { prompt: 'い', answers: ['i'], instruction: 'Escribe la lectura (romaji o kana).' },
+        { prompt: 'う', answers: ['u'], instruction: 'Escribe la lectura (romaji o kana).' },
       ],
       translate: [
         { prompt: 'gato', answers: ['猫', 'ねこ', 'ネコ', 'neko'], instruction: 'Escribe la palabra en japonés (hiragana, katakana o kanji).' },
@@ -356,12 +361,23 @@ export default function GamePage() {
       active: mode === 'translate',
       description: 'Español → palabra japonesa',
     },
+    {
+      id: 'pair_match',
+      label: 'Par-Parejas 🎴',
+      crown: false,
+      active: false,
+      description: 'Memoria: empareja kanji con traducción',
+    },
   ];
 
   const promptIsJapanese = containsJapaneseScript(currentQuestion?.prompt ?? '');
   const promptSizeClass = promptIsJapanese ? 'text-6xl sm:text-7xl md:text-8xl' : 'text-2xl sm:text-3xl md:text-4xl';
 
   const handleModeChange = (nextMode) => {
+    if (nextMode === 'pair_match') {
+      navigate('/pair-match');
+      return;
+    }
     setMode(nextMode);
     setIndex(0);
     setAnswer('');
@@ -379,6 +395,19 @@ export default function GamePage() {
     const normalizedAnswer = normalize(answer);
     const acceptedAnswers = getAcceptedAnswers(currentQuestion?.answers ?? [], mode);
     const isCorrect = acceptedAnswers.some((item) => item && normalize(item) === normalizedAnswer);
+
+    if (isCorrect) {
+      playSuccess();
+      setFeedback({ tone: 'success', message: 'Correcto. Sigue con la siguiente pregunta.' });
+      setScore((value) => value + 50);
+      setStreak((value) => value + 1);
+      setCanAdvance(true);
+    } else {
+      playError();
+      setFeedback({ tone: 'error', message: 'Respuesta incorrecta. Revisa la lectura.' });
+      setStreak(0);
+      setCanAdvance(false);
+    }
 
     if (currentQuestion?.wordId) {
       const modeLabel = getModeLabel(mode);
@@ -403,82 +432,42 @@ export default function GamePage() {
     }
 
     if (user?.id && currentQuestion?.wordId) {
-      const payload = {
-        user_id: user.id,
-        word_id: currentQuestion.wordId,
-        mode,
-        correct: isCorrect,
-        attempts: 1,
-        mastery_level: isCorrect ? 1 : 0,
-        last_attempt: new Date().toISOString(),
-      };
-
-      const { data: existing, error: fetchError } = await fetchProgressRecord(user.id, currentQuestion.wordId, mode);
-
-      if (fetchError) {
-        console.warn('No se pudo leer progreso:', fetchError.message);
-      }
-
-      const attempts = (existing?.attempts ?? 0) + 1;
-      const masteryLevel = isCorrect ? (existing?.mastery_level ?? 0) + 1 : existing?.mastery_level ?? 0;
-
-      const { error: upsertError } = await upsertProgressRecord({
-        ...payload,
-        attempts,
-        mastery_level: masteryLevel,
-      });
-
-      if (upsertError) {
-        console.warn('No se pudo guardar progreso:', upsertError.message);
-      }
-
-      if (isCorrect) {
-        const { error: awardError } = await awardWordExperience(user.id, currentQuestion.wordId);
-
-        if (awardError) {
-          console.warn('No se pudo registrar la experiencia de la palabra:', awardError.message);
+      try {
+        const { data: rpcResult, error: rpcError } = await submitWordAnswer(currentQuestion.wordId, mode, isCorrect);
+        if (rpcError) {
+          console.warn('Error registrando respuesta:', rpcError.message);
         }
 
-        const { data: profileData, error: profileError } = await fetchUserProfile(user.id);
+        if (isCorrect) {
+          const { data: profileData } = await fetchUserProfile(user.id);
+          if (profileData) {
+            window.dispatchEvent(
+              new CustomEvent('kanaquest-profile-updated', {
+                detail: profileData,
+              })
+            );
 
-        if (profileError) {
-          console.warn('No se pudo refrescar el perfil:', profileError.message);
-        } else if (profileData) {
-          window.dispatchEvent(
-            new CustomEvent('kanaquest-profile-updated', {
-              detail: profileData,
-            }),
-          );
-
-          setRankingProfiles((players) =>
-            players.map((player) =>
-              player.user_id === user.id
-                ? {
-                  ...player,
-                  ...profileData,
-                }
-                : player,
-            ),
-          );
+            setRankingProfiles((players) =>
+              players.map((player) =>
+                player.user_id === user.id
+                  ? {
+                    ...player,
+                    ...profileData,
+                  }
+                  : player
+              )
+            );
+          }
         }
+      } catch (err) {
+        console.warn('Error en la llamada RPC:', err);
       }
     }
-
-    if (isCorrect) {
-      setFeedback({ tone: 'success', message: 'Correcto. Sigue con la siguiente pregunta.' });
-      setScore((value) => value + 50);
-      setStreak((value) => value + 1);
-      setCanAdvance(true);
-      return;
-    }
-
-    setFeedback({ tone: 'error', message: 'Respuesta incorrecta. Revisa la lectura.' });
-    setStreak(0);
-    setCanAdvance(false);
   };
 
   const handleNext = () => {
     if (!deck.length) return;
+    playFlip();
     setIndex((value) => (value + 1) % deck.length);
     setAnswer('');
     setFeedback(null);
@@ -487,6 +476,7 @@ export default function GamePage() {
 
   const handlePrev = () => {
     if (!deck.length) return;
+    playFlip();
     setIndex((value) => (value - 1 + deck.length) % deck.length);
     setAnswer('');
     setFeedback(null);

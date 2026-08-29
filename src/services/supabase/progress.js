@@ -64,3 +64,17 @@ export async function awardWordExperience(userId, wordId) {
       { onConflict: 'user_id,word_id', ignoreDuplicates: true }
     );
 }
+
+export async function submitWordAnswer(wordId, mode, isCorrect) {
+  return await supabase.rpc('handle_word_submission', {
+    p_word_id: wordId,
+    p_mode: mode,
+    p_is_correct: isCorrect,
+  });
+}
+
+export async function createGameSession(sessionData) {
+  return await supabase
+    .from('game_sessions')
+    .insert(sessionData);
+}
