@@ -122,11 +122,13 @@ create or replace function public.apply_word_experience_award()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, pg_temp
 as $$
 declare
     reward_points integer := 0;
 begin
+    perform set_config('app.internal_rpc_call', 'true', true);
+
     select coalesce(experience_reward, 0)
     into reward_points
     from public.words
@@ -160,7 +162,12 @@ security definer
 set search_path = public, pg_temp
 as $$
 begin
-    if (current_user in ('authenticated', 'anon') or (auth.role() in ('authenticated', 'anon') and session_user = 'authenticator')) then
+    -- Allow internal updates from trusted SECURITY DEFINER RPCs/triggers
+    if current_setting('app.internal_rpc_call', true) = 'true' then
+        return new;
+    end if;
+
+    if current_user in ('authenticated', 'anon') or (current_setting('role', true) in ('authenticated', 'anon')) then
         if (OLD.experience is distinct from NEW.experience) or
            (OLD.level is distinct from NEW.level) or
            (OLD.correct_answers is distinct from NEW.correct_answers) or
@@ -200,6 +207,9 @@ declare
     v_new_level integer := 1;
     v_valid_word boolean := false;
 begin
+    -- Enable internal RPC flag for trigger bypass
+    perform set_config('app.internal_rpc_call', 'true', true);
+
     -- 1. Authenticate user
     v_user_id := auth.uid();
     if v_user_id is null then

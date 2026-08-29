@@ -79,7 +79,7 @@ const getAnswersFromWord = (word, mode) => {
     return [word?.japanese, word?.hiragana, word?.katakana, word?.romaji].filter(Boolean);
   }
 
-  return [word?.translation, word?.romaji].filter(Boolean);
+  return [word?.hiragana, word?.katakana, word?.romaji, word?.translation].filter(Boolean);
 };
 
 const getModeLabel = (value) => (value === 'translate' ? 'Traducir' : 'Reconocer');
@@ -238,7 +238,7 @@ export default function GamePage() {
         const translate = shuffled.map((row) => ({
           wordId: row.id,
           prompt: row.translation || row.romaji || row.japanese,
-          answers: getAnswersFromWord(row, 'recognize'),
+          answers: getAnswersFromWord(row, 'translate'),
           instruction: 'Escribe la palabra en japonés (hiragana, katakana o kanji).',
         }));
 
@@ -436,28 +436,35 @@ export default function GamePage() {
         const { data: rpcResult, error: rpcError } = await submitWordAnswer(currentQuestion.wordId, mode, isCorrect);
         if (rpcError) {
           console.warn('Error registrando respuesta:', rpcError.message);
+        } else if (rpcResult) {
+          window.dispatchEvent(
+            new CustomEvent('kanaquest-profile-updated', {
+              detail: {
+                experience: rpcResult.new_total_xp,
+                level: rpcResult.new_level,
+              },
+            })
+          );
         }
 
-        if (isCorrect) {
-          const { data: profileData } = await fetchUserProfile(user.id);
-          if (profileData) {
-            window.dispatchEvent(
-              new CustomEvent('kanaquest-profile-updated', {
-                detail: profileData,
-              })
-            );
+        const { data: profileData } = await fetchUserProfile(user.id);
+        if (profileData) {
+          window.dispatchEvent(
+            new CustomEvent('kanaquest-profile-updated', {
+              detail: profileData,
+            })
+          );
 
-            setRankingProfiles((players) =>
-              players.map((player) =>
-                player.user_id === user.id
-                  ? {
-                    ...player,
-                    ...profileData,
-                  }
-                  : player
-              )
-            );
-          }
+          setRankingProfiles((players) =>
+            players.map((player) =>
+              player.user_id === user.id
+                ? {
+                  ...player,
+                  ...profileData,
+                }
+                : player
+            )
+          );
         }
       } catch (err) {
         console.warn('Error en la llamada RPC:', err);

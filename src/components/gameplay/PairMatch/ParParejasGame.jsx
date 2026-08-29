@@ -176,11 +176,23 @@ export default function ParParejasGame({ onBackToLobby }) {
         // Record progress & experience via Supabase RPC
         if (user?.id) {
           try {
-            const { data: rpcResult } = await submitWordAnswer(firstCard.wordId, 'pair_match', true);
-            if (rpcResult?.xp_awarded) {
-              setEarnedXp((prev) => prev + rpcResult.xp_awarded);
+            const { data: rpcResult, error: rpcError } = await submitWordAnswer(firstCard.wordId, 'pair_match', true);
+            if (rpcError) {
+              console.warn('Error en RPC pair_match:', rpcError.message);
+            } else if (rpcResult) {
+              if (rpcResult.xp_awarded) {
+                setEarnedXp((prev) => prev + rpcResult.xp_awarded);
+              }
+              window.dispatchEvent(
+                new CustomEvent('kanaquest-profile-updated', {
+                  detail: {
+                    experience: rpcResult.new_total_xp,
+                    level: rpcResult.new_level,
+                  },
+                })
+              );
             }
-            // Update profile stats across UI
+            // Update full profile stats across UI
             const { data: profileData } = await fetchUserProfile(user.id);
             if (profileData) {
               window.dispatchEvent(
