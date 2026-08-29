@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useAuthSession } from '../../hooks/useAuthSession';
+import { useSoundEffects } from '../../hooks/useSoundEffects';
 import { fetchUserProfile } from '../../services/supabase/progress';
 import { signOut } from '../../services/supabase/auth';
 import toriiLogo from '../../img/torii.svg';
@@ -9,6 +10,7 @@ import MobileNavigation from './MobileNavigation';
 const navItems = [
   { to: '/', label: 'Inicio' },
   { to: '/game', label: 'Aprender' },
+  { to: '/pair-match', label: 'Par-Parejas' },
   { to: '/sentence-builder', label: 'Constructor' },
   { to: '/historial', label: 'Historial' },
 ];
@@ -55,6 +57,7 @@ export default function AppLayout({ children }) {
   const [profileExperience, setProfileExperience] = useState(0);
   const [streak, setStreak] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { isMuted, toggleSound } = useSoundEffects();
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -184,6 +187,18 @@ export default function AppLayout({ children }) {
             </nav>
 
             <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                type="button"
+                onClick={toggleSound}
+                className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-[#f8ebe6] text-[rgb(var(--color-accent))] hover:bg-[#f3dfd7] transition shadow-sm"
+                title={isMuted ? 'Activar sonido' : 'Silenciar sonido'}
+                aria-label={isMuted ? 'Activar sonido' : 'Silenciar sonido'}
+              >
+                <span className="text-base sm:text-lg select-none" aria-hidden="true">
+                  {isMuted ? '🔇' : '🔊'}
+                </span>
+              </button>
+
               <div className="flex items-center gap-1.5 rounded-full bg-[#f8ebe6] px-3 py-1.5 sm:px-4 sm:py-2 text-[rgb(var(--color-accent))] shadow-sm">
                 <span className="text-sm sm:text-base">🔥</span>
                 <span className="text-xs sm:text-sm font-bold">{streak}</span>

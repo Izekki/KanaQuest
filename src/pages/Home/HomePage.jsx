@@ -24,6 +24,7 @@ export default function HomePage() {
         <ul className="mt-3 list-disc pl-5 space-y-2">
           <li><strong>Practica reconocimiento:</strong> muestra un kanji/kana y escribe su lectura/significado.</li>
           <li><strong>Practica traducción:</strong> escribe la palabra en japonés desde su significado en español.</li>
+          <li><strong>Par-Parejas (Memoria):</strong> voltea y empareja palabras en japonés con su significado en español para ejercitar tu memoria visual y auditiva.</li>
           <li><strong>Constructor de oraciones:</strong> arrastra y ordena fichas interactivas para formar frases japonesas reales organizadas por temáticas y niveles.</li>
           <li><strong>Revisa tu historial:</strong> consulta tu progreso diario; el sistema guarda tus aciertos, errores y racha de estudio.</li>
         </ul>

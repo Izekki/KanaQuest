@@ -10,6 +10,7 @@ import LoginPage from './pages/Login/LoginPage';
 import RegisterPage from './pages/Register/RegisterPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 import SentenceBuilderPage from './pages/SentenceBuilder/SentenceBuilderPage';
+import PairMatchPage from './pages/PairMatch/PairMatchPage';
 
 export default function App() {
   return (
@@ -28,6 +29,26 @@ export default function App() {
           <ProtectedRoute>
             <AppLayout>
               <GamePage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pair-match"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <PairMatchPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/par-parejas"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <PairMatchPage />
             </AppLayout>
           </ProtectedRoute>
         }
