@@ -227,7 +227,7 @@ export default function GamePage() {
         const rows = data ?? [];
         const shuffled = [...rows].sort(() => Math.random() - 0.5);
 
-         const recognize = shuffled.map((row) => ({
+        const recognize = shuffled.map((row) => ({
           wordId: row.id,
           prompt: row.japanese || row.hiragana || row.katakana,
           answers: getAnswersFromWord(row, 'recognize'),
@@ -237,7 +237,7 @@ export default function GamePage() {
         const translate = shuffled.map((row) => ({
           wordId: row.id,
           prompt: row.translation || row.romaji || row.japanese,
-          answers: getAnswersFromWord(row, 'recognize') ,
+          answers: getAnswersFromWord(row, 'recognize'),
           instruction: 'Escribe la palabra en japonés (hiragana, katakana o kanji).',
         }));
 
@@ -359,8 +359,7 @@ export default function GamePage() {
   ];
 
   const promptIsJapanese = containsJapaneseScript(currentQuestion?.prompt ?? '');
-  // En móvil: kanji claramente mayor que el avatar; conservar tamaños previos en >= sm
-  const promptSizeClass = promptIsJapanese ? 'text-[8rem] sm:text-[7.5rem]' : 'text-[3rem] sm:text-[3.2rem]';
+  const promptSizeClass = promptIsJapanese ? 'text-6xl sm:text-7xl md:text-8xl' : 'text-2xl sm:text-3xl md:text-4xl';
 
   const handleModeChange = (nextMode) => {
     setMode(nextMode);
@@ -455,9 +454,9 @@ export default function GamePage() {
             players.map((player) =>
               player.user_id === user.id
                 ? {
-                    ...player,
-                    ...profileData,
-                  }
+                  ...player,
+                  ...profileData,
+                }
                 : player,
             ),
           );
@@ -495,36 +494,42 @@ export default function GamePage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] px-4 py-2 pb-20 lg:pb-0">
-      <section className="grid gap-3 lg:grid-cols-[250px_minmax(0,1fr)_320px] lg:gap-4 xl:grid-cols-[260px_minmax(0,1fr)_320px]">
-      <aside className="rounded-[1.6rem] bg-[rgb(var(--color-accent))] p-3 text-white shadow-[0_16px_34px_rgba(128,43,56,0.18)] lg:p-4">
-        <div className="px-2 pt-1">
-          <h2 className="text-[1.35rem] font-semibold tracking-tight">Repaso</h2>
-          <p className="mt-1 text-xs text-white/80">Últimas preguntas</p>
-        </div>
-
-        <div className="mt-3 grid gap-2.5">
-          {reviewLoading ? (
-            <div className="rounded-2xl bg-white px-3 py-4 text-center text-xs text-[rgb(var(--color-neutral))]/70 shadow-sm">
-              Cargando historial...
+    <div className="mx-auto w-full max-w-7xl">
+      <section className="grid grid-cols-1 md:grid-cols-12 lg:grid-cols-[250px_minmax(0,1fr)_320px] xl:grid-cols-[260px_minmax(0,1fr)_320px] gap-4 items-start">
+        {/* SIDEBAR REPASO (Columna 1 en Desktop, debajo en Mobile, Columna Izquierda en Tablet) */}
+        <aside className="order-2 md:order-1 md:col-span-5 lg:col-auto rounded-[1.6rem] bg-[rgb(var(--color-accent))] p-3.5 sm:p-4 text-white shadow-[0_16px_34px_rgba(128,43,56,0.18)]">
+          <div className="px-2 pt-1 flex items-center justify-between">
+            <div>
+              <h2 className="text-[1.35rem] font-semibold tracking-tight">Repaso</h2>
+              <p className="mt-0.5 text-xs text-white/80">Últimas preguntas</p>
             </div>
-          ) : null}
+            <span className="text-xs bg-white/20 px-2.5 py-1 rounded-full font-medium">
+              {reviewItems.length} recientes
+            </span>
+          </div>
 
-          {!reviewLoading && reviewItems.length === 0 ? (
-            <div className="rounded-2xl bg-white px-3 py-4 text-center text-xs text-[rgb(var(--color-neutral))]/70 shadow-sm">
-              Aun no hay respuestas registradas.
-            </div>
-          ) : null}
+          <div className="mt-3 grid gap-2.5 max-h-[380px] overflow-y-auto pr-0.5">
+            {reviewLoading ? (
+              <div className="rounded-2xl bg-white px-3 py-4 text-center text-xs text-[rgb(var(--color-neutral))]/70 shadow-sm">
+                Cargando historial...
+              </div>
+            ) : null}
 
-          {!reviewLoading
-            ? reviewItems.map((item) => (
-                <div key={item.id} className="flex items-center gap-2.5 rounded-2xl bg-white px-3 py-2.5 text-[rgb(var(--color-neutral))] shadow-sm">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#f6eadf] text-xl shadow-inner">
+            {!reviewLoading && reviewItems.length === 0 ? (
+              <div className="rounded-2xl bg-white px-3 py-4 text-center text-xs text-[rgb(var(--color-neutral))]/70 shadow-sm">
+                Aun no hay respuestas registradas.
+              </div>
+            ) : null}
+
+            {!reviewLoading
+              ? reviewItems.map((item) => (
+                <div key={item.id} className="flex items-center gap-2.5 rounded-2xl bg-white px-3 py-2.5 text-[rgb(var(--color-neutral))] shadow-sm transition hover:bg-[#fff9f6]">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#f6eadf] text-xl shadow-inner">
                     {item.thumbnail}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-[1rem] font-semibold leading-none text-[rgb(var(--color-accent))]">{item.word}</div>
-                    <div className="mt-1 text-xs text-[rgb(var(--color-neutral))]/75">
+                    <div className="truncate text-[0.95rem] font-semibold leading-tight text-[rgb(var(--color-accent))]">{item.word}</div>
+                    <div className="mt-0.5 truncate text-xs text-[rgb(var(--color-neutral))]/75">
                       {item.mode ? getModeLabel(item.mode) : item.translation}
                     </div>
                   </div>
@@ -538,353 +543,356 @@ export default function GamePage() {
                   </div>
                 </div>
               ))
-            : null}
-        </div>
-
-        <Link
-          to="/historial"
-          className="mt-3 inline-flex w-full items-center justify-center rounded-2xl bg-white px-4 py-2.5 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm transition-transform hover:-translate-y-0.5"
-        >
-          Ver todos
-        </Link>
-      </aside>
-
-      <div className="flex flex-col gap-2">
-        <SessionProgressCard
-          streak={sessionStats.streak}
-          questionNumber={sessionStats.questionNumber}
-          totalQuestions={sessionStats.totalQuestions}
-          score={sessionStats.score}
-          progress={sessionStats.progress}
-          className="mb-0"
-        />
-
-        <section className="rounded-[1.6rem] border border-[#eaded6] bg-white p-4 shadow-[0_14px_32px_rgba(128,43,56,0.08)] sm:p-5 lg:p-5">
-          {loading ? <p className="mb-4 text-center text-sm text-[rgb(var(--color-neutral))]/70">Cargando palabras desde Supabase...</p> : null}
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_210px] xl:items-center">
-            <div className="flex items-start justify-center xl:justify-start">
-              <div className={[
-                'pt-2 font-semibold leading-none text-[rgb(var(--color-accent))] sm:pt-3',
-                promptSizeClass,
-                promptIsJapanese ? 'font-jp' : '',
-              ].join(' ')}>
-                {currentQuestion?.prompt ?? '...'}
-              </div>
-            </div>
-
-            <div className="flex justify-center xl:justify-end">
-              <CatIllustration />
-            </div>
+              : null}
           </div>
 
-          <form className="mx-auto mt-3 max-w-2xl" onSubmit={handleSubmit}>
-            <p className="text-center text-base font-semibold text-[rgb(var(--color-neutral))] sm:text-lg">{currentQuestion?.instruction ?? 'Escribe la respuesta:'}</p>
+          <Link
+            to="/historial"
+            className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center rounded-2xl bg-white px-4 py-2.5 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm transition-transform hover:-translate-y-0.5 active:scale-98"
+          >
+            Ver historial completo
+          </Link>
+        </aside>
 
-            <div className="relative mt-2.5">
-              <input
-                className="w-full rounded-[1.1rem] border border-[rgba(128,43,56,0.22)] bg-[#fffdfb] px-4 py-3.5 pr-14 text-base text-[rgb(var(--color-neutral))] outline-none transition placeholder:text-[rgb(var(--color-neutral))]/35 focus:border-[rgb(var(--color-accent))] focus:ring-2 focus:ring-[rgba(128,43,56,0.12)] sm:px-5 sm:py-4 sm:text-lg"
-                value={answer}
-                onChange={(event) => setAnswer(event.target.value)}
-                placeholder="Escribe aquí..."
-                autoComplete="off"
-              />
+        {/* ÁREA PRINCIPAL DE JUEGO (Prioridad #1 en Mobile, Centro en Desktop) */}
+        <div className="order-1 md:order-2 md:col-span-7 lg:col-auto flex flex-col gap-3 w-full">
+          <SessionProgressCard
+            streak={sessionStats.streak}
+            questionNumber={sessionStats.questionNumber}
+            totalQuestions={sessionStats.totalQuestions}
+            score={sessionStats.score}
+            progress={sessionStats.progress}
+            className="mb-0"
+          />
 
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#f6e7e0] sm:h-10 sm:w-10">
-                  <KeyboardIcon />
+          <section className="rounded-[1.6rem] border border-[#eaded6] bg-white p-4 sm:p-6 shadow-[0_14px_32px_rgba(128,43,56,0.08)]">
+            {loading ? <p className="mb-4 text-center text-sm text-[rgb(var(--color-neutral))]/70">Cargando palabras desde Supabase...</p> : null}
+
+            <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-4 items-center text-center sm:text-left">
+              <div className="flex items-center justify-center sm:justify-start min-h-[130px] sm:min-h-[170px]">
+                <div className={[
+                  'font-semibold leading-none text-[rgb(var(--color-accent))] tracking-tight select-none',
+                  promptSizeClass,
+                  promptIsJapanese ? 'font-jp' : '',
+                ].join(' ')}>
+                  {currentQuestion?.prompt ?? '...'}
                 </div>
               </div>
+
+              <div className="flex justify-center sm:justify-end">
+                <CatIllustration />
+              </div>
             </div>
 
-            {feedback ? (
-              <p className={['mt-3 text-center text-sm font-medium', feedback.tone === 'success' ? 'text-emerald-700' : 'text-red-600'].join(' ')}>{feedback.message}</p>
-            ) : null}
+            <form className="mx-auto mt-4 max-w-2xl" onSubmit={handleSubmit}>
+              <p className="text-center text-base font-semibold text-[rgb(var(--color-neutral))] sm:text-lg">{currentQuestion?.instruction ?? 'Escribe la respuesta:'}</p>
 
-            <div className="mt-4 flex justify-center sm:mt-5">
-              <button
-                type="submit"
-                className="inline-flex min-w-32 items-center justify-center rounded-2xl bg-[rgb(var(--color-accent))] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(128,43,56,0.18)] transition hover:bg-[rgb(var(--color-accent-dark))] sm:min-w-36 sm:px-6 sm:py-3"
-              >
-                Verificar
-              </button>
-            </div>
-          </form>
-        </section>
+              <div className="relative mt-3">
+                <input
+                  className="w-full min-h-[48px] rounded-[1.1rem] border border-[rgba(128,43,56,0.22)] bg-[#fffdfb] px-4 py-3.5 pr-14 text-base text-[rgb(var(--color-neutral))] outline-none transition placeholder:text-[rgb(var(--color-neutral))]/35 focus:border-[rgb(var(--color-accent))] focus:ring-2 focus:ring-[rgba(128,43,56,0.12)] sm:px-5 sm:py-4 sm:text-lg"
+                  value={answer}
+                  onChange={(event) => setAnswer(event.target.value)}
+                  placeholder="Escribe aquí..."
+                  autoComplete="off"
+                />
 
-        <div className="grid grid-cols-2 gap-3 px-1 sm:gap-4">
-          <button type="button" onClick={handlePrev} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[rgba(128,43,56,0.28)] bg-white px-4 py-2.5 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm transition hover:bg-[#fcf4f0] sm:px-5 sm:py-3">
-            <span aria-hidden="true">←</span>
-            Atrás
-          </button>
-          <button type="button" onClick={handleNext} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[rgba(128,43,56,0.28)] bg-white px-4 py-2.5 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm transition hover:bg-[#fcf4f0] sm:px-5 sm:py-3">
-            Siguiente
-            <span aria-hidden="true">→</span>
-          </button>
-        </div>
-      </div>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                  <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#f6e7e0] sm:h-10 sm:w-10">
+                    <KeyboardIcon />
+                  </div>
+                </div>
+              </div>
 
-      <aside className="grid gap-3">
-        <section className="rounded-[1.3rem] border border-[#eaded6] bg-white p-3.5 shadow-[0_12px_30px_rgba(128,43,56,0.08)] sm:p-4">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="text-base font-semibold text-[rgb(var(--color-accent))] sm:text-lg">Ranking de usuarios</h3>
+              {feedback ? (
+                <p className={['mt-3 text-center text-sm font-medium', feedback.tone === 'success' ? 'text-emerald-700' : 'text-red-600'].join(' ')}>{feedback.message}</p>
+              ) : null}
+
+              <div className="mt-4 flex justify-center sm:mt-5">
+                <button
+                  type="submit"
+                  className="inline-flex min-h-[44px] w-full sm:w-auto min-w-36 items-center justify-center rounded-2xl bg-[rgb(var(--color-accent))] px-6 py-3 text-sm sm:text-base font-semibold text-white shadow-[0_12px_24px_rgba(128,43,56,0.18)] transition hover:bg-[rgb(var(--color-accent-dark))] active:scale-98"
+                >
+                  Verificar
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <button type="button" onClick={handlePrev} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-[rgba(128,43,56,0.28)] bg-white px-4 py-3 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm transition hover:bg-[#fcf4f0] active:scale-98">
+              <span aria-hidden="true">←</span>
+              Atrás
+            </button>
+            <button type="button" onClick={handleNext} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-[rgba(128,43,56,0.28)] bg-white px-4 py-3 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm transition hover:bg-[#fcf4f0] active:scale-98">
+              Siguiente
+              <span aria-hidden="true">→</span>
+            </button>
           </div>
-
-          <div className="mt-3 grid gap-3 sm:mt-4">
-            {rankingLoading ? (
-              <div className="rounded-2xl border border-[#f0e2db] bg-[#fffdfb] px-3 py-3 text-sm text-[rgb(var(--color-neutral))]/70">Cargando ranking...</div>
-            ) : null}
-
-            {!rankingLoading && rankingProfiles.length === 0 ? (
-              <div className="rounded-2xl border border-[#f0e2db] bg-[#fffdfb] px-3 py-3 text-sm text-[rgb(var(--color-neutral))]/70">Todavía no hay usuarios para mostrar.</div>
-            ) : null}
-
-            <div className="grid grid-cols-3 items-end gap-1.5 sm:gap-3 lg:items-stretch lg:gap-2">
-  {/* 2DO LUGAR */}
-  {podiumRanking[1] ? (
-    <div className="order-2 flex h-[150px] flex-col items-center justify-between rounded-[1.15rem] border border-[#eaded6] bg-[#fff8f4] p-2 shadow-sm sm:h-[190px] lg:order-1 lg:h-[210px] lg:p-3 lg:translate-y-1">
-      <div className="inline-flex items-center gap-0.5 rounded-full bg-[#dce9f4] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-[#46688e] sm:text-[9px]">
-        <span aria-hidden="true">🥈</span>
-        <span className="hidden sm:inline">2do</span>
-      </div>
-      <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-slate-300 to-slate-500 text-xs font-semibold text-white shadow-sm ring-2 ring-[#eef5fb] sm:h-12 sm:w-12 sm:text-base sm:ring-4">
-        {(podiumRanking[1]?.username || podiumRanking[1]?.name || 'Usuario').slice(0, 1).toUpperCase()}
-      </div>
-      <div className="w-full min-w-0 text-center">
-        <div className="w-full truncate text-[0.65rem] font-bold text-[rgb(var(--color-neutral))] sm:text-[0.85rem]" title={podiumRanking[1]?.username || podiumRanking[1]?.name || 'Usuario'}>
-          {podiumRanking[1]?.username || podiumRanking[1]?.name || 'Usuario'}
         </div>
-        <div className="truncate text-[9px] text-[rgb(var(--color-neutral))]/60 sm:text-[11px]">
-          {podiumRanking[1]?.experience ?? podiumRanking[1]?.xp ?? 0} XP
-        </div>
-      </div>
-    </div>
-  ) : <div className="order-2 hidden lg:block" />}
 
-  {/* 1ER LUGAR */}
-  {podiumRanking[0] ? (
-    <div className="order-1 flex h-[170px] flex-col items-center justify-between rounded-[1.15rem] border border-[#eaded6] bg-[#fff3ed] p-2 shadow-md sm:h-[210px] lg:order-2 lg:h-[210px] lg:-translate-y-1 lg:scale-[1.03] lg:p-3 lg:shadow-[0_12px_24px_rgba(128,43,56,0.1)]">
-      <div className="inline-flex items-center gap-0.5 rounded-full bg-[#ffe5a1] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-[#9d6d1d] sm:text-[9px]">
-        <span aria-hidden="true">👑</span>
-        <span className="hidden sm:inline">1ro</span>
-      </div>
-      <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-sm font-semibold text-white shadow-sm ring-2 ring-white sm:h-14 sm:w-14 sm:text-lg sm:ring-4">
-        {(podiumRanking[0]?.username || podiumRanking[0]?.name || 'Usuario').slice(0, 1).toUpperCase()}
-      </div>
-      <div className="w-full min-w-0 text-center">
-        <div className="w-full truncate text-[0.65rem] font-bold text-[rgb(var(--color-neutral))] sm:text-[0.85rem]" title={podiumRanking[0]?.username || podiumRanking[0]?.name || 'Usuario'}>
-          {podiumRanking[0]?.username || podiumRanking[0]?.name || 'Usuario'}
-        </div>
-        <div className="truncate text-[9px] text-[rgb(var(--color-neutral))]/60 sm:text-[11px]">
-          {podiumRanking[0]?.experience ?? podiumRanking[0]?.xp ?? 0} XP
-        </div>
-      </div>
-    </div>
-  ) : <div className="order-1 hidden lg:block" />}
+        {/* ASIDE DERECHO (Ranking + Modos de Juego) */}
+        <aside className="order-3 md:order-3 md:col-span-12 lg:col-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
+          <section className="rounded-[1.3rem] border border-[#eaded6] bg-white p-3.5 shadow-[0_12px_30px_rgba(128,43,56,0.08)] sm:p-4">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-base font-semibold text-[rgb(var(--color-accent))] sm:text-lg">Ranking de usuarios</h3>
+            </div>
 
-  {/* 3ER LUGAR */}
-  {podiumRanking[2] ? (
-    <div className="order-3 flex h-[140px] flex-col items-center justify-between rounded-[1.15rem] border border-[#eaded6] bg-[#fff8f4] p-2 shadow-sm sm:h-[180px] lg:h-[210px] lg:p-3 lg:translate-y-1">
-      <div className="inline-flex items-center gap-0.5 rounded-full bg-[#efd4c8] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-[#8c5348] sm:text-[9px]">
-        <span aria-hidden="true">🥉</span>
-        <span className="hidden sm:inline">3ro</span>
-      </div>
-      <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-xs font-semibold text-white shadow-sm ring-2 ring-[#f8eded] sm:h-12 sm:w-12 sm:text-base sm:ring-4">
-        {(podiumRanking[2]?.username || podiumRanking[2]?.name || 'Usuario').slice(0, 1).toUpperCase()}
-      </div>
-      <div className="w-full min-w-0 text-center">
-        <div className="w-full truncate text-[0.65rem] font-bold text-[rgb(var(--color-neutral))] sm:text-[0.85rem]" title={podiumRanking[2]?.username || podiumRanking[2]?.name || 'Usuario'}>
-          {podiumRanking[2]?.username || podiumRanking[2]?.name || 'Usuario'}
-        </div>
-        <div className="truncate text-[9px] text-[rgb(var(--color-neutral))]/60 sm:text-[11px]">
-          {podiumRanking[2]?.experience ?? podiumRanking[2]?.xp ?? 0} XP
-        </div>
-      </div>
-    </div>
-  ) : <div className="order-3 hidden lg:block" />}
-</div>
+            <div className="mt-3 grid gap-3 sm:mt-4">
+              {rankingLoading ? (
+                <div className="rounded-2xl border border-[#f0e2db] bg-[#fffdfb] px-3 py-3 text-sm text-[rgb(var(--color-neutral))]/70">Cargando ranking...</div>
+              ) : null}
 
-            {listRanking.length ? (
-              <div className="mt-2 space-y-2 border-t border-[#f0e2db] pt-4">
-                {listRanking.map((player, indexRanking) => {
-                  const isCurrentUser = user?.id && player.user_id === user.id;
-                  const displayName = player.username || player.name || 'Usuario';
-                  const initials = displayName.slice(0, 1).toUpperCase();
-                  const xp = player.experience ?? player.xp ?? 0;
+              {!rankingLoading && rankingProfiles.length === 0 ? (
+                <div className="rounded-2xl border border-[#f0e2db] bg-[#fffdfb] px-3 py-3 text-sm text-[rgb(var(--color-neutral))]/70">Todavía no hay usuarios para mostrar.</div>
+              ) : null}
 
-                  return (
-                    <div
-                      key={player.user_id ?? player.name ?? displayName}
-                      className={[
-                        'flex items-center gap-2.5 rounded-2xl border px-3 py-2.5',
-                        isCurrentUser
-                          ? 'border-[rgba(128,43,56,0.46)] bg-[#fdf3ef] shadow-[0_8px_18px_rgba(128,43,56,0.08)]'
-                          : 'border-[#f0e2db] bg-[#fffdfb]'
-                      ].join(' ')}
-                    >
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--color-accent))] text-xs font-bold text-white shadow-sm">
-                        {indexRanking + 4}
+              <div className="grid grid-cols-3 items-end gap-1.5 sm:gap-3 lg:items-stretch lg:gap-2">
+                {/* 2DO LUGAR */}
+                {podiumRanking[1] ? (
+                  <div className="order-2 flex h-[150px] flex-col items-center justify-between rounded-[1.15rem] border border-[#eaded6] bg-[#fff8f4] p-2 shadow-sm sm:h-[190px] lg:order-1 lg:h-[210px] lg:p-3 lg:translate-y-1">
+                    <div className="inline-flex items-center gap-0.5 rounded-full bg-[#dce9f4] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-[#46688e] sm:text-[9px]">
+                      <span aria-hidden="true">🥈</span>
+                      <span className="hidden sm:inline">2do</span>
+                    </div>
+                    <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-slate-300 to-slate-500 text-xs font-semibold text-white shadow-sm ring-2 ring-[#eef5fb] sm:h-12 sm:w-12 sm:text-base sm:ring-4">
+                      {(podiumRanking[1]?.username || podiumRanking[1]?.name || 'Usuario').slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className="w-full min-w-0 text-center">
+                      <div className="w-full truncate text-[0.65rem] font-bold text-[rgb(var(--color-neutral))] sm:text-[0.85rem]" title={podiumRanking[1]?.username || podiumRanking[1]?.name || 'Usuario'}>
+                        {podiumRanking[1]?.username || podiumRanking[1]?.name || 'Usuario'}
                       </div>
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#d95f76] to-[#8b2d3f] text-sm font-semibold text-white shadow-sm">
-                        {initials}
+                      <div className="truncate text-[9px] text-[rgb(var(--color-neutral))]/60 sm:text-[11px]">
+                        {podiumRanking[1]?.experience ?? podiumRanking[1]?.xp ?? 0} XP
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <div className={['w-full min-w-0 truncate text-sm font-semibold text-[rgb(var(--color-neutral))]', containsJapaneseScript(displayName) ? 'font-jp' : ''].join(' ')}>
-                            {displayName}
+                    </div>
+                  </div>
+                ) : <div className="order-2 hidden lg:block" />}
+
+                {/* 1ER LUGAR */}
+                {podiumRanking[0] ? (
+                  <div className="order-1 flex h-[170px] flex-col items-center justify-between rounded-[1.15rem] border border-[#eaded6] bg-[#fff3ed] p-2 shadow-md sm:h-[210px] lg:order-2 lg:h-[210px] lg:-translate-y-1 lg:scale-[1.03] lg:p-3 lg:shadow-[0_12px_24px_rgba(128,43,56,0.1)]">
+                    <div className="inline-flex items-center gap-0.5 rounded-full bg-[#ffe5a1] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-[#9d6d1d] sm:text-[9px]">
+                      <span aria-hidden="true">👑</span>
+                      <span className="hidden sm:inline">1ro</span>
+                    </div>
+                    <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-sm font-semibold text-white shadow-sm ring-2 ring-white sm:h-14 sm:w-14 sm:text-lg sm:ring-4">
+                      {(podiumRanking[0]?.username || podiumRanking[0]?.name || 'Usuario').slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className="w-full min-w-0 text-center">
+                      <div className="w-full truncate text-[0.65rem] font-bold text-[rgb(var(--color-neutral))] sm:text-[0.85rem]" title={podiumRanking[0]?.username || podiumRanking[0]?.name || 'Usuario'}>
+                        {podiumRanking[0]?.username || podiumRanking[0]?.name || 'Usuario'}
+                      </div>
+                      <div className="truncate text-[9px] text-[rgb(var(--color-neutral))]/60 sm:text-[11px]">
+                        {podiumRanking[0]?.experience ?? podiumRanking[0]?.xp ?? 0} XP
+                      </div>
+                    </div>
+                  </div>
+                ) : <div className="order-1 hidden lg:block" />}
+
+                {/* 3ER LUGAR */}
+                {podiumRanking[2] ? (
+                  <div className="order-3 flex h-[140px] flex-col items-center justify-between rounded-[1.15rem] border border-[#eaded6] bg-[#fff8f4] p-2 shadow-sm sm:h-[180px] lg:h-[210px] lg:p-3 lg:translate-y-1">
+                    <div className="inline-flex items-center gap-0.5 rounded-full bg-[#efd4c8] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-[#8c5348] sm:text-[9px]">
+                      <span aria-hidden="true">🥉</span>
+                      <span className="hidden sm:inline">3ro</span>
+                    </div>
+                    <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-xs font-semibold text-white shadow-sm ring-2 ring-[#f8eded] sm:h-12 sm:w-12 sm:text-base sm:ring-4">
+                      {(podiumRanking[2]?.username || podiumRanking[2]?.name || 'Usuario').slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className="w-full min-w-0 text-center">
+                      <div className="w-full truncate text-[0.65rem] font-bold text-[rgb(var(--color-neutral))] sm:text-[0.85rem]" title={podiumRanking[2]?.username || podiumRanking[2]?.name || 'Usuario'}>
+                        {podiumRanking[2]?.username || podiumRanking[2]?.name || 'Usuario'}
+                      </div>
+                      <div className="truncate text-[9px] text-[rgb(var(--color-neutral))]/60 sm:text-[11px]">
+                        {podiumRanking[2]?.experience ?? podiumRanking[2]?.xp ?? 0} XP
+                      </div>
+                    </div>
+                  </div>
+                ) : <div className="order-3 hidden lg:block" />}
+              </div>
+
+              {listRanking.length ? (
+                <div className="mt-2 space-y-2 border-t border-[#f0e2db] pt-4">
+                  {listRanking.map((player, indexRanking) => {
+                    const isCurrentUser = user?.id && player.user_id === user.id;
+                    const displayName = player.username || player.name || 'Usuario';
+                    const initials = displayName.slice(0, 1).toUpperCase();
+                    const xp = player.experience ?? player.xp ?? 0;
+
+                    return (
+                      <div
+                        key={player.user_id ?? player.name ?? displayName}
+                        className={[
+                          'flex items-center gap-2.5 rounded-2xl border px-3 py-2.5',
+                          isCurrentUser
+                            ? 'border-[rgba(128,43,56,0.46)] bg-[#fdf3ef] shadow-[0_8px_18px_rgba(128,43,56,0.08)]'
+                            : 'border-[#f0e2db] bg-[#fffdfb]'
+                        ].join(' ')}
+                      >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--color-accent))] text-xs font-bold text-white shadow-sm">
+                          {indexRanking + 4}
+                        </div>
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#d95f76] to-[#8b2d3f] text-sm font-semibold text-white shadow-sm">
+                          {initials}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <div className={['w-full min-w-0 truncate text-sm font-semibold text-[rgb(var(--color-neutral))]', containsJapaneseScript(displayName) ? 'font-jp' : ''].join(' ')}>
+                              {displayName}
+                            </div>
+                            {isCurrentUser ? (
+                              <span className="inline-flex shrink-0 items-center rounded-full bg-[rgb(var(--color-accent))]/12 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[rgb(var(--color-accent))]">
+                                Tú
+                              </span>
+                            ) : null}
                           </div>
-                          {isCurrentUser ? (
-                            <span className="inline-flex shrink-0 items-center rounded-full bg-[rgb(var(--color-accent))]/12 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[rgb(var(--color-accent))]">
-                              Tú
-                            </span>
-                          ) : null}
+                          <div className="text-xs text-[rgb(var(--color-neutral))]/65">
+                            Nivel {player.level ?? 1}
+                            {isCurrentUser ? ' · actual' : ''}
+                          </div>
                         </div>
-                        <div className="text-xs text-[rgb(var(--color-neutral))]/65">
-                          Nivel {player.level ?? 1}
-                          {isCurrentUser ? ' · actual' : ''}
-                        </div>
+                        <div className="text-sm font-semibold text-[rgb(var(--color-neutral))]">{xp} XP</div>
                       </div>
-                      <div className="text-sm font-semibold text-[rgb(var(--color-neutral))]">{xp} XP</div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : null}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setRankingModalOpen(true)}
-            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[rgb(var(--color-accent))] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[rgb(var(--color-accent-dark))] sm:mt-4 sm:py-3"
-          >
-            Ver ranking completo
-          </button>
-        </section>
-
-        <section className="rounded-[1.3rem] border border-[#eaded6] bg-[#fbefe8] p-3.5 shadow-[0_12px_30px_rgba(128,43,56,0.08)] sm:p-4">
-          <h3 className="text-base font-semibold text-[rgb(var(--color-accent))] sm:text-lg">Modo de juego</h3>
-
-          <div className="mt-3 grid gap-2.5 sm:mt-4 sm:gap-3">
-            {modeCards.map((mode) => (
-              <div
-                key={mode.id}
-                className={[
-                  'rounded-2xl border p-3.5 sm:p-4',
-                  mode.active ? 'border-transparent bg-[rgb(var(--color-accent))] text-white shadow-md' : 'border-[#eaded6] bg-white text-[rgb(var(--color-neutral))]',
-                ].join(' ')}
-                role="button"
-                tabIndex={0}
-                onClick={() => handleModeChange(mode.id)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    handleModeChange(mode.id);
-                  }
-                }}
-              >
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <span>{mode.label}</span>
-                  {mode.crown ? <span aria-hidden="true">👑</span> : null}
+                    );
+                  })}
                 </div>
-                <p className={['mt-1 text-xs sm:text-sm', mode.active ? 'text-white/80' : 'text-[rgb(var(--color-neutral))]/70'].join(' ')}>{mode.description}</p>
-              </div>
-            ))}
-          </div>
+              ) : null}
+            </div>
 
-          <button className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[rgba(128,43,56,0.22)] bg-white px-4 py-2.5 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm transition hover:bg-[#fcf4f0] sm:mt-4 sm:py-3">
-            <span aria-hidden="true">⚙</span>
-            Configuración del modo
-          </button>
-        </section>
-      </aside>
+            <button
+              type="button"
+              onClick={() => setRankingModalOpen(true)}
+              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[rgb(var(--color-accent))] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[rgb(var(--color-accent-dark))] sm:mt-4 sm:py-3"
+            >
+              Ver ranking completo
+            </button>
+          </section>
 
-      {rankingModalOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(53,18,25,0.45)] px-4 py-6 backdrop-blur-sm"
-          onClick={() => setRankingModalOpen(false)}
-        >
+          <section className="rounded-[1.3rem] border border-[#eaded6] bg-[#fbefe8] p-3.5 shadow-[0_12px_30px_rgba(128,43,56,0.08)] sm:p-4">
+            <h3 className="text-base font-semibold text-[rgb(var(--color-accent))] sm:text-lg">Modo de juego</h3>
+
+            <div className="mt-3 grid gap-2.5 sm:mt-4 sm:gap-3">
+              {modeCards.map((mode) => (
+                <div
+                  key={mode.id}
+                  className={[
+                    'rounded-2xl border p-3.5 sm:p-4',
+                    mode.active ? 'border-transparent bg-[rgb(var(--color-accent))] text-white shadow-md' : 'border-[#eaded6] bg-white text-[rgb(var(--color-neutral))]',
+                  ].join(' ')}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleModeChange(mode.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      handleModeChange(mode.id);
+                    }
+                  }}
+                >
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <span>{mode.label}</span>
+                    {mode.crown ? <span aria-hidden="true"></span> : null}
+                  </div>
+                  <p className={['mt-1 text-xs sm:text-sm', mode.active ? 'text-white/80' : 'text-[rgb(var(--color-neutral))]/70'].join(' ')}>{mode.description}</p>
+                </div>
+              ))}
+            </div>
+
+            <button className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[rgba(128,43,56,0.22)] bg-white px-4 py-2.5 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm transition hover:bg-[#fcf4f0] sm:mt-4 sm:py-3">
+              <span aria-hidden="true">⚙</span>
+              Configuración del modo
+            </button>
+          </section>
+        </aside>
+
+        {rankingModalOpen ? (
           <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Top 10 del ranking"
-            className="w-full max-w-3xl overflow-hidden rounded-[1.5rem] border border-[#eaded6] bg-white shadow-[0_24px_60px_rgba(53,18,25,0.28)]"
-            onClick={(event) => event.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(53,18,25,0.45)] px-4 py-6 backdrop-blur-sm"
+            onClick={() => setRankingModalOpen(false)}
           >
-            <div className="flex items-start justify-between gap-4 border-b border-[#f0e2db] px-4 py-4 sm:px-6">
-              <div>
-                <h3 className="text-lg font-semibold text-[rgb(var(--color-accent))] sm:text-xl">Top 10 del ranking</h3>
-                <p className="mt-1 text-sm text-[rgb(var(--color-neutral))]/60">Podio arriba y lista completa dentro del modal.</p>
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Top 10 del ranking"
+              className="w-full max-w-3xl overflow-hidden rounded-[1.5rem] border border-[#eaded6] bg-white shadow-[0_24px_60px_rgba(53,18,25,0.28)]"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-4 border-b border-[#f0e2db] px-4 py-4 sm:px-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-[rgb(var(--color-accent))] sm:text-xl">Top 10 del ranking</h3>
+                  <p className="mt-1 text-sm text-[rgb(var(--color-neutral))]/60">Podio arriba y lista completa dentro del modal.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setRankingModalOpen(false)}
+                  className="rounded-full px-3 py-2 text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea]"
+                >
+                  Cerrar
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setRankingModalOpen(false)}
-                className="rounded-full px-3 py-2 text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea]"
-              >
-                Cerrar
-              </button>
-            </div>
 
-            <div className="max-h-[75vh] overflow-y-auto p-4 sm:p-6">
-              <div className="space-y-3">
-                {modalRanking.map((player, indexRanking) => {
-                  const isCurrentUser = user?.id && player.user_id === user.id;
-                  const displayName = player.username || player.name || 'Usuario';
-                  const initials = displayName.slice(0, 1).toUpperCase();
-                  const xp = player.experience ?? player.xp ?? 0;
-                  const rankGradient =
-                    indexRanking === 0
-                      ? 'from-amber-400 to-amber-600'
-                      : indexRanking === 1
-                        ? 'from-slate-300 to-slate-500'
-                        : indexRanking === 2
-                          ? 'from-orange-400 to-orange-600'
-                          : 'from-[#d95f76] to-[#8b2d3f]';
-                  const rankBadgeClass =
-                    indexRanking === 0
-                      ? 'bg-gradient-to-br from-amber-400 to-amber-600'
-                      : indexRanking === 1
-                        ? 'bg-gradient-to-br from-slate-300 to-slate-500'
-                        : indexRanking === 2
-                          ? 'bg-gradient-to-br from-orange-400 to-orange-600'
-                          : 'bg-[rgb(var(--color-accent))]';
+              <div className="max-h-[75vh] overflow-y-auto p-4 sm:p-6">
+                <div className="space-y-3">
+                  {modalRanking.map((player, indexRanking) => {
+                    const isCurrentUser = user?.id && player.user_id === user.id;
+                    const displayName = player.username || player.name || 'Usuario';
+                    const initials = displayName.slice(0, 1).toUpperCase();
+                    const xp = player.experience ?? player.xp ?? 0;
+                    const rankGradient =
+                      indexRanking === 0
+                        ? 'from-amber-400 to-amber-600'
+                        : indexRanking === 1
+                          ? 'from-slate-300 to-slate-500'
+                          : indexRanking === 2
+                            ? 'from-orange-400 to-orange-600'
+                            : 'from-[#d95f76] to-[#8b2d3f]';
+                    const rankBadgeClass =
+                      indexRanking === 0
+                        ? 'bg-gradient-to-br from-amber-400 to-amber-600'
+                        : indexRanking === 1
+                          ? 'bg-gradient-to-br from-slate-300 to-slate-500'
+                          : indexRanking === 2
+                            ? 'bg-gradient-to-br from-orange-400 to-orange-600'
+                            : 'bg-[rgb(var(--color-accent))]';
 
-                  return (
-                    <div
-                      key={`modal-${player.user_id ?? player.name ?? displayName}`}
-                      className={[
-                        'flex items-center gap-3 rounded-2xl border px-3 py-3 sm:px-4',
-                        isCurrentUser ? 'border-[rgba(128,43,56,0.28)] bg-[#fdf3ef]' : 'border-[#f0e2db] bg-[#fffdfb]'
-                      ].join(' ')}
-                    >
-                      <div className={[
-                        'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow-sm',
-                        rankBadgeClass,
-                      ].join(' ')}>
-                        #{indexRanking + 1}
-                      </div>
-                      <div className={[
-                        'flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br text-sm font-semibold text-white shadow-sm',
-                        rankGradient,
-                      ].join(' ')}>
-                        {initials}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className={['truncate text-sm font-semibold text-[rgb(var(--color-neutral))]', containsJapaneseScript(displayName) ? 'font-jp' : ''].join(' ')}>
-                          {displayName}
-                          {isCurrentUser ? ' (Tú)' : ''}
+                    return (
+                      <div
+                        key={`modal-${player.user_id ?? player.name ?? displayName}`}
+                        className={[
+                          'flex items-center gap-3 rounded-2xl border px-3 py-3 sm:px-4',
+                          isCurrentUser ? 'border-[rgba(128,43,56,0.28)] bg-[#fdf3ef]' : 'border-[#f0e2db] bg-[#fffdfb]'
+                        ].join(' ')}
+                      >
+                        <div className={[
+                          'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow-sm',
+                          rankBadgeClass,
+                        ].join(' ')}>
+                          #{indexRanking + 1}
                         </div>
-                        <div className="text-xs text-[rgb(var(--color-neutral))]/65">
-                          Nivel {player.level ?? 1}
-                          {isCurrentUser ? ' · actual' : ''}
+                        <div className={[
+                          'flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br text-sm font-semibold text-white shadow-sm',
+                          rankGradient,
+                        ].join(' ')}>
+                          {initials}
                         </div>
+                        <div className="min-w-0 flex-1">
+                          <div className={['truncate text-sm font-semibold text-[rgb(var(--color-neutral))]', containsJapaneseScript(displayName) ? 'font-jp' : ''].join(' ')}>
+                            {displayName}
+                            {isCurrentUser ? ' (Tú)' : ''}
+                          </div>
+                          <div className="text-xs text-[rgb(var(--color-neutral))]/65">
+                            Nivel {player.level ?? 1}
+                            {isCurrentUser ? ' · actual' : ''}
+                          </div>
+                        </div>
+                        <div className="text-sm font-semibold text-[rgb(var(--color-neutral))]">{xp} XP</div>
                       </div>
-                      <div className="text-sm font-semibold text-[rgb(var(--color-neutral))]">{xp} XP</div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
       </section>
     </div>
   );

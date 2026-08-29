@@ -67,8 +67,8 @@ export default function SentenceDropZone({
         onDragLeave={handleDragLeave}
         onDrop={(e) => handleDrop(e)}
         className={[
-          'relative min-h-[110px] w-full rounded-3xl border-2 border-dashed p-4 sm:p-6',
-          'flex flex-wrap items-center justify-center gap-3 transition-all duration-200',
+          'relative min-h-[90px] sm:min-h-[110px] w-full rounded-3xl border-2 border-dashed p-3 sm:p-5 md:p-6',
+          'flex flex-wrap items-center justify-center gap-2 sm:gap-3 transition-all duration-200 overflow-hidden',
           containerStyles,
         ].join(' ')}
       >

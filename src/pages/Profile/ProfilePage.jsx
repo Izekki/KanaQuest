@@ -228,53 +228,53 @@ export default function ProfilePage() {
   }
 
   return (
-    <section className="rounded-[1.75rem] border border-[#eaded6] bg-white p-8 shadow-[0_14px_34px_rgba(128,43,56,0.08)]">
-      <p className="text-sm uppercase tracking-[0.35em] text-[rgb(var(--color-accent))]/70">Perfil</p>
-      <h1 className="mt-4 text-3xl font-semibold text-[rgb(var(--color-accent))] md:text-5xl">Mi perfil</h1>
+    <section className="w-full max-w-4xl mx-auto rounded-[1.75rem] border border-[#eaded6] bg-white p-4 sm:p-8 shadow-[0_14px_34px_rgba(128,43,56,0.08)]">
+      <p className="text-xs sm:text-sm uppercase tracking-[0.35em] text-[rgb(var(--color-accent))]/70">Perfil</p>
+      <h1 className="mt-2 sm:mt-4 text-2xl sm:text-3xl font-semibold text-[rgb(var(--color-accent))] md:text-5xl">Mi perfil</h1>
 
       {profile ? (
-        <form onSubmit={handleSave} className="mt-6 grid gap-4">
-          <div className="grid gap-4 rounded-[1.5rem] border border-[#eaded6] bg-[#fcfaf8] p-5 shadow-[0_10px_22px_rgba(128,43,56,0.05)]">
+        <form onSubmit={handleSave} className="mt-5 sm:mt-6 grid gap-4">
+          <div className="grid gap-4 rounded-[1.5rem] border border-[#eaded6] bg-[#fcfaf8] p-4 sm:p-6 shadow-[0_10px_22px_rgba(128,43,56,0.05)]">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
                 <div className="shrink-0">
                   {avatarPreviewUrl ? (
                     // eslint-disable-next-line jsx-a11y/img-redundant-alt
-                    <img src={avatarPreviewUrl} alt="avatar" className="h-20 w-20 rounded-full object-cover" />
+                    <img src={avatarPreviewUrl} alt="avatar" className="h-16 w-16 sm:h-20 sm:w-20 rounded-full object-cover shadow-sm" />
                   ) : (
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f5d2dd,#b86773)] text-xl font-semibold text-white">{(profile.username || 'J').slice(0, 1).toUpperCase()}</div>
+                    <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f5d2dd,#b86773)] text-xl font-semibold text-white shadow-sm">{(profile.username || 'J').slice(0, 1).toUpperCase()}</div>
                   )}
                 </div>
 
                 <div>
-                  <div className="text-sm text-[rgb(var(--color-neutral))]/80">Nivel</div>
-                  <div className="text-xl font-semibold text-[rgb(var(--color-accent))]">{profile.level ?? 1}</div>
-                  <div className="mt-2 text-sm text-[rgb(var(--color-neutral))]/70">Experiencia: {profile.experience ?? 0}</div>
+                  <div className="text-xs sm:text-sm text-[rgb(var(--color-neutral))]/80">Nivel</div>
+                  <div className="text-xl sm:text-2xl font-bold text-[rgb(var(--color-accent))]">{profile.level ?? 1}</div>
+                  <div className="mt-1 text-xs sm:text-sm text-[rgb(var(--color-neutral))]/70">Experiencia: {profile.experience ?? 0} XP</div>
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:min-w-[18rem] sm:max-w-[22rem] sm:flex-1 sm:justify-items-stretch">
-                <label className="text-xs text-[rgb(var(--color-accent))]/70">Nombre de usuario</label>
+              <div className="grid gap-2 sm:min-w-[18rem] sm:max-w-[22rem] sm:flex-1 sm:justify-items-stretch">
+                <label className="text-xs font-semibold text-[rgb(var(--color-accent))]/80">Nombre de usuario</label>
                 <input
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="rounded-xl border border-[#eaded6] px-3 py-2 text-sm"
+                  className="rounded-xl border border-[#eaded6] bg-white px-3.5 py-2.5 min-h-[44px] text-sm text-[rgb(var(--color-neutral))] outline-none focus:border-[rgb(var(--color-accent))] focus:ring-2 focus:ring-[rgba(128,43,56,0.12)]"
                   placeholder="Tu nombre público"
                   required
                 />
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2 border-t border-[#eaded6]/60">
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex w-full items-center justify-center rounded-2xl bg-[rgb(var(--color-accent))] px-5 py-2.5 text-white transition hover:bg-[rgb(var(--color-accent-dark))] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+                className="inline-flex min-h-[44px] w-full sm:w-auto items-center justify-center rounded-2xl bg-[rgb(var(--color-accent))] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[rgb(var(--color-accent-dark))] disabled:cursor-not-allowed disabled:opacity-70 active:scale-98 shadow-sm"
               >
                 {saving ? 'Guardando...' : 'Guardar cambios'}
               </button>
-              <div className="min-h-5 text-sm text-red-600">{error}</div>
-              <div className="min-h-5 text-sm text-[rgb(var(--color-accent))]">{info}</div>
+              {error ? <div className="text-xs sm:text-sm text-red-600 font-medium">{error}</div> : null}
+              {info ? <div className="text-xs sm:text-sm text-emerald-700 font-medium">{info}</div> : null}
             </div>
           </div>
         </form>

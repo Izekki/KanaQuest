@@ -159,14 +159,14 @@ export default function AppLayout({ children }) {
     <main className="relative min-h-screen overflow-hidden bg-background text-neutral">
       <PetalsLayer />
       <div className="relative z-0">
-        <header className="relative z-50 px-4 pt-4 sm:px-6 lg:px-8">
-          <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 rounded-[1.5rem] border border-[#eaded6] bg-white/85 px-4 py-3 shadow-[0_10px_30px_rgba(128,43,56,0.06)] backdrop-blur">
+        <header className="relative z-50 px-3 pt-3 sm:px-6 sm:pt-4 lg:px-8">
+          <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 sm:gap-4 rounded-[1.5rem] border border-[#eaded6] bg-white/85 px-3.5 py-2.5 sm:px-5 sm:py-3 shadow-[0_10px_30px_rgba(128,43,56,0.06)] backdrop-blur">
             <Link className="flex items-center gap-2 text-sm font-semibold text-[rgb(var(--color-accent))]" to="/">
-              <img src={toriiLogo} alt="KanaQuest" className="h-[40.5px] w-[40.5px] shrink-0 object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(18%) sepia(34%) saturate(1700%) hue-rotate(318deg) brightness(88%) contrast(94%)' }} />
-              <span className="text-[1.05rem] leading-none tracking-tight">KanaQuest</span>
+              <img src={toriiLogo} alt="KanaQuest" className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(18%) sepia(34%) saturate(1700%) hue-rotate(318deg) brightness(88%) contrast(94%)' }} />
+              <span className="text-base sm:text-[1.05rem] leading-none tracking-tight font-bold">KanaQuest</span>
             </Link>
 
-            <nav className="hidden items-center gap-10 text-sm font-medium text-[rgb(var(--color-accent))] md:flex">
+            <nav className="hidden items-center gap-8 lg:gap-10 text-sm font-medium text-[rgb(var(--color-accent))] md:flex">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
@@ -174,7 +174,7 @@ export default function AppLayout({ children }) {
                 className={({ isActive }) =>
                   [
                     'transition-colors hover:text-[rgb(var(--color-accent-dark))]',
-                    isActive ? 'font-semibold' : 'text-[rgb(var(--color-accent))]/80',
+                    isActive ? 'font-semibold text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-accent))]/75',
                   ].join(' ')
                 }
               >
@@ -183,46 +183,48 @@ export default function AppLayout({ children }) {
             ))}
             </nav>
 
-            <div className="flex items-center gap-3 sm:gap-4">
-              <div className="flex items-center gap-2 rounded-full bg-[#f8ebe6] px-4 py-2 text-[rgb(var(--color-accent))] shadow-sm">
-                <span className="text-base">🔥</span>
-                <span className="text-sm font-semibold">{streak}</span>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-1.5 rounded-full bg-[#f8ebe6] px-3 py-1.5 sm:px-4 sm:py-2 text-[rgb(var(--color-accent))] shadow-sm">
+                <span className="text-sm sm:text-base">🔥</span>
+                <span className="text-xs sm:text-sm font-bold">{streak}</span>
               </div>
 
               <div ref={menuRef} className="relative">
                 <button
                   type="button"
                   onClick={() => setMenuOpen((value) => !value)}
-                  className="flex items-center gap-3 rounded-full px-2 py-1 text-left transition hover:bg-[#f9efea]"
+                  className="flex items-center gap-2 sm:gap-3 rounded-full px-1.5 py-1 text-left transition hover:bg-[#f9efea] min-h-[44px]"
+                  aria-expanded={menuOpen}
+                  aria-label="Menú de usuario"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f5d2dd,#b86773)] text-sm font-semibold text-white shadow-sm">
+                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f5d2dd,#b86773)] text-xs sm:text-sm font-semibold text-white shadow-sm shrink-0">
                     {profileInitial}
                   </div>
-                  <div className="leading-tight">
-                    <div className="text-sm font-semibold text-[rgb(var(--color-neutral))]">{profileName}</div>
-                    <div className="text-xs text-[rgb(var(--color-accent))]/70">Nivel {profileLevel} · {profileExperience} XP</div>
+                  <div className="hidden min-[460px]:block leading-tight max-w-[110px] sm:max-w-[160px]">
+                    <div className="truncate text-xs sm:text-sm font-semibold text-[rgb(var(--color-neutral))]">{profileName}</div>
+                    <div className="truncate text-[10px] sm:text-xs text-[rgb(var(--color-accent))]/70">Nv. {profileLevel} · {profileExperience} XP</div>
                   </div>
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className={['h-4 w-4 text-[rgb(var(--color-accent))]/60 transition-transform', menuOpen ? 'rotate-180' : 'rotate-0'].join(' ')}>
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className={['h-4 w-4 shrink-0 text-[rgb(var(--color-accent))]/60 transition-transform', menuOpen ? 'rotate-180' : 'rotate-0'].join(' ')}>
                     <path fill="currentColor" d="M5.5 7.5 10 12l4.5-4.5 1.4 1.4L10 14.8 4.1 8.9z" />
                   </svg>
                 </button>
 
                 {menuOpen ? (
-                  <div className="absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-[1.1rem] border border-[#eaded6] bg-white p-2 shadow-[0_18px_35px_rgba(128,43,56,0.14)]">
+                  <div className="absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-[1.1rem] border border-[#eaded6] bg-white p-2 shadow-[0_18px_35px_rgba(128,43,56,0.14)] animate-fadeIn">
                     {user ? (
                       <>
                         <div className="px-3 py-2 text-xs uppercase tracking-[0.25em] text-[rgb(var(--color-accent))]/55">Sesión</div>
                         <Link
                           to="/profile"
                           onClick={() => setMenuOpen(false)}
-                          className="flex w-full items-center rounded-xl px-3 py-2 text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea]"
+                          className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea] min-h-[44px]"
                         >
                           Mi Perfil
                         </Link>
                         <button
                           type="button"
                           onClick={handleSignOut}
-                          className="mt-1 flex w-full items-center rounded-xl px-3 py-2 text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea]"
+                          className="mt-1 flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea] min-h-[44px]"
                         >
                           Cerrar sesión
                         </button>
@@ -233,14 +235,14 @@ export default function AppLayout({ children }) {
                         <Link
                           to="/login"
                           onClick={() => setMenuOpen(false)}
-                          className="flex rounded-xl px-3 py-2 text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea]"
+                          className="flex rounded-xl px-3 py-2.5 text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea] min-h-[44px]"
                         >
                           Iniciar sesión
                         </Link>
                         <Link
                           to="/register"
                           onClick={() => setMenuOpen(false)}
-                          className="mt-1 flex rounded-xl px-3 py-2 text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea]"
+                          className="mt-1 flex rounded-xl px-3 py-2.5 text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea] min-h-[44px]"
                         >
                           Registrarse
                         </Link>
@@ -253,7 +255,7 @@ export default function AppLayout({ children }) {
           </div>
         </header>
 
-        <div className="mx-auto max-w-[1400px] px-4 py-4 sm:px-6 lg:px-8 lg:py-5">{children}</div>
+        <div className="mx-auto w-full max-w-7xl px-3 py-3 sm:px-6 sm:py-5 lg:px-8 pb-24 lg:pb-8">{children}</div>
         <MobileNavigation />
       </div>
     </main>
