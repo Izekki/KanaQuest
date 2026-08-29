@@ -1,22 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import SessionProgressCard from '../../components/gameplay/SessionProgressCard';
 import { fetchWords } from '../../services/supabase/words';
 import {
-  fetchRankingProfiles,
   fetchUserProfile,
-  fetchRecentProgress,
   submitWordAnswer,
 } from '../../services/supabase/progress';
 import { useAuthSession } from '../../hooks/useAuthSession';
 import { useSoundEffects } from '../../hooks/useSoundEffects';
 import avatarRimuruRedPink from '../../img/avatar_rimuru_version_red-pink.svg';
-
-const players = [
-  { name: 'Hana (Tú)', xp: 2350, tone: 'from-[#d95f76] to-[#8b2d3f]' },
-  { name: 'Kenji', xp: 1980, tone: 'from-[#5d95c7] to-[#2f5375]' },
-  { name: 'Yuki', xp: 1570, tone: 'from-[#c97b8a] to-[#7f4f63]' },
-];
 
 const normalize = (value) => value.trim().toLowerCase().normalize('NFKC');
 
@@ -82,25 +74,40 @@ const getAnswersFromWord = (word, mode) => {
   return [word?.hiragana, word?.katakana, word?.romaji, word?.translation].filter(Boolean);
 };
 
-const getModeLabel = (value) => (value === 'translate' ? 'Traducir' : 'Reconocer');
-
 const getStreakStorageKey = (userId) => `kanaquest-streak:${userId}`;
 
-function Avatar({ label, tone }) {
-  return (
-    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${tone} text-sm font-semibold text-white shadow-sm`}>
-      {label}
-    </div>
-  );
+function speakWord(text) {
+  if (typeof window === 'undefined' || !window.speechSynthesis || !text) return;
+  try {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ja-JP';
+    utterance.rate = 0.85;
+    window.speechSynthesis.speak(utterance);
+  } catch (e) {
+    console.debug('Speech synthesis error:', e);
+  }
 }
 
-function CatIllustration() {
+function CatIllustration({ animationState }) {
+  const animationClass =
+    animationState === 'success'
+      ? 'animate-mascot-success'
+      : animationState === 'error'
+      ? 'animate-mascot-error'
+      : '';
+
   return (
-    <div className="relative flex h-24 w-24 sm:h-[220px] sm:w-[220px] items-center justify-center overflow-hidden rounded-full bg-[#f5dbe0] shadow-[0_10px_25px_rgba(128,43,56,0.12)]">
+    <div
+      className={[
+        'relative flex h-24 w-24 sm:h-[180px] sm:w-[180px] items-center justify-center overflow-hidden rounded-full bg-[#f5dbe0] border-4 border-white shadow-[0_12px_28px_rgba(128,43,56,0.14)] transition-transform duration-300',
+        animationClass,
+      ].join(' ')}
+    >
       <img
         src={avatarRimuruRedPink}
         alt="Avatar de Rimuru"
-        className="h-16 w-16 sm:h-[130px] sm:w-[130px] max-w-none object-contain drop-shadow-[0_10px_12px_rgba(128,43,56,0.15)]"
+        className="h-16 w-16 sm:h-[115px] sm:w-[115px] max-w-none object-contain drop-shadow-[0_8px_12px_rgba(128,43,56,0.15)]"
         loading="eager"
         decoding="async"
       />
@@ -126,45 +133,17 @@ export default function GamePage() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { playFlip, playSuccess, playError } = useSoundEffects();
-  const [rankingProfiles, setRankingProfiles] = useState([]);
-  const [rankingLoading, setRankingLoading] = useState(true);
-  const [rankingModalOpen, setRankingModalOpen] = useState(false);
-  const [reviewItems, setReviewItems] = useState([]);
-  const [reviewLoading, setReviewLoading] = useState(true);
+
   const [answer, setAnswer] = useState('');
-  const [feedback, setFeedback] = useState(null);
+  const [feedback, setFeedback] = useState(null); // null | { tone: 'success' | 'error', message: string, masteryLevel?: number }
   const [index, setIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
-  const [canAdvance, setCanAdvance] = useState(false);
 
-  const rankingEntries = useMemo(
-    () => (rankingProfiles.length ? rankingProfiles : players),
-    [rankingProfiles]
-  );
+  const inputRef = useRef(null);
+  const nextButtonRef = useRef(null);
 
-  const podiumRanking = useMemo(() => rankingEntries.slice(0, 3), [rankingEntries]);
-  const listRanking = useMemo(() => rankingEntries.slice(3, 5), [rankingEntries]);
-  const modalRanking = useMemo(() => rankingEntries.slice(0, 10), [rankingEntries]);
-
-  useEffect(() => {
-    if (!rankingModalOpen) {
-      return;
-    }
-
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        setRankingModalOpen(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [rankingModalOpen]);
-
+  // Sync Streak with Session Storage
   useEffect(() => {
     if (!user?.id) {
       setStreak(0);
@@ -186,37 +165,7 @@ export default function GamePage() {
     window.dispatchEvent(new Event('kanaquest-streak-change'));
   }, [streak, user?.id]);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadRanking = async () => {
-      try {
-        const { data, error } = await fetchRankingProfiles(10);
-
-        if (error) throw error;
-
-        if (isMounted) {
-          setRankingProfiles(data ?? []);
-        }
-      } catch (error) {
-        console.warn('No se pudo cargar el ranking:', error?.message ?? error);
-        if (isMounted) {
-          setRankingProfiles([]);
-        }
-      } finally {
-        if (isMounted) {
-          setRankingLoading(false);
-        }
-      }
-    };
-
-    loadRanking();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
+  // Load Word Deck
   useEffect(() => {
     let isMounted = true;
 
@@ -231,13 +180,21 @@ export default function GamePage() {
         const recognize = shuffled.map((row) => ({
           wordId: row.id,
           prompt: row.japanese || row.hiragana || row.katakana,
+          hiragana: row.hiragana,
+          romaji: row.romaji,
+          translation: row.translation,
+          difficulty: row.difficulty,
           answers: getAnswersFromWord(row, 'recognize'),
-          instruction: 'Escribe la lectura (hiragana o katakana).',
+          instruction: 'Escribe la lectura (hiragana, katakana o romaji).',
         }));
 
         const translate = shuffled.map((row) => ({
           wordId: row.id,
           prompt: row.translation || row.romaji || row.japanese,
+          hiragana: row.hiragana,
+          romaji: row.romaji,
+          translation: row.translation,
+          difficulty: row.difficulty,
           answers: getAnswersFromWord(row, 'translate'),
           instruction: 'Escribe la palabra en japonés (hiragana, katakana o kanji).',
         }));
@@ -282,61 +239,6 @@ export default function GamePage() {
   const activeDeckData = deckData?.[mode]?.length ? deckData : null;
   const deck = activeDeckData?.[mode] ?? fallbackDeck[mode];
   const currentQuestion = deck[index] ?? deck[0];
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadReviewItems = async () => {
-      if (!user?.id) {
-        if (isMounted) {
-          setReviewItems([]);
-          setReviewLoading(false);
-        }
-        return;
-      }
-
-      setReviewLoading(true);
-
-      try {
-        const { data, error } = await fetchRecentProgress(user.id, 6);
-
-        if (error) throw error;
-
-        const items = (data ?? []).map((row) => {
-          const word = row.word ?? {};
-          const wordLabel = word.japanese || word.hiragana || word.katakana || word.romaji || word.translation || '—';
-          const translation = word.translation || word.romaji || word.japanese || word.hiragana || word.katakana || '';
-
-          return {
-            id: row.id,
-            thumbnail: '🀄',
-            word: wordLabel,
-            translation,
-            correct: Boolean(row.correct),
-            mode: row.mode,
-          };
-        });
-
-        if (isMounted) {
-          setReviewItems(items);
-        }
-      } catch (error) {
-        console.warn('No se pudo cargar el historial desde Supabase:', error?.message ?? error);
-        if (isMounted) {
-          setReviewItems([]);
-        }
-      } finally {
-        if (isMounted) {
-          setReviewLoading(false);
-        }
-      }
-    };
-
-    loadReviewItems();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [user?.id]);
 
   const sessionStats = {
     streak,
@@ -346,32 +248,8 @@ export default function GamePage() {
     progress: deck.length ? ((index + 1) / deck.length) * 100 : 0,
   };
 
-  const modeCards = [
-    {
-      id: 'recognize',
-      label: 'Reconocer',
-      crown: true,
-      active: mode === 'recognize',
-      description: 'Kana / Kanji → Lectura (hiragana o katakana)',
-    },
-    {
-      id: 'translate',
-      label: 'Traducir',
-      crown: false,
-      active: mode === 'translate',
-      description: 'Español → palabra japonesa',
-    },
-    {
-      id: 'pair_match',
-      label: 'Par-Parejas 🎴',
-      crown: false,
-      active: false,
-      description: 'Memoria: empareja kanji con traducción',
-    },
-  ];
-
   const promptIsJapanese = containsJapaneseScript(currentQuestion?.prompt ?? '');
-  const promptSizeClass = promptIsJapanese ? 'text-6xl sm:text-7xl md:text-8xl' : 'text-2xl sm:text-3xl md:text-4xl';
+  const promptSizeClass = promptIsJapanese ? 'text-6xl sm:text-7xl md:text-8xl' : 'text-3xl sm:text-4xl md:text-5xl';
 
   const handleModeChange = (nextMode) => {
     if (nextMode === 'pair_match') {
@@ -382,15 +260,48 @@ export default function GamePage() {
     setIndex(0);
     setAnswer('');
     setFeedback(null);
-    setCanAdvance(false);
   };
+
+  const handleNext = useCallback(() => {
+    if (!deck.length) return;
+    playFlip();
+    setIndex((value) => (value + 1) % deck.length);
+    setAnswer('');
+    setFeedback(null);
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
+  }, [deck.length, playFlip]);
+
+  // Global Enter Key Handler when feedback is active
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if (e.key === 'Enter' && feedback) {
+        e.preventDefault();
+        handleNext();
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [feedback, handleNext]);
+
+  // Auto focus input on question load
+  useEffect(() => {
+    if (!feedback) {
+      inputRef.current?.focus();
+    }
+  }, [index, feedback]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (canAdvance) {
+    if (feedback) {
+      handleNext();
       return;
     }
+
+    if (!answer.trim()) return;
 
     const normalizedAnswer = normalize(answer);
     const acceptedAnswers = getAcceptedAnswers(currentQuestion?.answers ?? [], mode);
@@ -398,37 +309,13 @@ export default function GamePage() {
 
     if (isCorrect) {
       playSuccess();
-      setFeedback({ tone: 'success', message: 'Correcto. Sigue con la siguiente pregunta.' });
+      setFeedback({ tone: 'success', message: '¡Correcto! Excelente trabajo.' });
       setScore((value) => value + 50);
       setStreak((value) => value + 1);
-      setCanAdvance(true);
     } else {
       playError();
-      setFeedback({ tone: 'error', message: 'Respuesta incorrecta. Revisa la lectura.' });
+      setFeedback({ tone: 'error', message: 'Respuesta incorrecta.' });
       setStreak(0);
-      setCanAdvance(false);
-    }
-
-    if (currentQuestion?.wordId) {
-      const modeLabel = getModeLabel(mode);
-      const translation = currentQuestion?.answers?.[0] ?? '';
-
-      setReviewItems((items) => {
-        const next = [
-          {
-            id: `${currentQuestion.wordId}-${mode}-${Date.now()}`,
-            thumbnail: '🀄',
-            word: currentQuestion?.prompt ?? '—',
-            translation,
-            correct: isCorrect,
-            mode,
-            modeLabel,
-          },
-          ...items.filter((item) => item.word !== currentQuestion?.prompt || item.mode !== mode),
-        ];
-
-        return next.slice(0, 6);
-      });
     }
 
     if (user?.id && currentQuestion?.wordId) {
@@ -454,17 +341,6 @@ export default function GamePage() {
               detail: profileData,
             })
           );
-
-          setRankingProfiles((players) =>
-            players.map((player) =>
-              player.user_id === user.id
-                ? {
-                  ...player,
-                  ...profileData,
-                }
-                : player
-            )
-          );
         }
       } catch (err) {
         console.warn('Error en la llamada RPC:', err);
@@ -472,425 +348,219 @@ export default function GamePage() {
     }
   };
 
-  const handleNext = () => {
-    if (!deck.length) return;
-    playFlip();
-    setIndex((value) => (value + 1) % deck.length);
-    setAnswer('');
-    setFeedback(null);
-    setCanAdvance(false);
-  };
-
-  const handlePrev = () => {
-    if (!deck.length) return;
-    playFlip();
-    setIndex((value) => (value - 1 + deck.length) % deck.length);
-    setAnswer('');
-    setFeedback(null);
-    setCanAdvance(false);
-  };
-
   return (
-    <div className="mx-auto w-full max-w-7xl">
-      <section className="grid grid-cols-1 md:grid-cols-12 lg:grid-cols-[250px_minmax(0,1fr)_320px] xl:grid-cols-[260px_minmax(0,1fr)_320px] gap-4 items-start">
-        {/* SIDEBAR REPASO (Columna 1 en Desktop, debajo en Mobile, Columna Izquierda en Tablet) */}
-        <aside className="order-2 md:order-1 md:col-span-5 lg:col-auto rounded-[1.6rem] bg-[rgb(var(--color-accent))] p-3.5 sm:p-4 text-white shadow-[0_16px_34px_rgba(128,43,56,0.18)]">
-          <div className="px-2 pt-1 flex items-center justify-between">
-            <div>
-              <h2 className="text-[1.35rem] font-semibold tracking-tight">Repaso</h2>
-              <p className="mt-0.5 text-xs text-white/80">Últimas preguntas</p>
-            </div>
-            <span className="text-xs bg-white/20 px-2.5 py-1 rounded-full font-medium">
-              {reviewItems.length} recientes
-            </span>
-          </div>
+    <div className="mx-auto w-full max-w-2xl py-2">
+      {/* Top Bar with Compact Mode Selector and Stats */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2.5">
+        {/* Mode Selector Pills */}
+        <div className="flex items-center gap-1 rounded-2xl bg-[#fbf5f2] p-1 border border-[#eaded6] shadow-xs">
+          {[
+            { id: 'recognize', label: 'Reconocer' },
+            { id: 'translate', label: 'Traducir' },
+          ].map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => handleModeChange(option.id)}
+              className={[
+                'rounded-xl px-3.5 py-1.5 text-xs sm:text-sm font-semibold transition-all',
+                mode === option.id
+                  ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
+                  : 'text-[rgb(var(--color-neutral))]/70 hover:text-[rgb(var(--color-accent))] hover:bg-white',
+              ].join(' ')}
+            >
+              {option.label}
+            </button>
+          ))}
 
-          <div className="mt-3 grid gap-2.5 max-h-[380px] overflow-y-auto pr-0.5">
-            {reviewLoading ? (
-              <div className="rounded-2xl bg-white px-3 py-4 text-center text-xs text-[rgb(var(--color-neutral))]/70 shadow-sm">
-                Cargando historial...
-              </div>
-            ) : null}
-
-            {!reviewLoading && reviewItems.length === 0 ? (
-              <div className="rounded-2xl bg-white px-3 py-4 text-center text-xs text-[rgb(var(--color-neutral))]/70 shadow-sm">
-                Aun no hay respuestas registradas.
-              </div>
-            ) : null}
-
-            {!reviewLoading
-              ? reviewItems.map((item) => (
-                <div key={item.id} className="flex items-center gap-2.5 rounded-2xl bg-white px-3 py-2.5 text-[rgb(var(--color-neutral))] shadow-sm transition hover:bg-[#fff9f6]">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#f6eadf] text-xl shadow-inner">
-                    {item.thumbnail}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[0.95rem] font-semibold leading-tight text-[rgb(var(--color-accent))]">{item.word}</div>
-                    <div className="mt-0.5 truncate text-xs text-[rgb(var(--color-neutral))]/75">
-                      {item.mode ? getModeLabel(item.mode) : item.translation}
-                    </div>
-                  </div>
-                  <div
-                    className={[
-                      'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
-                      item.correct ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600',
-                    ].join(' ')}
-                  >
-                    {item.correct ? '✓' : '✕'}
-                  </div>
-                </div>
-              ))
-              : null}
-          </div>
-
-          <Link
-            to="/historial"
-            className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center rounded-2xl bg-white px-4 py-2.5 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm transition-transform hover:-translate-y-0.5 active:scale-98"
+          <button
+            type="button"
+            onClick={() => navigate('/pair-match')}
+            className="rounded-xl px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-[rgb(var(--color-neutral))]/70 hover:text-[rgb(var(--color-accent))] hover:bg-white transition-all"
           >
-            Ver historial completo
-          </Link>
-        </aside>
+            Parejas 🎴
+          </button>
+        </div>
 
-        {/* ÁREA PRINCIPAL DE JUEGO (Prioridad #1 en Mobile, Centro en Desktop) */}
-        <div className="order-1 md:order-2 md:col-span-7 lg:col-auto flex flex-col gap-3 w-full">
-          <SessionProgressCard
-            streak={sessionStats.streak}
-            questionNumber={sessionStats.questionNumber}
-            totalQuestions={sessionStats.totalQuestions}
-            score={sessionStats.score}
-            progress={sessionStats.progress}
-            className="mb-0"
-          />
+        {/* Quick Link to Historial */}
+        <Link
+          to="/historial"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-[#eaded6] bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-[rgb(var(--color-accent))] shadow-xs transition hover:bg-white hover:shadow-sm"
+        >
+          <span>Historial</span>
+          <span aria-hidden="true">⏱</span>
+        </Link>
+      </div>
 
-          <section className="rounded-[1.6rem] border border-[#eaded6] bg-white p-4 sm:p-6 shadow-[0_14px_32px_rgba(128,43,56,0.08)]">
-            {loading ? <p className="mb-4 text-center text-sm text-[rgb(var(--color-neutral))]/70">Cargando palabras desde Supabase...</p> : null}
+      {/* Main Practice Container */}
+      <div className="flex flex-col gap-3.5 w-full">
+        {/* Top Progress Bar Component */}
+        <SessionProgressCard
+          streak={sessionStats.streak}
+          questionNumber={sessionStats.questionNumber}
+          totalQuestions={sessionStats.totalQuestions}
+          score={sessionStats.score}
+          progress={sessionStats.progress}
+          className="mb-0"
+        />
 
-            <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-4 items-center text-center sm:text-left">
-              <div className="flex items-center justify-center sm:justify-start min-h-[130px] sm:min-h-[170px]">
-                <div className={[
-                  'font-semibold leading-none text-[rgb(var(--color-accent))] tracking-tight select-none',
-                  promptSizeClass,
-                  promptIsJapanese ? 'font-jp' : '',
-                ].join(' ')}>
+        {/* Central Game Card */}
+        <section className="rounded-[1.75rem] border border-[#eaded6] bg-white p-5 sm:p-7 shadow-[0_16px_36px_rgba(128,43,56,0.08)]">
+          {loading ? (
+            <p className="mb-4 text-center text-sm text-[rgb(var(--color-neutral))]/70">
+              Cargando palabras desde Supabase...
+            </p>
+          ) : null}
+
+          {/* Prompt + Mascot Section */}
+          <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-4 items-center text-center sm:text-left">
+            <div className="flex flex-col justify-center min-h-[140px] sm:min-h-[180px]">
+              <div className="flex items-center justify-center sm:justify-start gap-3">
+                <div
+                  className={[
+                    'font-bold leading-tight text-[rgb(var(--color-accent))] tracking-tight select-none',
+                    promptSizeClass,
+                    promptIsJapanese ? 'font-jp' : '',
+                  ].join(' ')}
+                >
                   {currentQuestion?.prompt ?? '...'}
                 </div>
               </div>
-
-              <div className="flex justify-center sm:justify-end">
-                <CatIllustration />
-              </div>
             </div>
 
-            <form className="mx-auto mt-4 max-w-2xl" onSubmit={handleSubmit}>
-              <p className="text-center text-base font-semibold text-[rgb(var(--color-neutral))] sm:text-lg">{currentQuestion?.instruction ?? 'Escribe la respuesta:'}</p>
+            <div className="flex justify-center sm:justify-end">
+              <CatIllustration animationState={feedback?.tone} />
+            </div>
+          </div>
 
-              <div className="relative mt-3">
-                <input
-                  className="w-full min-h-[48px] rounded-[1.1rem] border border-[rgba(128,43,56,0.22)] bg-[#fffdfb] px-4 py-3.5 pr-14 text-base text-[rgb(var(--color-neutral))] outline-none transition placeholder:text-[rgb(var(--color-neutral))]/35 focus:border-[rgb(var(--color-accent))] focus:ring-2 focus:ring-[rgba(128,43,56,0.12)] sm:px-5 sm:py-4 sm:text-lg"
-                  value={answer}
-                  onChange={(event) => setAnswer(event.target.value)}
-                  placeholder="Escribe aquí..."
-                  autoComplete="off"
-                />
+          {/* Practice Form */}
+          <form className="mx-auto mt-5 max-w-xl" onSubmit={handleSubmit}>
+            <p className="text-center text-sm sm:text-base font-semibold text-[rgb(var(--color-neutral))]">
+              {currentQuestion?.instruction ?? 'Escribe la respuesta:'}
+            </p>
 
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                  <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#f6e7e0] sm:h-10 sm:w-10">
-                    <KeyboardIcon />
-                  </div>
+            <div className="relative mt-3">
+              <input
+                ref={inputRef}
+                className="w-full min-h-[50px] rounded-[1.2rem] border border-[rgba(128,43,56,0.22)] bg-[#fffdfb] px-4 py-3.5 pr-14 text-base text-[rgb(var(--color-neutral))] outline-none transition placeholder:text-[rgb(var(--color-neutral))]/35 focus:border-[rgb(var(--color-accent))] focus:bg-white focus:ring-2 focus:ring-[rgba(128,43,56,0.12)] disabled:bg-stone-50 disabled:opacity-80 sm:px-5 sm:py-4 sm:text-lg"
+                value={answer}
+                onChange={(event) => setAnswer(event.target.value)}
+                placeholder="Escribe aquí..."
+                autoComplete="off"
+                disabled={feedback !== null}
+              />
+
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#f6e7e0] sm:h-10 sm:w-10">
+                  <KeyboardIcon />
                 </div>
               </div>
-
-              {feedback ? (
-                <p className={['mt-3 text-center text-sm font-medium', feedback.tone === 'success' ? 'text-emerald-700' : 'text-red-600'].join(' ')}>{feedback.message}</p>
-              ) : null}
-
-              <div className="mt-4 flex justify-center sm:mt-5">
-                <button
-                  type="submit"
-                  className="inline-flex min-h-[44px] w-full sm:w-auto min-w-36 items-center justify-center rounded-2xl bg-[rgb(var(--color-accent))] px-6 py-3 text-sm sm:text-base font-semibold text-white shadow-[0_12px_24px_rgba(128,43,56,0.18)] transition hover:bg-[rgb(var(--color-accent-dark))] active:scale-98"
-                >
-                  Verificar
-                </button>
-              </div>
-            </form>
-          </section>
-
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            <button type="button" onClick={handlePrev} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-[rgba(128,43,56,0.28)] bg-white px-4 py-3 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm transition hover:bg-[#fcf4f0] active:scale-98">
-              <span aria-hidden="true">←</span>
-              Atrás
-            </button>
-            <button type="button" onClick={handleNext} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-[rgba(128,43,56,0.28)] bg-white px-4 py-3 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm transition hover:bg-[#fcf4f0] active:scale-98">
-              Siguiente
-              <span aria-hidden="true">→</span>
-            </button>
-          </div>
-        </div>
-
-        {/* ASIDE DERECHO (Ranking + Modos de Juego) */}
-        <aside className="order-3 md:order-3 md:col-span-12 lg:col-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
-          <section className="rounded-[1.3rem] border border-[#eaded6] bg-white p-3.5 shadow-[0_12px_30px_rgba(128,43,56,0.08)] sm:p-4">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="text-base font-semibold text-[rgb(var(--color-accent))] sm:text-lg">Ranking de usuarios</h3>
             </div>
 
-            <div className="mt-3 grid gap-3 sm:mt-4">
-              {rankingLoading ? (
-                <div className="rounded-2xl border border-[#f0e2db] bg-[#fffdfb] px-3 py-3 text-sm text-[rgb(var(--color-neutral))]/70">Cargando ranking...</div>
-              ) : null}
+            {/* Answer Feedback Banner */}
+            {feedback ? (
+              <div
+                className={[
+                  'mt-4 rounded-2xl p-4 transition-all duration-300 shadow-xs animate-fadeIn',
+                  feedback.tone === 'success'
+                    ? 'bg-emerald-50/90 border border-emerald-200 text-emerald-900'
+                    : 'bg-rose-50/90 border border-rose-200 text-rose-900',
+                ].join(' ')}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <span className="text-2xl select-none" aria-hidden="true">
+                      {feedback.tone === 'success' ? '🎉' : '❌'}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-sm sm:text-base">{feedback.message}</p>
 
-              {!rankingLoading && rankingProfiles.length === 0 ? (
-                <div className="rounded-2xl border border-[#f0e2db] bg-[#fffdfb] px-3 py-3 text-sm text-[rgb(var(--color-neutral))]/70">Todavía no hay usuarios para mostrar.</div>
-              ) : null}
+                      {/* Detailed word info revealed ONLY after answering */}
+                      <div className="mt-1.5 text-xs sm:text-sm space-y-0.5">
+                        {currentQuestion?.hiragana || currentQuestion?.romaji ? (
+                          <div className="font-medium text-[rgb(var(--color-neutral))]/80">
+                            Lectura: <span className="font-semibold">{currentQuestion.hiragana || currentQuestion.romaji}</span>
+                            {currentQuestion.romaji && currentQuestion.hiragana ? ` (${currentQuestion.romaji})` : ''}
+                          </div>
+                        ) : null}
 
-              <div className="grid grid-cols-3 items-end gap-1.5 sm:gap-3 lg:items-stretch lg:gap-2">
-                {/* 2DO LUGAR */}
-                {podiumRanking[1] ? (
-                  <div className="order-2 flex h-[150px] flex-col items-center justify-between rounded-[1.15rem] border border-[#eaded6] bg-[#fff8f4] p-2 shadow-sm sm:h-[190px] lg:order-1 lg:h-[210px] lg:p-3 lg:translate-y-1">
-                    <div className="inline-flex items-center gap-0.5 rounded-full bg-[#dce9f4] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-[#46688e] sm:text-[9px]">
-                      <span aria-hidden="true">🥈</span>
-                      <span className="hidden sm:inline">2do</span>
-                    </div>
-                    <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-slate-300 to-slate-500 text-xs font-semibold text-white shadow-sm ring-2 ring-[#eef5fb] sm:h-12 sm:w-12 sm:text-base sm:ring-4">
-                      {(podiumRanking[1]?.username || podiumRanking[1]?.name || 'Usuario').slice(0, 1).toUpperCase()}
-                    </div>
-                    <div className="w-full min-w-0 text-center">
-                      <div className="w-full truncate text-[0.65rem] font-bold text-[rgb(var(--color-neutral))] sm:text-[0.85rem]" title={podiumRanking[1]?.username || podiumRanking[1]?.name || 'Usuario'}>
-                        {podiumRanking[1]?.username || podiumRanking[1]?.name || 'Usuario'}
-                      </div>
-                      <div className="truncate text-[9px] text-[rgb(var(--color-neutral))]/60 sm:text-[11px]">
-                        {podiumRanking[1]?.experience ?? podiumRanking[1]?.xp ?? 0} XP
-                      </div>
-                    </div>
-                  </div>
-                ) : <div className="order-2 hidden lg:block" />}
+                        {currentQuestion?.translation && mode === 'recognize' ? (
+                          <div className="text-[rgb(var(--color-neutral))]/70">
+                            Significado: <span className="font-semibold">{currentQuestion.translation}</span>
+                          </div>
+                        ) : null}
 
-                {/* 1ER LUGAR */}
-                {podiumRanking[0] ? (
-                  <div className="order-1 flex h-[170px] flex-col items-center justify-between rounded-[1.15rem] border border-[#eaded6] bg-[#fff3ed] p-2 shadow-md sm:h-[210px] lg:order-2 lg:h-[210px] lg:-translate-y-1 lg:scale-[1.03] lg:p-3 lg:shadow-[0_12px_24px_rgba(128,43,56,0.1)]">
-                    <div className="inline-flex items-center gap-0.5 rounded-full bg-[#ffe5a1] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-[#9d6d1d] sm:text-[9px]">
-                      <span aria-hidden="true">👑</span>
-                      <span className="hidden sm:inline">1ro</span>
-                    </div>
-                    <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-sm font-semibold text-white shadow-sm ring-2 ring-white sm:h-14 sm:w-14 sm:text-lg sm:ring-4">
-                      {(podiumRanking[0]?.username || podiumRanking[0]?.name || 'Usuario').slice(0, 1).toUpperCase()}
-                    </div>
-                    <div className="w-full min-w-0 text-center">
-                      <div className="w-full truncate text-[0.65rem] font-bold text-[rgb(var(--color-neutral))] sm:text-[0.85rem]" title={podiumRanking[0]?.username || podiumRanking[0]?.name || 'Usuario'}>
-                        {podiumRanking[0]?.username || podiumRanking[0]?.name || 'Usuario'}
-                      </div>
-                      <div className="truncate text-[9px] text-[rgb(var(--color-neutral))]/60 sm:text-[11px]">
-                        {podiumRanking[0]?.experience ?? podiumRanking[0]?.xp ?? 0} XP
-                      </div>
-                    </div>
-                  </div>
-                ) : <div className="order-1 hidden lg:block" />}
-
-                {/* 3ER LUGAR */}
-                {podiumRanking[2] ? (
-                  <div className="order-3 flex h-[140px] flex-col items-center justify-between rounded-[1.15rem] border border-[#eaded6] bg-[#fff8f4] p-2 shadow-sm sm:h-[180px] lg:h-[210px] lg:p-3 lg:translate-y-1">
-                    <div className="inline-flex items-center gap-0.5 rounded-full bg-[#efd4c8] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-[#8c5348] sm:text-[9px]">
-                      <span aria-hidden="true">🥉</span>
-                      <span className="hidden sm:inline">3ro</span>
-                    </div>
-                    <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-xs font-semibold text-white shadow-sm ring-2 ring-[#f8eded] sm:h-12 sm:w-12 sm:text-base sm:ring-4">
-                      {(podiumRanking[2]?.username || podiumRanking[2]?.name || 'Usuario').slice(0, 1).toUpperCase()}
-                    </div>
-                    <div className="w-full min-w-0 text-center">
-                      <div className="w-full truncate text-[0.65rem] font-bold text-[rgb(var(--color-neutral))] sm:text-[0.85rem]" title={podiumRanking[2]?.username || podiumRanking[2]?.name || 'Usuario'}>
-                        {podiumRanking[2]?.username || podiumRanking[2]?.name || 'Usuario'}
-                      </div>
-                      <div className="truncate text-[9px] text-[rgb(var(--color-neutral))]/60 sm:text-[11px]">
-                        {podiumRanking[2]?.experience ?? podiumRanking[2]?.xp ?? 0} XP
-                      </div>
-                    </div>
-                  </div>
-                ) : <div className="order-3 hidden lg:block" />}
-              </div>
-
-              {listRanking.length ? (
-                <div className="mt-2 space-y-2 border-t border-[#f0e2db] pt-4">
-                  {listRanking.map((player, indexRanking) => {
-                    const isCurrentUser = user?.id && player.user_id === user.id;
-                    const displayName = player.username || player.name || 'Usuario';
-                    const initials = displayName.slice(0, 1).toUpperCase();
-                    const xp = player.experience ?? player.xp ?? 0;
-
-                    return (
-                      <div
-                        key={player.user_id ?? player.name ?? displayName}
-                        className={[
-                          'flex items-center gap-2.5 rounded-2xl border px-3 py-2.5',
-                          isCurrentUser
-                            ? 'border-[rgba(128,43,56,0.46)] bg-[#fdf3ef] shadow-[0_8px_18px_rgba(128,43,56,0.08)]'
-                            : 'border-[#f0e2db] bg-[#fffdfb]'
-                        ].join(' ')}
-                      >
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--color-accent))] text-xs font-bold text-white shadow-sm">
-                          {indexRanking + 4}
-                        </div>
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#d95f76] to-[#8b2d3f] text-sm font-semibold text-white shadow-sm">
-                          {initials}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <div className={['w-full min-w-0 truncate text-sm font-semibold text-[rgb(var(--color-neutral))]', containsJapaneseScript(displayName) ? 'font-jp' : ''].join(' ')}>
-                              {displayName}
-                            </div>
-                            {isCurrentUser ? (
-                              <span className="inline-flex shrink-0 items-center rounded-full bg-[rgb(var(--color-accent))]/12 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[rgb(var(--color-accent))]">
-                                Tú
+                        {feedback.tone === 'error' && currentQuestion?.answers?.length ? (
+                          <p className="pt-0.5 text-xs sm:text-sm font-medium text-rose-800">
+                            Respuesta aceptada:{' '}
+                            <strong className="font-bold text-rose-950">
+                              {currentQuestion.answers[0]}
+                            </strong>
+                            {currentQuestion.answers.length > 1 ? (
+                              <span className="text-rose-700/80 font-normal">
+                                {' '}
+                                (o {currentQuestion.answers.slice(1, 3).join(', ')})
                               </span>
                             ) : null}
-                          </div>
-                          <div className="text-xs text-[rgb(var(--color-neutral))]/65">
-                            Nivel {player.level ?? 1}
-                            {isCurrentUser ? ' · actual' : ''}
-                          </div>
-                        </div>
-                        <div className="text-sm font-semibold text-[rgb(var(--color-neutral))]">{xp} XP</div>
+                          </p>
+                        ) : null}
                       </div>
-                    );
-                  })}
-                </div>
-              ) : null}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setRankingModalOpen(true)}
-              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[rgb(var(--color-accent))] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[rgb(var(--color-accent-dark))] sm:mt-4 sm:py-3"
-            >
-              Ver ranking completo
-            </button>
-          </section>
-
-          <section className="rounded-[1.3rem] border border-[#eaded6] bg-[#fbefe8] p-3.5 shadow-[0_12px_30px_rgba(128,43,56,0.08)] sm:p-4">
-            <h3 className="text-base font-semibold text-[rgb(var(--color-accent))] sm:text-lg">Modo de juego</h3>
-
-            <div className="mt-3 grid gap-2.5 sm:mt-4 sm:gap-3">
-              {modeCards.map((mode) => (
-                <div
-                  key={mode.id}
-                  className={[
-                    'rounded-2xl border p-3.5 sm:p-4',
-                    mode.active ? 'border-transparent bg-[rgb(var(--color-accent))] text-white shadow-md' : 'border-[#eaded6] bg-white text-[rgb(var(--color-neutral))]',
-                  ].join(' ')}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => handleModeChange(mode.id)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      handleModeChange(mode.id);
-                    }
-                  }}
-                >
-                  <div className="flex items-center gap-2 text-sm font-semibold">
-                    <span>{mode.label}</span>
-                    {mode.crown ? <span aria-hidden="true"></span> : null}
+                    </div>
                   </div>
-                  <p className={['mt-1 text-xs sm:text-sm', mode.active ? 'text-white/80' : 'text-[rgb(var(--color-neutral))]/70'].join(' ')}>{mode.description}</p>
-                </div>
-              ))}
-            </div>
 
-            <button className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[rgba(128,43,56,0.22)] bg-white px-4 py-2.5 text-sm font-semibold text-[rgb(var(--color-accent))] shadow-sm transition hover:bg-[#fcf4f0] sm:mt-4 sm:py-3">
-              <span aria-hidden="true">⚙</span>
-              Configuración del modo
-            </button>
-          </section>
-        </aside>
+                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                    {feedback.tone === 'success' ? (
+                      <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-extrabold text-emerald-800 tracking-wider">
+                        +50 XP
+                      </span>
+                    ) : null}
 
-        {rankingModalOpen ? (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(53,18,25,0.45)] px-4 py-6 backdrop-blur-sm"
-            onClick={() => setRankingModalOpen(false)}
-          >
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-label="Top 10 del ranking"
-              className="w-full max-w-3xl overflow-hidden rounded-[1.5rem] border border-[#eaded6] bg-white shadow-[0_24px_60px_rgba(53,18,25,0.28)]"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div className="flex items-start justify-between gap-4 border-b border-[#f0e2db] px-4 py-4 sm:px-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-[rgb(var(--color-accent))] sm:text-xl">Top 10 del ranking</h3>
-                  <p className="mt-1 text-sm text-[rgb(var(--color-neutral))]/60">Podio arriba y lista completa dentro del modal.</p>
+                    {/* Audio button in feedback */}
+                    <button
+                      type="button"
+                      onClick={() => speakWord(currentQuestion?.hiragana || currentQuestion?.prompt)}
+                      className="inline-flex items-center gap-1 rounded-full bg-white/80 border border-[#eaded6] px-2.5 py-1 text-xs font-semibold text-[rgb(var(--color-accent))] hover:bg-white transition shadow-2xs"
+                      title="Escuchar pronunciación"
+                      aria-label="Escuchar pronunciación"
+                    >
+                      <span aria-hidden="true">🔊</span>
+                      <span className="hidden sm:inline text-[11px]">Audio</span>
+                    </button>
+                  </div>
                 </div>
+              </div>
+            ) : null}
+
+            {/* Dynamic Action Button: Verificar / Siguiente pregunta */}
+            <div className="mt-5 flex justify-center">
+              {feedback ? (
                 <button
                   type="button"
-                  onClick={() => setRankingModalOpen(false)}
-                  className="rounded-full px-3 py-2 text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea]"
+                  ref={nextButtonRef}
+                  onClick={handleNext}
+                  className={[
+                    'inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-2xl px-6 py-3 text-base font-bold text-white shadow-md transition-all duration-150 active:scale-98',
+                    feedback.tone === 'success'
+                      ? 'bg-emerald-600 hover:bg-emerald-700 shadow-[0_10px_22px_rgba(5,150,105,0.28)]'
+                      : 'bg-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent-dark))] shadow-[0_10px_22px_rgba(128,43,56,0.22)]',
+                  ].join(' ')}
                 >
-                  Cerrar
+                  <span>Siguiente pregunta</span>
+                  <span aria-hidden="true">→</span>
                 </button>
-              </div>
-
-              <div className="max-h-[75vh] overflow-y-auto p-4 sm:p-6">
-                <div className="space-y-3">
-                  {modalRanking.map((player, indexRanking) => {
-                    const isCurrentUser = user?.id && player.user_id === user.id;
-                    const displayName = player.username || player.name || 'Usuario';
-                    const initials = displayName.slice(0, 1).toUpperCase();
-                    const xp = player.experience ?? player.xp ?? 0;
-                    const rankGradient =
-                      indexRanking === 0
-                        ? 'from-amber-400 to-amber-600'
-                        : indexRanking === 1
-                          ? 'from-slate-300 to-slate-500'
-                          : indexRanking === 2
-                            ? 'from-orange-400 to-orange-600'
-                            : 'from-[#d95f76] to-[#8b2d3f]';
-                    const rankBadgeClass =
-                      indexRanking === 0
-                        ? 'bg-gradient-to-br from-amber-400 to-amber-600'
-                        : indexRanking === 1
-                          ? 'bg-gradient-to-br from-slate-300 to-slate-500'
-                          : indexRanking === 2
-                            ? 'bg-gradient-to-br from-orange-400 to-orange-600'
-                            : 'bg-[rgb(var(--color-accent))]';
-
-                    return (
-                      <div
-                        key={`modal-${player.user_id ?? player.name ?? displayName}`}
-                        className={[
-                          'flex items-center gap-3 rounded-2xl border px-3 py-3 sm:px-4',
-                          isCurrentUser ? 'border-[rgba(128,43,56,0.28)] bg-[#fdf3ef]' : 'border-[#f0e2db] bg-[#fffdfb]'
-                        ].join(' ')}
-                      >
-                        <div className={[
-                          'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow-sm',
-                          rankBadgeClass,
-                        ].join(' ')}>
-                          #{indexRanking + 1}
-                        </div>
-                        <div className={[
-                          'flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br text-sm font-semibold text-white shadow-sm',
-                          rankGradient,
-                        ].join(' ')}>
-                          {initials}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className={['truncate text-sm font-semibold text-[rgb(var(--color-neutral))]', containsJapaneseScript(displayName) ? 'font-jp' : ''].join(' ')}>
-                            {displayName}
-                            {isCurrentUser ? ' (Tú)' : ''}
-                          </div>
-                          <div className="text-xs text-[rgb(var(--color-neutral))]/65">
-                            Nivel {player.level ?? 1}
-                            {isCurrentUser ? ' · actual' : ''}
-                          </div>
-                        </div>
-                        <div className="text-sm font-semibold text-[rgb(var(--color-neutral))]">{xp} XP</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={!answer.trim()}
+                  className="inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-2xl bg-[rgb(var(--color-accent))] px-6 py-3 text-base font-bold text-white shadow-[0_12px_24px_rgba(128,43,56,0.18)] transition-all duration-150 hover:bg-[rgb(var(--color-accent-dark))] active:scale-98 disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none"
+                >
+                  <span>Verificar</span>
+                </button>
+              )}
             </div>
-          </div>
-        ) : null}
-      </section>
+          </form>
+        </section>
+      </div>
     </div>
   );
 }
