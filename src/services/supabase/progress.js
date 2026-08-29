@@ -24,11 +24,17 @@ export async function fetchRankingProfiles(limit = 10) {
     .limit(limit);
 }
 
-export async function fetchUserProgress(userId) {
-  return await supabase
+export async function fetchUserProgress(userId, mode = null) {
+  let query = supabase
     .from('progress')
-    .select('word_id,status,mode,correct,attempts,mastery_level,last_attempt')
+    .select('id,user_id,word_id,correct,attempts,mastery_level,last_attempt,mode')
     .eq('user_id', userId);
+
+  if (mode) {
+    query = query.eq('mode', mode);
+  }
+
+  return await query;
 }
 
 export async function fetchRecentProgress(userId, limit = 6) {
