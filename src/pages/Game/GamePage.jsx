@@ -77,6 +77,11 @@ const getAnswersFromWord = (word, mode) => {
 
 const getStreakStorageKey = (userId) => `kanaquest-streak:${userId}`;
 
+function getInitials(player) {
+  const name = player?.username || player?.name || 'U';
+  return name.slice(0, 1).toUpperCase();
+}
+
 function speakWord(text) {
   if (typeof window === 'undefined' || !window.speechSynthesis || !text) return;
   try {
@@ -141,7 +146,7 @@ export default function GamePage() {
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
 
-  // Ranking State for Weekly Ranking Sidebar
+  // Ranking State for Compact Podium Sidebar
   const [rankingProfiles, setRankingProfiles] = useState([]);
   const [rankingLoading, setRankingLoading] = useState(true);
   const [rankingModalOpen, setRankingModalOpen] = useState(false);
@@ -424,8 +429,8 @@ export default function GamePage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl py-2">
-      {/* 2-Column Asymmetrical Layout: Exercise (Left) + Weekly Ranking Sidebar (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_320px] gap-5 items-start">
+      {/* 2-Column Asymmetrical Layout: Exercise (Left) + Compact Podium Ranking (Right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_290px] xl:grid-cols-[1fr_310px] gap-5 items-start">
         
         {/* LEFT COLUMN: Main Practice Flow */}
         <div className="w-full max-w-2xl mx-auto lg:max-w-none space-y-3.5">
@@ -638,77 +643,114 @@ export default function GamePage() {
           </section>
         </div>
 
-        {/* RIGHT COLUMN: Compact Weekly Ranking Sidebar */}
-        <aside className="w-full max-w-2xl mx-auto lg:max-w-[320px] rounded-[1.6rem] border border-[#eaded6] bg-white p-4 sm:p-5 shadow-[0_14px_32px_rgba(107,40,50,0.06)]">
+        {/* RIGHT COLUMN: Compact Podium Ranking Sidebar */}
+        <aside className="w-full max-w-2xl mx-auto lg:max-w-[300px] xl:max-w-[320px] rounded-[1.6rem] border border-[#eaded6] bg-white p-4 sm:p-4.5 shadow-[0_14px_32px_rgba(107,40,50,0.06)]">
           {/* Header */}
-          <div className="flex items-center justify-between gap-2 pb-3 border-b border-[#f2e2da]">
-            <div className="flex items-center gap-1.5">
-              <span className="text-base sm:text-lg select-none" aria-hidden="true">🏆</span>
-              <h3 className="text-base font-bold text-[#6b2832] tracking-tight">
-                Ranking Semanal
-              </h3>
-            </div>
-            <button
-              type="button"
-              onClick={() => setRankingModalOpen(true)}
-              className="text-xs font-semibold text-[#6b2832]/80 hover:text-[#6b2832] hover:underline transition"
-            >
-              Ver detalles
-            </button>
+          <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[#f2e2da]">
+            <h3 className="text-base font-bold text-[#6b2832] tracking-tight">
+              Ranking de usuarios
+            </h3>
           </div>
 
-          {/* Top 3 List */}
-          <div className="mt-3.5 space-y-2">
+          {/* Compact Podium (Top 3) */}
+          <div className="mt-3">
             {rankingLoading ? (
               <div className="py-6 text-center text-xs text-[rgb(var(--color-neutral))]/60">
                 Cargando ranking...
               </div>
-            ) : top3.length === 0 ? (
-              <div className="py-4 text-center text-xs text-[rgb(var(--color-neutral))]/60">
-                Aún no hay puntuaciones esta semana.
-              </div>
             ) : (
-              top3.map((player, idx) => {
-                const isCurrent = user?.id && player.user_id === user.id;
-                const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
-                const name = player.username || player.name || `Jugador ${idx + 1}`;
-                const xp = player.experience ?? player.xp ?? 0;
-
-                return (
-                  <div
-                    key={player.user_id || idx}
-                    className={[
-                      'flex items-center justify-between gap-2.5 rounded-xl px-3 py-2 text-xs transition-all',
-                      isCurrent
-                        ? 'bg-[#faece9] border border-[#e3b8b1] shadow-2xs font-bold text-[#6b2832]'
-                        : 'bg-[#fffdfb] border border-[#eaded6] hover:bg-white text-[rgb(var(--color-neutral))]',
-                    ].join(' ')}
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-sm shrink-0 select-none" aria-hidden="true">{medal}</span>
-                      <span className={['truncate font-semibold', isCurrent ? 'text-[#6b2832]' : 'text-[rgb(var(--color-neutral))]', containsJapaneseScript(name) ? 'font-jp' : ''].join(' ')}>
-                        {name} {isCurrent ? '(Tú)' : ''}
-                      </span>
+              <div className="grid grid-cols-3 items-end gap-1.5 pt-1">
+                {/* 2DO LUGAR */}
+                {top3[1] ? (
+                  <div className="flex h-[132px] flex-col items-center justify-between rounded-2xl border border-[#eaded6] bg-[#fff8f4] p-2 shadow-2xs">
+                    <div className="inline-flex items-center gap-0.5 rounded-full bg-[#dce9f4] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-[#46688e]">
+                      <span aria-hidden="true">🥈</span>
+                      <span>2DO</span>
                     </div>
-                    <span className="font-bold text-[#6b2832] shrink-0 font-mono">
-                      {xp} <span className="text-[10px] font-normal text-[rgb(var(--color-neutral))]/60">XP</span>
-                    </span>
+                    <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-slate-300 to-slate-500 text-xs font-bold text-white shadow-2xs ring-2 ring-[#eef5fb]">
+                      {getInitials(top3[1])}
+                    </div>
+                    <div className="w-full min-w-0 text-center">
+                      <div
+                        className={['truncate text-[11px] font-bold', top3[1].user_id === user?.id ? 'text-[#6b2832]' : 'text-[rgb(var(--color-neutral))]', containsJapaneseScript(top3[1].username) ? 'font-jp' : ''].join(' ')}
+                        title={top3[1].username}
+                      >
+                        {top3[1].username || 'Usuario'}
+                      </div>
+                      <div className="truncate text-[10px] text-[rgb(var(--color-neutral))]/60 font-medium">
+                        {top3[1].experience ?? 0} XP
+                      </div>
+                    </div>
                   </div>
-                );
-              })
+                ) : (
+                  <div className="h-[132px]" />
+                )}
+
+                {/* 1ER LUGAR */}
+                {top3[0] ? (
+                  <div className="flex h-[148px] -translate-y-1 flex-col items-center justify-between rounded-2xl border border-[#e3b8b1] bg-[#fff3ed] p-2 sm:p-2.5 shadow-sm">
+                    <div className="inline-flex items-center gap-0.5 rounded-full bg-[#ffe5a1] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-[#9d6d1d]">
+                      <span aria-hidden="true">👑</span>
+                      <span>1RO</span>
+                    </div>
+                    <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-xs sm:text-sm font-bold text-white shadow-xs ring-2 ring-amber-200">
+                      {getInitials(top3[0])}
+                    </div>
+                    <div className="w-full min-w-0 text-center">
+                      <div
+                        className={['truncate text-[11px] font-extrabold text-[#6b2832]', containsJapaneseScript(top3[0].username) ? 'font-jp' : ''].join(' ')}
+                        title={top3[0].username}
+                      >
+                        {top3[0].username || 'Usuario'}
+                      </div>
+                      <div className="truncate text-[10px] text-[#6b2832]/80 font-bold font-mono">
+                        {top3[0].experience ?? 0} XP
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-[148px]" />
+                )}
+
+                {/* 3ER LUGAR */}
+                {top3[2] ? (
+                  <div className="flex h-[126px] flex-col items-center justify-between rounded-2xl border border-[#eaded6] bg-[#fff8f4] p-2 shadow-2xs">
+                    <div className="inline-flex items-center gap-0.5 rounded-full bg-[#efd4c8] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-[#8c5348]">
+                      <span aria-hidden="true">🥉</span>
+                      <span>3RO</span>
+                    </div>
+                    <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-[11px] font-bold text-white shadow-2xs ring-2 ring-[#f8eded]">
+                      {getInitials(top3[2])}
+                    </div>
+                    <div className="w-full min-w-0 text-center">
+                      <div
+                        className={['truncate text-[11px] font-bold', top3[2].user_id === user?.id ? 'text-[#6b2832]' : 'text-[rgb(var(--color-neutral))]', containsJapaneseScript(top3[2].username) ? 'font-jp' : ''].join(' ')}
+                        title={top3[2].username}
+                      >
+                        {top3[2].username || 'Usuario'}
+                      </div>
+                      <div className="truncate text-[10px] text-[rgb(var(--color-neutral))]/60 font-medium">
+                        {top3[2].experience ?? 0} XP
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-[126px]" />
+                )}
+              </div>
             )}
           </div>
 
-          {/* If user is not in top 3, show their row */}
+          {/* User's position row if not in top 3 */}
           {!rankingLoading && !isUserInTop3 && currentUserRank ? (
-            <div className="mt-3 pt-2.5 border-t border-[#f2e2da]">
-              <div className="flex items-center justify-between gap-2 rounded-xl bg-[#faece9] border border-[#e3b8b1] px-3 py-2 text-xs font-bold text-[#6b2832]">
+            <div className="mt-2.5 pt-2 border-t border-[#f2e2da]">
+              <div className="flex items-center justify-between gap-2 rounded-xl bg-[#faece9] border border-[#e3b8b1] px-3 py-1.5 text-xs font-bold text-[#6b2832]">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="rounded-full bg-[#6b2832] text-white text-[10px] font-bold px-1.5 py-0.5 shrink-0">
                     #{currentUserRank}
                   </span>
                   <span className="truncate">
-                    {user?.user_metadata?.username || 'Tú'} (Tu posición)
+                    {currentUserProfile?.username || user?.user_metadata?.username || 'Tú'} (Tú)
                   </span>
                 </div>
                 <span className="font-mono text-[#6b2832] shrink-0">
@@ -718,24 +760,33 @@ export default function GamePage() {
             </div>
           ) : null}
 
-          {/* Motivational Bottom Badge / Pill */}
+          {/* Motivational Badge / Pill */}
           {!rankingLoading && (
-            <div className="mt-3.5">
+            <div className="mt-2.5">
               {currentUserRank === 1 ? (
-                <div className="rounded-xl bg-[#6b2832] text-white p-2.5 text-center text-xs font-bold shadow-xs">
-                  ¡Estás en el puesto #1 del podio! 👑
+                <div className="rounded-xl bg-[#faece9] border border-[#e3b8b1] text-[#6b2832] p-2 text-center text-xs font-bold shadow-2xs">
+                  ¡Estás en el puesto #1! 👑
                 </div>
               ) : xpToNext > 0 ? (
-                <div className="rounded-xl bg-[#f7ece5] border border-[#ead8ce] text-[#6b2832] p-2.5 text-center text-xs font-semibold">
-                  🚀 <strong>+{xpToNext} XP</strong> para subir de puesto
+                <div className="rounded-xl bg-[#f7ece5] border border-[#ead8ce] text-[#6b2832] p-2 text-center text-xs font-semibold">
+                  🚀 <strong>+{xpToNext} XP</strong> para el siguiente puesto
                 </div>
               ) : (
-                <div className="rounded-xl bg-[#f7ece5] border border-[#ead8ce] text-[#6b2832] p-2.5 text-center text-xs font-semibold">
-                  🎯 ¡Sigue sumando XP para subir en el ranking!
+                <div className="rounded-xl bg-[#f7ece5] border border-[#ead8ce] text-[#6b2832] p-2 text-center text-xs font-semibold">
+                  🎯 ¡Gana partidas para subir en el podio!
                 </div>
               )}
             </div>
           )}
+
+          {/* Bottom Button */}
+          <button
+            type="button"
+            onClick={() => setRankingModalOpen(true)}
+            className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#6b2832] px-4 py-2.5 text-xs sm:text-sm font-medium text-white shadow-xs transition hover:bg-[#581f27] active:scale-98"
+          >
+            <span>Ver ranking completo</span>
+          </button>
         </aside>
       </div>
 
