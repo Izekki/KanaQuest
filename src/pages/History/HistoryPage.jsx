@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useAuthSession } from '../../hooks/useAuthSession';
+import { getUser } from '../../services/supabase/auth';
 import { fetchWordsForHistory } from '../../services/supabase/words';
 import { fetchUserProgress } from '../../services/supabase/progress';
 import { useSoundEffects } from '../../hooks/useSoundEffects';
@@ -94,18 +95,25 @@ export default function HistoryPage() {
 
   // 1. Data Fetching from Supabase
   const loadData = useCallback(async () => {
-    if (!user?.id) {
-      setWords([]);
-      setProgressRows([]);
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
     try {
+      let activeUserId = user?.id;
+
+      if (!activeUserId) {
+        const { data: authData } = await getUser();
+        activeUserId = authData?.user?.id;
+      }
+
+      if (!activeUserId) {
+        setWords([]);
+        setProgressRows([]);
+        setLoading(false);
+        return;
+      }
+
       const [wordsResult, progressResult] = await Promise.all([
         fetchWordsForHistory(),
-        fetchUserProgress(user.id),
+        fetchUserProgress(activeUserId, mode),
       ]);
 
       if (wordsResult.error) throw wordsResult.error;
@@ -120,7 +128,7 @@ export default function HistoryPage() {
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, mode]);
 
   useEffect(() => {
     loadData();
@@ -133,22 +141,20 @@ export default function HistoryPage() {
 
   // 2. Correlate Words with Progress per active mode
   const progressMap = useMemo(() => {
-    return progressRows
-      .filter((row) => row?.mode === mode)
-      .reduce((acc, row) => {
-        if (row?.word_id) {
-          acc[row.word_id] = row;
-        }
-        return acc;
-      }, {});
-  }, [progressRows, mode]);
+    return progressRows.reduce((acc, row) => {
+      if (row?.word_id) {
+        acc[row.word_id] = row;
+      }
+      return acc;
+    }, {});
+  }, [progressRows]);
 
   const allItems = useMemo(() => {
     return words.map((word) => {
       const progress = progressMap[word.id];
       const attempts = progress?.attempts ?? 0;
       const masteryLevel = progress?.mastery_level ?? 0;
-      const isCorrect = Boolean(progress?.correct) || masteryLevel > 0;
+      const isCorrect = Boolean(progress?.correct) || masteryLevel >= 1;
       const status = isCorrect ? 'correct' : attempts > 0 ? 'wrong' : 'pending';
 
       return {

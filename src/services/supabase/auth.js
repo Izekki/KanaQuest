@@ -24,6 +24,10 @@ export async function getSession() {
   return await supabase.auth.getSession();
 }
 
+export async function getUser() {
+  return await supabase.auth.getUser();
+}
+
 export function onAuthStateChange(callback) {
   return supabase.auth.onAuthStateChange(callback);
 }

@@ -34,6 +34,16 @@ export default function App() {
         }
       />
       <Route
+        path="/aprender"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <GamePage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/pair-match"
         element={
           <ProtectedRoute>
