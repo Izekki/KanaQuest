@@ -136,15 +136,17 @@ export default function GamePage() {
   const { playFlip, playSuccess, playError } = useSoundEffects();
 
   const [answer, setAnswer] = useState('');
-  const [feedback, setFeedback] = useState(null); // null | { tone: 'success' | 'error', message: string, masteryLevel?: number }
+  const [feedback, setFeedback] = useState(null);
   const [index, setIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
 
-  // Ranking State
+  // Ranking State for Micro-Widget
   const [rankingProfiles, setRankingProfiles] = useState([]);
   const [rankingLoading, setRankingLoading] = useState(true);
   const [rankingModalOpen, setRankingModalOpen] = useState(false);
+  const [rankUpMessage, setRankUpMessage] = useState(null);
+  const prevRankRef = useRef(null);
 
   const inputRef = useRef(null);
   const nextButtonRef = useRef(null);
@@ -275,25 +277,47 @@ export default function GamePage() {
     return () => window.removeEventListener('kanaquest-profile-updated', handleProfileUpdate);
   }, [user?.id]);
 
-  // Ranking Computations
-  const top3 = useMemo(() => rankingProfiles.slice(0, 3), [rankingProfiles]);
+  // Ranking Computations for Micro-Widget
   const currentUserIndex = useMemo(() => {
     if (!user?.id) return -1;
     return rankingProfiles.findIndex((p) => p.user_id === user.id);
   }, [rankingProfiles, user?.id]);
 
-  const currentUserRank = currentUserIndex >= 0 ? currentUserIndex + 1 : null;
-  const isUserInTop3 = currentUserIndex >= 0 && currentUserIndex < 3;
+  const currentUserRank = currentUserIndex >= 0 ? currentUserIndex + 1 : (rankingProfiles.length ? rankingProfiles.length + 1 : 1);
   const currentUserProfile = currentUserIndex >= 0 ? rankingProfiles[currentUserIndex] : null;
   const currentUserXP = currentUserProfile?.experience ?? 0;
 
-  const xpToNext = useMemo(() => {
+  // Rival immediately ahead
+  const rival = useMemo(() => {
     if (currentUserIndex > 0 && rankingProfiles[currentUserIndex - 1]) {
-      const prevXP = rankingProfiles[currentUserIndex - 1].experience ?? 0;
-      return Math.max(10, prevXP - currentUserXP + 10);
+      return rankingProfiles[currentUserIndex - 1];
     }
-    return 0;
-  }, [currentUserIndex, rankingProfiles, currentUserXP]);
+    return null;
+  }, [currentUserIndex, rankingProfiles]);
+
+  const rivalName = rival?.username || rival?.name || 'Rival';
+  const rivalRank = currentUserRank ? currentUserRank - 1 : 1;
+  const rivalXP = rival?.experience ?? rival?.xp ?? 0;
+  const xpGap = Math.max(0, rivalXP - currentUserXP + 10);
+
+  const rivalPercentage = useMemo(() => {
+    if (currentUserRank === 1) return 100;
+    if (!rivalXP || rivalXP <= 0) return Math.min(100, Math.max(15, currentUserXP));
+    const pct = Math.round((currentUserXP / rivalXP) * 100);
+    return Math.min(99, Math.max(8, pct));
+  }, [currentUserRank, currentUserXP, rivalXP]);
+
+  // Rank-up celebration toast
+  useEffect(() => {
+    if (currentUserRank !== null) {
+      if (prevRankRef.current !== null && currentUserRank < prevRankRef.current) {
+        setRankUpMessage(`¡Has subido al Puesto #${currentUserRank}! 🎉`);
+        const timer = setTimeout(() => setRankUpMessage(null), 4500);
+        return () => clearTimeout(timer);
+      }
+      prevRankRef.current = currentUserRank;
+    }
+  }, [currentUserRank]);
 
   const fallbackDeck = useMemo(
     () => ({
@@ -423,326 +447,300 @@ export default function GamePage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-6xl py-2">
-      {/* Asymmetrical 2-Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_290px] xl:grid-cols-[1fr_310px] gap-5 items-start">
-        {/* Main Column: Game & Practice Session */}
-        <div className="w-full max-w-2xl mx-auto lg:max-w-none space-y-3.5">
-          {/* Top Bar with Compact Mode Selector and Quick Links */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5">
-            {/* Mode Selector Pills */}
-            <div className="flex items-center gap-1 rounded-2xl bg-[#fbf5f2] p-1 border border-[#eaded6] shadow-xs">
-              {[
-                { id: 'recognize', label: 'Reconocer' },
-                { id: 'translate', label: 'Traducir' },
-              ].map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => handleModeChange(option.id)}
-                  className={[
-                    'rounded-xl px-3.5 py-1.5 text-xs sm:text-sm font-semibold transition-all',
-                    mode === option.id
-                      ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
-                      : 'text-[rgb(var(--color-neutral))]/70 hover:text-[rgb(var(--color-accent))] hover:bg-white',
-                  ].join(' ')}
-                >
-                  {option.label}
-                </button>
-              ))}
-
-              <button
-                type="button"
-                onClick={() => navigate('/pair-match')}
-                className="rounded-xl px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-[rgb(var(--color-neutral))]/70 hover:text-[rgb(var(--color-accent))] hover:bg-white transition-all"
-              >
-                Parejas 🎴
-              </button>
-            </div>
-
-            {/* Quick Link to Historial */}
-            <Link
-              to="/historial"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#eaded6] bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-[rgb(var(--color-accent))] shadow-xs transition hover:bg-white hover:shadow-sm"
+    <div className="mx-auto w-full max-w-2xl py-2 space-y-3.5">
+      {/* Top Bar with Mode Selector Pills and Quick Links */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
+        {/* Mode Selector Pills */}
+        <div className="flex items-center gap-1 rounded-2xl bg-[#fbf5f2] p-1 border border-[#eaded6] shadow-xs">
+          {[
+            { id: 'recognize', label: 'Reconocer' },
+            { id: 'translate', label: 'Traducir' },
+          ].map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => handleModeChange(option.id)}
+              className={[
+                'rounded-xl px-3.5 py-1.5 text-xs sm:text-sm font-semibold transition-all',
+                mode === option.id
+                  ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
+                  : 'text-[rgb(var(--color-neutral))]/70 hover:text-[rgb(var(--color-accent))] hover:bg-white',
+              ].join(' ')}
             >
-              <span>Historial</span>
-              <span aria-hidden="true">⏱</span>
-            </Link>
-          </div>
+              {option.label}
+            </button>
+          ))}
 
-          {/* Top Progress Bar Component */}
-          <SessionProgressCard
-            streak={sessionStats.streak}
-            questionNumber={sessionStats.questionNumber}
-            totalQuestions={sessionStats.totalQuestions}
-            score={sessionStats.score}
-            progress={sessionStats.progress}
-            className="mb-0"
-          />
-
-          {/* Central Game Card */}
-          <section className="rounded-[1.75rem] border border-[#eaded6] bg-white p-5 sm:p-7 shadow-[0_16px_36px_rgba(128,43,56,0.08)]">
-            {loading ? (
-              <p className="mb-4 text-center text-sm text-[rgb(var(--color-neutral))]/70">
-                Cargando palabras desde Supabase...
-              </p>
-            ) : null}
-
-            {/* Prompt + Mascot Section */}
-            <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-4 items-center text-center sm:text-left">
-              <div className="flex flex-col justify-center min-h-[140px] sm:min-h-[180px]">
-                <div className="flex items-center justify-center sm:justify-start gap-3">
-                  <div
-                    className={[
-                      'font-bold leading-tight text-[rgb(var(--color-accent))] tracking-tight select-none',
-                      promptSizeClass,
-                      promptIsJapanese ? 'font-jp' : '',
-                    ].join(' ')}
-                  >
-                    {currentQuestion?.prompt ?? '...'}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-center sm:justify-end">
-                <CatIllustration animationState={feedback?.tone} />
-              </div>
-            </div>
-
-            {/* Practice Form */}
-            <form className="mx-auto mt-5 max-w-xl" onSubmit={handleSubmit}>
-              <p className="text-center text-sm sm:text-base font-semibold text-[rgb(var(--color-neutral))]">
-                {currentQuestion?.instruction ?? 'Escribe la respuesta:'}
-              </p>
-
-              <div className="relative mt-3">
-                <input
-                  ref={inputRef}
-                  className="w-full min-h-[50px] rounded-[1.2rem] border border-[rgba(128,43,56,0.22)] bg-[#fffdfb] px-4 py-3.5 pr-14 text-base text-[rgb(var(--color-neutral))] outline-none transition placeholder:text-[rgb(var(--color-neutral))]/35 focus:border-[rgb(var(--color-accent))] focus:bg-white focus:ring-2 focus:ring-[rgba(128,43,56,0.12)] disabled:bg-stone-50 disabled:opacity-80 sm:px-5 sm:py-4 sm:text-lg"
-                  value={answer}
-                  onChange={(event) => setAnswer(event.target.value)}
-                  placeholder="Escribe aquí..."
-                  autoComplete="off"
-                  disabled={feedback !== null}
-                />
-
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                  <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#f6e7e0] sm:h-10 sm:w-10">
-                    <KeyboardIcon />
-                  </div>
-                </div>
-              </div>
-
-              {/* Answer Feedback Banner */}
-              {feedback ? (
-                <div
-                  className={[
-                    'mt-4 rounded-2xl p-4 transition-all duration-300 shadow-xs animate-fadeIn',
-                    feedback.tone === 'success'
-                      ? 'bg-emerald-50/90 border border-emerald-200 text-emerald-900'
-                      : 'bg-rose-50/90 border border-rose-200 text-rose-900',
-                  ].join(' ')}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3 min-w-0">
-                      <span className="text-2xl select-none" aria-hidden="true">
-                        {feedback.tone === 'success' ? '🎉' : '❌'}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-bold text-sm sm:text-base">{feedback.message}</p>
-
-                        {/* Detailed word info revealed ONLY after answering */}
-                        <div className="mt-1.5 text-xs sm:text-sm space-y-0.5">
-                          {currentQuestion?.hiragana || currentQuestion?.romaji ? (
-                            <div className="font-medium text-[rgb(var(--color-neutral))]/80">
-                              Lectura: <span className="font-semibold">{currentQuestion.hiragana || currentQuestion.romaji}</span>
-                              {currentQuestion.romaji && currentQuestion.hiragana ? ` (${currentQuestion.romaji})` : ''}
-                            </div>
-                          ) : null}
-
-                          {currentQuestion?.translation && mode === 'recognize' ? (
-                            <div className="text-[rgb(var(--color-neutral))]/70">
-                              Significado: <span className="font-semibold">{currentQuestion.translation}</span>
-                            </div>
-                          ) : null}
-
-                          {feedback.tone === 'error' && currentQuestion?.answers?.length ? (
-                            <p className="pt-0.5 text-xs sm:text-sm font-medium text-rose-800">
-                              Respuesta aceptada:{' '}
-                              <strong className="font-bold text-rose-950">
-                                {currentQuestion.answers[0]}
-                              </strong>
-                              {currentQuestion.answers.length > 1 ? (
-                                <span className="text-rose-700/80 font-normal">
-                                  {' '}
-                                  (o {currentQuestion.answers.slice(1, 3).join(', ')})
-                                </span>
-                              ) : null}
-                            </p>
-                          ) : null}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col items-end gap-1.5 shrink-0">
-                      {feedback.tone === 'success' ? (
-                        <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-extrabold text-emerald-800 tracking-wider">
-                          +50 XP
-                        </span>
-                      ) : null}
-
-                      {/* Audio button in feedback */}
-                      <button
-                        type="button"
-                        onClick={() => speakWord(currentQuestion?.hiragana || currentQuestion?.prompt)}
-                        className="inline-flex items-center gap-1 rounded-full bg-white/80 border border-[#eaded6] px-2.5 py-1 text-xs font-semibold text-[rgb(var(--color-accent))] hover:bg-white transition shadow-2xs"
-                        title="Escuchar pronunciación"
-                        aria-label="Escuchar pronunciación"
-                      >
-                        <span aria-hidden="true">🔊</span>
-                        <span className="hidden sm:inline text-[11px]">Audio</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-
-              {/* Dynamic Action Button: Verificar / Siguiente pregunta */}
-              <div className="mt-5 flex justify-center">
-                {feedback ? (
-                  <button
-                    type="button"
-                    ref={nextButtonRef}
-                    onClick={handleNext}
-                    className={[
-                      'inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-2xl px-6 py-3 text-base font-bold text-white shadow-md transition-all duration-150 active:scale-98',
-                      feedback.tone === 'success'
-                        ? 'bg-emerald-600 hover:bg-emerald-700 shadow-[0_10px_22px_rgba(5,150,105,0.28)]'
-                        : 'bg-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent-dark))] shadow-[0_10px_22px_rgba(128,43,56,0.22)]',
-                    ].join(' ')}
-                  >
-                    <span>Siguiente pregunta</span>
-                    <span aria-hidden="true">→</span>
-                  </button>
-                ) : (
-                  <button
-                    type="submit"
-                    disabled={!answer.trim()}
-                    className="inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-2xl bg-[rgb(var(--color-accent))] px-6 py-3 text-base font-bold text-white shadow-[0_12px_24px_rgba(128,43,56,0.18)] transition-all duration-150 hover:bg-[rgb(var(--color-accent-dark))] active:scale-98 disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none"
-                  >
-                    <span>Verificar</span>
-                  </button>
-                )}
-              </div>
-            </form>
-          </section>
+          <button
+            type="button"
+            onClick={() => navigate('/pair-match')}
+            className="rounded-xl px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-[rgb(var(--color-neutral))]/70 hover:text-[rgb(var(--color-accent))] hover:bg-white transition-all"
+          >
+            Parejas 🎴
+          </button>
         </div>
 
-        {/* Right Column: Compact Weekly Ranking */}
-        <aside className="w-full max-w-2xl mx-auto lg:max-w-[310px] rounded-[1.6rem] border border-[#eaded6] bg-white p-4 sm:p-5 shadow-[0_12px_30px_rgba(128,43,56,0.06)]">
-          {/* Ranking Header */}
-          <div className="flex items-center justify-between gap-2 pb-3 border-b border-[#f3e7e0]">
-            <div className="flex items-center gap-1.5">
-              <span className="text-base sm:text-lg select-none" aria-hidden="true">🏆</span>
-              <h3 className="text-sm sm:text-base font-bold text-[rgb(var(--color-accent))] tracking-tight">
-                Ranking Semanal
-              </h3>
+        {/* Quick Link to Historial */}
+        <Link
+          to="/historial"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-[#eaded6] bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-[rgb(var(--color-accent))] shadow-xs transition hover:bg-white hover:shadow-sm"
+        >
+          <span>Historial</span>
+          <span aria-hidden="true">⏱</span>
+        </Link>
+      </div>
+
+      {/* Top Progress Bar Component */}
+      <SessionProgressCard
+        streak={sessionStats.streak}
+        questionNumber={sessionStats.questionNumber}
+        totalQuestions={sessionStats.totalQuestions}
+        score={sessionStats.score}
+        progress={sessionStats.progress}
+        className="mb-0"
+      />
+
+      {/* Micro-Widget Competitivo (Opción C) */}
+      <div className="relative overflow-hidden rounded-2xl border border-amber-200/70 bg-gradient-to-r from-[#fff9f3] via-[#fffdfb] to-[#fef8f4] p-3 sm:px-4 sm:py-3 shadow-xs">
+        {/* Rank up notification overlay */}
+        {rankUpMessage ? (
+          <div className="absolute inset-0 z-10 flex items-center justify-between bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-2 text-white font-bold text-xs sm:text-sm animate-fadeIn shadow-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-lg select-none">🎉</span>
+              <span>{rankUpMessage}</span>
             </div>
             <button
               type="button"
-              onClick={() => setRankingModalOpen(true)}
-              className="text-[11px] font-semibold text-[rgb(var(--color-accent))]/75 hover:text-[rgb(var(--color-accent))] hover:underline transition"
+              onClick={() => setRankUpMessage(null)}
+              className="rounded-full px-2 py-0.5 hover:bg-black/15 text-xs font-semibold"
             >
-              Ver detalles
+              ✕
             </button>
           </div>
+        ) : null}
 
-          {/* Compact Top 3 List */}
-          <div className="mt-3.5 space-y-2">
-            {rankingLoading ? (
-              <div className="py-6 text-center text-xs text-[rgb(var(--color-neutral))]/60">
-                Cargando ranking...
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          {/* Left: Position badge */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100/90 text-amber-800 font-bold text-sm shadow-2xs border border-amber-200 select-none">
+              🏆
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5 leading-tight">
+                <span className="text-xs font-extrabold text-[rgb(var(--color-accent))]">
+                  Puesto #{currentUserRank || '—'}
+                </span>
+                <span className="rounded-full bg-[rgb(var(--color-accent))]/10 px-1.5 py-0.2 text-[9px] font-bold text-[rgb(var(--color-accent))]">
+                  Tú
+                </span>
               </div>
-            ) : top3.length === 0 ? (
-              <div className="py-4 text-center text-xs text-[rgb(var(--color-neutral))]/60">
-                Aún no hay puntuaciones esta semana.
+              <div className="text-[10px] text-[rgb(var(--color-neutral))]/60 font-mono">
+                {currentUserXP} XP
               </div>
-            ) : (
-              top3.map((player, idx) => {
-                const isCurrent = user?.id && player.user_id === user.id;
-                const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
-                const name = player.username || player.name || `Jugador ${idx + 1}`;
-                const xp = player.experience ?? player.xp ?? 0;
-
-                return (
-                  <div
-                    key={player.user_id || idx}
-                    className={[
-                      'flex items-center justify-between gap-2.5 rounded-xl px-3 py-2 text-xs transition-all',
-                      isCurrent
-                        ? 'bg-[#fcf1ed] border border-[rgb(var(--color-accent))]/35 shadow-2xs font-semibold'
-                        : 'bg-[#fdfaf8] border border-[#f2e6df] hover:bg-white',
-                    ].join(' ')}
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-sm shrink-0 select-none" aria-hidden="true">{medal}</span>
-                      <span className={['truncate font-semibold text-[rgb(var(--color-neutral))]', containsJapaneseScript(name) ? 'font-jp' : ''].join(' ')}>
-                        {name} {isCurrent ? '(Tú)' : ''}
-                      </span>
-                    </div>
-                    <span className="font-bold text-[rgb(var(--color-accent))] shrink-0 font-mono">
-                      {xp} <span className="text-[10px] font-normal text-[rgb(var(--color-neutral))]/60">XP</span>
-                    </span>
-                  </div>
-                );
-              })
-            )}
+            </div>
           </div>
 
-          {/* User's Position Row (if not in Top 3) */}
-          {!rankingLoading && !isUserInTop3 && currentUserRank ? (
-            <div className="mt-3 pt-3 border-t border-[#f3e7e0]">
-              <div className="flex items-center justify-between gap-2 rounded-xl bg-[#fbf0ec] border border-[rgb(var(--color-accent))]/25 px-3 py-2 text-xs">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="rounded-full bg-[rgb(var(--color-accent))] text-white text-[10px] font-bold px-1.5 py-0.5 shrink-0">
-                    #{currentUserRank}
-                  </span>
-                  <span className="truncate font-bold text-[rgb(var(--color-accent))]">
-                    Tu posición
-                  </span>
-                </div>
-                <span className="font-bold text-[rgb(var(--color-accent))] shrink-0 font-mono">
-                  {currentUserXP} <span className="text-[10px] font-normal text-[rgb(var(--color-neutral))]/60">XP</span>
+          {/* Center: Distance Progress Bar toward Rival */}
+          <div className="flex-1 min-w-[170px] sm:mx-3">
+            <div className="flex items-center justify-between text-[11px] font-medium text-[rgb(var(--color-neutral))]/80 mb-1">
+              {currentUserRank === 1 ? (
+                <span className="text-amber-800 font-bold truncate">
+                  👑 ¡Líder de la clasificación!
                 </span>
+              ) : rival ? (
+                <span className="truncate">
+                  <strong>+{xpGap} XP</strong> para superar a{' '}
+                  <span className="text-[rgb(var(--color-accent))] font-semibold">@{rivalName}</span> (#{rivalRank})
+                </span>
+              ) : (
+                <span>Compitiendo en el Ranking Semanal</span>
+              )}
+              <span className="text-[10px] font-mono text-amber-700 font-bold shrink-0 ml-1">
+                {rivalPercentage}%
+              </span>
+            </div>
+
+            <div className="h-2 w-full overflow-hidden rounded-full bg-amber-100/70 border border-amber-200/50">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-500 ease-out"
+                style={{ width: `${rivalPercentage}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Right: Trigger Modal Button */}
+          <button
+            type="button"
+            onClick={() => setRankingModalOpen(true)}
+            className="inline-flex items-center justify-center gap-1.5 self-end sm:self-center rounded-xl bg-white border border-[#eaded6] px-3 py-1.5 text-xs font-semibold text-[rgb(var(--color-accent))] shadow-2xs transition hover:bg-[#fbf5f2] hover:border-[rgb(var(--color-accent))]/30 shrink-0"
+          >
+            <span>Tabla</span>
+            <span aria-hidden="true" className="text-[10px]">📊</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Central Game Card */}
+      <section className="rounded-[1.75rem] border border-[#eaded6] bg-white p-5 sm:p-7 shadow-[0_16px_36px_rgba(128,43,56,0.08)]">
+        {loading ? (
+          <p className="mb-4 text-center text-sm text-[rgb(var(--color-neutral))]/70">
+            Cargando palabras desde Supabase...
+          </p>
+        ) : null}
+
+        {/* Prompt + Mascot Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-4 items-center text-center sm:text-left">
+          <div className="flex flex-col justify-center min-h-[140px] sm:min-h-[180px]">
+            <div className="flex items-center justify-center sm:justify-start gap-3">
+              <div
+                className={[
+                  'font-bold leading-tight text-[rgb(var(--color-accent))] tracking-tight select-none',
+                  promptSizeClass,
+                  promptIsJapanese ? 'font-jp' : '',
+                ].join(' ')}
+              >
+                {currentQuestion?.prompt ?? '...'}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-center sm:justify-end">
+            <CatIllustration animationState={feedback?.tone} />
+          </div>
+        </div>
+
+        {/* Practice Form */}
+        <form className="mx-auto mt-5 max-w-xl" onSubmit={handleSubmit}>
+          <p className="text-center text-sm sm:text-base font-semibold text-[rgb(var(--color-neutral))]">
+            {currentQuestion?.instruction ?? 'Escribe la respuesta:'}
+          </p>
+
+          <div className="relative mt-3">
+            <input
+              ref={inputRef}
+              className="w-full min-h-[50px] rounded-[1.2rem] border border-[rgba(128,43,56,0.22)] bg-[#fffdfb] px-4 py-3.5 pr-14 text-base text-[rgb(var(--color-neutral))] outline-none transition placeholder:text-[rgb(var(--color-neutral))]/35 focus:border-[rgb(var(--color-accent))] focus:bg-white focus:ring-2 focus:ring-[rgba(128,43,56,0.12)] disabled:bg-stone-50 disabled:opacity-80 sm:px-5 sm:py-4 sm:text-lg"
+              value={answer}
+              onChange={(event) => setAnswer(event.target.value)}
+              placeholder="Escribe aquí..."
+              autoComplete="off"
+              disabled={feedback !== null}
+            />
+
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+              <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#f6e7e0] sm:h-10 sm:w-10">
+                <KeyboardIcon />
+              </div>
+            </div>
+          </div>
+
+          {/* Answer Feedback Banner */}
+          {feedback ? (
+            <div
+              className={[
+                'mt-4 rounded-2xl p-4 transition-all duration-300 shadow-xs animate-fadeIn',
+                feedback.tone === 'success'
+                  ? 'bg-emerald-50/90 border border-emerald-200 text-emerald-900'
+                  : 'bg-rose-50/90 border border-rose-200 text-rose-900',
+              ].join(' ')}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 min-w-0">
+                  <span className="text-2xl select-none" aria-hidden="true">
+                    {feedback.tone === 'success' ? '🎉' : '❌'}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-sm sm:text-base">{feedback.message}</p>
+
+                    {/* Detailed word info revealed ONLY after answering */}
+                    <div className="mt-1.5 text-xs sm:text-sm space-y-0.5">
+                      {currentQuestion?.hiragana || currentQuestion?.romaji ? (
+                        <div className="font-medium text-[rgb(var(--color-neutral))]/80">
+                          Lectura: <span className="font-semibold">{currentQuestion.hiragana || currentQuestion.romaji}</span>
+                          {currentQuestion.romaji && currentQuestion.hiragana ? ` (${currentQuestion.romaji})` : ''}
+                        </div>
+                      ) : null}
+
+                      {currentQuestion?.translation && mode === 'recognize' ? (
+                        <div className="text-[rgb(var(--color-neutral))]/70">
+                          Significado: <span className="font-semibold">{currentQuestion.translation}</span>
+                        </div>
+                      ) : null}
+
+                      {feedback.tone === 'error' && currentQuestion?.answers?.length ? (
+                        <p className="pt-0.5 text-xs sm:text-sm font-medium text-rose-800">
+                          Respuesta aceptada:{' '}
+                          <strong className="font-bold text-rose-950">
+                            {currentQuestion.answers[0]}
+                          </strong>
+                          {currentQuestion.answers.length > 1 ? (
+                            <span className="text-rose-700/80 font-normal">
+                              {' '}
+                              (o {currentQuestion.answers.slice(1, 3).join(', ')})
+                            </span>
+                          ) : null}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-end gap-1.5 shrink-0">
+                  {feedback.tone === 'success' ? (
+                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-extrabold text-emerald-800 tracking-wider">
+                      +50 XP
+                    </span>
+                  ) : null}
+
+                  {/* Audio button in feedback */}
+                  <button
+                    type="button"
+                    onClick={() => speakWord(currentQuestion?.hiragana || currentQuestion?.prompt)}
+                    className="inline-flex items-center gap-1 rounded-full bg-white/80 border border-[#eaded6] px-2.5 py-1 text-xs font-semibold text-[rgb(var(--color-accent))] hover:bg-white transition shadow-2xs"
+                    title="Escuchar pronunciación"
+                    aria-label="Escuchar pronunciación"
+                  >
+                    <span aria-hidden="true">🔊</span>
+                    <span className="hidden sm:inline text-[11px]">Audio</span>
+                  </button>
+                </div>
               </div>
             </div>
           ) : null}
 
-          {/* Motivational Indicator Footer */}
-          {!rankingLoading && (
-            <div className="mt-3.5 rounded-xl bg-[#faf3ef] p-2.5 text-center text-[11px] text-[rgb(var(--color-neutral))]/80 border border-[#f0e2db]">
-              {currentUserRank === 1 ? (
-                <span className="font-semibold text-emerald-800">
-                  ¡Estás en el puesto #1 del podio! 👑
-                </span>
-              ) : xpToNext > 0 ? (
-                <span>
-                  🚀 <strong>+{xpToNext} XP</strong> para subir de puesto
-                </span>
-              ) : (
-                <span>
-                  🎯 ¡Gana partidas para escalar en el ranking!
-                </span>
-              )}
-            </div>
-          )}
-        </aside>
-      </div>
+          {/* Dynamic Action Button: Verificar / Siguiente pregunta */}
+          <div className="mt-5 flex justify-center">
+            {feedback ? (
+              <button
+                type="button"
+                ref={nextButtonRef}
+                onClick={handleNext}
+                className={[
+                  'inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-2xl px-6 py-3 text-base font-bold text-white shadow-md transition-all duration-150 active:scale-98',
+                  feedback.tone === 'success'
+                    ? 'bg-emerald-600 hover:bg-emerald-700 shadow-[0_10px_22px_rgba(5,150,105,0.28)]'
+                    : 'bg-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-accent-dark))] shadow-[0_10px_22px_rgba(128,43,56,0.22)]',
+                ].join(' ')}
+              >
+                <span>Siguiente pregunta</span>
+                <span aria-hidden="true">→</span>
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={!answer.trim()}
+                className="inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-2xl bg-[rgb(var(--color-accent))] px-6 py-3 text-base font-bold text-white shadow-[0_12px_24px_rgba(128,43,56,0.18)] transition-all duration-150 hover:bg-[rgb(var(--color-accent-dark))] active:scale-98 disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none"
+              >
+                <span>Verificar</span>
+              </button>
+            )}
+          </div>
+        </form>
+      </section>
 
       {/* Full Ranking Modal */}
       {rankingModalOpen ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(53,18,25,0.45)] px-4 py-6 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(53,18,25,0.45)] px-4 py-6 backdrop-blur-sm animate-fadeIn"
           onClick={() => setRankingModalOpen(false)}
         >
           <div
@@ -755,7 +753,7 @@ export default function GamePage() {
             <div className="flex items-start justify-between gap-4 border-b border-[#f0e2db] px-5 py-4">
               <div>
                 <h3 className="text-base sm:text-lg font-bold text-[rgb(var(--color-accent))]">
-                  🏆 Top 10 del Ranking
+                  🏆 Top 10 del Ranking Semanal
                 </h3>
                 <p className="mt-0.5 text-xs text-[rgb(var(--color-neutral))]/65">
                   Tabla de clasificación de la comunidad KanaQuest.
