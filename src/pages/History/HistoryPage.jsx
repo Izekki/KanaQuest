@@ -477,18 +477,20 @@ export default function HistoryPage() {
             ))}
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="my-8 flex flex-col items-center justify-center text-center p-6 rounded-2xl border border-dashed border-[#eaded6] bg-[#fdfbf9]">
-            <span className="text-4xl mb-2">🔍</span>
-            <h3 className="text-base font-semibold text-[rgb(var(--color-accent))]">
+          <div className="my-6 flex flex-col items-center justify-center text-center py-8 px-5 rounded-2xl border border-dashed border-[#eaded6] bg-[#fdfbf9]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fbeae5] text-2xl shadow-2xs border border-[#f2d2cc] mb-3">
+              🔍
+            </div>
+            <h3 className="text-base font-bold text-[#6b2832]">
               No se encontraron palabras
             </h3>
-            <p className="mt-1 max-w-sm text-xs sm:text-sm text-[rgb(var(--color-neutral))]/70">
+            <p className="mt-1 max-w-sm text-xs sm:text-sm text-[rgb(var(--color-neutral))]/70 leading-relaxed">
               No hay palabras que coincidan con los filtros o término de búsqueda aplicado.
             </p>
             <button
               type="button"
               onClick={handleClearFilters}
-              className="mt-3.5 rounded-xl bg-[rgb(var(--color-accent))] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-90 transition"
+              className="mt-4 rounded-xl bg-[#6b2832] hover:bg-[#581f27] px-5 py-2.5 text-xs font-semibold text-white shadow-xs transition-all active:scale-98"
             >
               Restablecer filtros
             </button>
@@ -573,7 +575,9 @@ export default function HistoryPage() {
                             className={
                               starIndex < item.masteryLevel
                                 ? 'text-amber-500 font-bold'
-                                : 'text-stone-300'
+                                : item.masteryLevel === 0
+                                ? 'text-stone-300 opacity-25'
+                                : 'text-stone-300 opacity-40'
                             }
                           >
                             ★

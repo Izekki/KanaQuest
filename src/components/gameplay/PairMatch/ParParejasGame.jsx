@@ -294,23 +294,25 @@ export default function ParParejasGame({ onBackToLobby }) {
             </p>
           </div>
 
-          {/* Difficulty Selector */}
-          <div className="flex items-center gap-1.5 rounded-2xl bg-[#fbf5f2] p-1 border border-[#eaded6] self-start md:self-auto overflow-x-auto max-w-full">
-            {DIFFICULTIES.map((d) => (
-              <button
-                key={d.id}
-                type="button"
-                onClick={() => setDifficulty(d.id)}
-                className={[
-                  'rounded-xl px-3 py-1.5 text-xs font-semibold transition-all whitespace-nowrap min-h-[36px]',
-                  difficulty === d.id
-                    ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
-                    : 'text-[rgb(var(--color-neutral))]/70 hover:text-[rgb(var(--color-accent))] hover:bg-white',
-                ].join(' ')}
-              >
-                {d.label} ({d.pairs} pares)
-              </button>
-            ))}
+          {/* Difficulty Selector (Centered Pills) */}
+          <div className="flex justify-center md:justify-end">
+            <div className="inline-flex items-center p-1 bg-white/80 border border-rose-100/90 rounded-2xl gap-1 shadow-2xs">
+              {DIFFICULTIES.map((d) => (
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => setDifficulty(d.id)}
+                  className={[
+                    'rounded-xl px-3.5 sm:px-4 py-1.5 text-xs font-semibold transition-all whitespace-nowrap min-h-[34px]',
+                    difficulty === d.id
+                      ? 'bg-[#6b2832] text-white shadow-xs'
+                      : 'text-[#6b2832]/70 hover:text-[#6b2832] hover:bg-white',
+                  ].join(' ')}
+                >
+                  {d.label} ({d.pairs} pares)
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

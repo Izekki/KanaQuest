@@ -50,14 +50,14 @@ export default function ParParejasCard({
         {/* FRONT OF CARD (FACE DOWN: Torii/Logo Pattern) */}
         <div
           className={[
-            'absolute inset-0 flex flex-col items-center justify-center rounded-2xl border border-[#eaded6] bg-gradient-to-br from-[#ffffff] via-[#fdf7f4] to-[#f9ede8] p-2 text-center shadow-[0_4px_12px_rgba(128,43,56,0.06)] [backface-visibility:hidden]',
-            'group-hover:border-[rgb(var(--color-accent))]/40 group-hover:shadow-[0_6px_16px_rgba(128,43,56,0.1)] transition-colors',
+            'absolute inset-0 flex flex-col items-center justify-center rounded-2xl border border-rose-100/80 bg-gradient-to-br from-[#ffffff] via-[#fdf7f4] to-[#fbf0ec] p-2 text-center shadow-sm hover:shadow-md hover:scale-[1.02] transition-all [backface-visibility:hidden]',
+            'group-hover:border-[#6b2832]/40',
           ].join(' ')}
         >
-          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[rgb(var(--color-accent))]/10 text-lg sm:text-xl font-bold text-[rgb(var(--color-accent))]">
+          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-[#fbeae5] text-lg sm:text-xl font-bold text-[#6b2832] shadow-2xs border border-[#f2d2cc]">
             <span>🎴</span>
           </div>
-          <span className="mt-1.5 text-[10px] sm:text-xs font-semibold tracking-wider text-[rgb(var(--color-accent))]/60 uppercase">
+          <span className="mt-1.5 text-[10px] sm:text-xs font-semibold tracking-wider text-[#6b2832]/70 uppercase">
             Kana
           </span>
         </div>
