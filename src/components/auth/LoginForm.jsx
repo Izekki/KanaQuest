@@ -61,6 +61,12 @@ export default function LoginForm() {
             required
           />
         </FormField>
+        <Link
+          to="/forgot-password"
+          className="text-xs text-[#6b2832]/80 hover:underline text-right block mb-4"
+        >
+          ¿Olvidaste tu contraseña?
+        </Link>
         <Button type="submit" disabled={loading}>
           {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
         </Button>

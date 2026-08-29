@@ -33,6 +33,7 @@ KanaQuest features three main educational modes designed to reinforce vocabulary
 
 - **Gamified Progression (XP & Levels):** Users earn Experience Points (XP) and level up as they answer correctly. Levels are calculated dynamically via custom PostgreSQL database functions.
 - **User Profile & Customization:** Personalized profiles show stats (XP, level, games played, accuracy). Users can change their usernames and upload profile avatars.
+- **Authentication & Security:** Complete auth lifecycle with sign up, sign in, password recovery via email (`/forgot-password`), token-verified password updates (`/reset-password`), and integrated password visibility toggles.
 - **Dynamic Leaderboard:** A real-time ranking panel showcases the top 10 players based on accumulated experience points.
 - **Streak Tracker:** Encourages daily active recall by tracking consecutive learning streaks.
 - **Historical Progress:** Dedicated progress dashboards for vocabulary recall and sentence construction attempts.

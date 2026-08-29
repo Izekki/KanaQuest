@@ -7,6 +7,8 @@ import HomePage from './pages/Home/HomePage';
 import GamePage from './pages/Game/GamePage';
 import HistoryPage from './pages/History/HistoryPage';
 import LoginPage from './pages/Login/LoginPage';
+import ForgotPasswordPage from './pages/Login/ForgotPasswordPage';
+import ResetPasswordPage from './pages/Login/ResetPasswordPage';
 import RegisterPage from './pages/Register/RegisterPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 import SentenceBuilderPage from './pages/SentenceBuilder/SentenceBuilderPage';
@@ -91,6 +93,26 @@ export default function App() {
               <LoginPage />
             </AppLayout>
           </AuthRedirectRoute>
+        }
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          <AuthRedirectRoute>
+            <AppLayout>
+              <ForgotPasswordPage />
+            </AppLayout>
+          </AuthRedirectRoute>
+        }
+      />
+      <Route
+        path="/reset-password"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <ResetPasswordPage />
+            </AppLayout>
+          </ProtectedRoute>
         }
       />
       <Route
