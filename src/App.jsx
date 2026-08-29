@@ -74,6 +74,16 @@ export default function App() {
         }
       />
       <Route
+        path="/constructor"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <SentenceBuilderPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/login"
         element={
           <AuthRedirectRoute>
