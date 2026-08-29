@@ -6,6 +6,7 @@ import {
   playSyntheticSuccess,
   playSyntheticError,
   playSyntheticComplete,
+  playCardAudio as playCardAudioUtil,
 } from '../utils/soundEffects';
 
 /**
@@ -51,6 +52,10 @@ export function useSoundEffects() {
     if (!muted) playSyntheticComplete();
   }, [muted]);
 
+  const playCardAudio = useCallback((text, lang = 'ja') => {
+    if (!muted) playCardAudioUtil(text, lang);
+  }, [muted]);
+
   return {
     isMuted: muted,
     toggleSound,
@@ -58,6 +63,7 @@ export function useSoundEffects() {
     playSuccess,
     playError,
     playComplete,
+    playCardAudio,
   };
 }
 

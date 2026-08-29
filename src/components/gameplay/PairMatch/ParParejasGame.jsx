@@ -25,7 +25,7 @@ function shuffle(array) {
 
 export default function ParParejasGame({ onBackToLobby }) {
   const { user } = useAuthSession();
-  const { playFlip, playSuccess, playError, playComplete, isMuted, toggleSound } = useSoundEffects();
+  const { playFlip, playSuccess, playError, playComplete, isMuted, toggleSound, playCardAudio } = useSoundEffects();
 
   const [difficulty, setDifficulty] = useState('beginner');
   const [wordsPool, setWordsPool] = useState([]);
@@ -79,13 +79,18 @@ export default function ParParejasGame({ onBackToLobby }) {
     // Generate Card Pairs (Japanese Kanji/Kana & Spanish Translation)
     const generatedCards = [];
     shuffledWords.forEach((word) => {
+      const jpText = word.japanese || word.hiragana || word.romaji;
+      const esText = word.translation;
+
       // Japanese Card
       generatedCards.push({
         id: `${word.id}-jp`,
         wordId: word.id,
-        content: word.japanese || word.hiragana || word.romaji,
+        content: jpText,
         subtext: word.hiragana !== word.japanese ? word.hiragana : word.romaji,
         type: 'kanji',
+        japaneseText: jpText,
+        spanishText: esText,
         isFlipped: false,
         isMatched: false,
       });
@@ -94,9 +99,11 @@ export default function ParParejasGame({ onBackToLobby }) {
       generatedCards.push({
         id: `${word.id}-es`,
         wordId: word.id,
-        content: word.translation,
+        content: esText,
         subtext: word.romaji,
         type: 'translation',
+        japaneseText: jpText,
+        spanishText: esText,
         isFlipped: false,
         isMatched: false,
       });
@@ -140,6 +147,12 @@ export default function ParParejasGame({ onBackToLobby }) {
     if (clickedCard.isFlipped || clickedCard.isMatched) return;
 
     playFlip();
+
+    if (clickedCard.type === 'kanji') {
+      playCardAudio(clickedCard.japaneseText || clickedCard.content, 'ja');
+    } else {
+      playCardAudio(clickedCard.spanishText || clickedCard.content, 'es');
+    }
 
     // Flip card visually
     const nextCards = cards.map((c) => (c.id === clickedCard.id ? { ...c, isFlipped: true } : c));
