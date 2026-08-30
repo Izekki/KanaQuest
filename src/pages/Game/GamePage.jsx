@@ -165,7 +165,7 @@ export default function GamePage() {
   // Current Question State
   const [answer, setAnswer] = useState('');
   const [feedback, setFeedback] = useState(null);
-  const [streak, setStreak] = useState(0);
+  const [combo, setCombo] = useState(0);
   const [hintUsed, setHintUsed] = useState(false);
   const [hintText, setHintText] = useState('');
 
@@ -176,28 +176,6 @@ export default function GamePage() {
 
   const inputRef = useRef(null);
   const nextButtonRef = useRef(null);
-
-  // Sync Streak with Session Storage
-  useEffect(() => {
-    if (!user?.id) {
-      setStreak(0);
-      return;
-    }
-
-    const savedStreak = sessionStorage.getItem(getStreakStorageKey(user.id));
-    const nextStreak = Number(savedStreak);
-
-    setStreak(Number.isFinite(nextStreak) ? nextStreak : 0);
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (!user?.id) {
-      return;
-    }
-
-    sessionStorage.setItem(getStreakStorageKey(user.id), String(streak));
-    window.dispatchEvent(new Event('kanaquest-streak-change'));
-  }, [streak, user?.id]);
 
   // Helper to map raw word rows to question objects
   const mapWordsToQuestions = useCallback((rows, targetMode) => {
@@ -389,7 +367,7 @@ export default function GamePage() {
   const currentQuestion = roundQuestions[roundIndex] ?? roundQuestions[0];
 
   const sessionStats = {
-    streak,
+    streak: combo,
     questionNumber: roundQuestions.length ? roundIndex + 1 : 0,
     totalQuestions: roundQuestions.length,
     score: roundStats.xpEarned,
@@ -535,11 +513,11 @@ export default function GamePage() {
           xpEarned: prev.xpEarned + xpForWord,
         }));
       }
-      setStreak((value) => value + 1);
+      setCombo((value) => value + 1);
     } else {
       playError();
       setFeedback({ tone: 'error', message: 'Respuesta incorrecta.' });
-      setStreak(0);
+      setCombo(0);
       setRoundStats((prev) => ({
         ...prev,
         wrongCount: prev.wrongCount + 1,
@@ -564,6 +542,8 @@ export default function GamePage() {
               detail: {
                 experience: rpcResult.new_total_xp,
                 level: rpcResult.new_level,
+                current_streak: rpcResult.current_streak,
+                last_active_date: rpcResult.last_active_date,
               },
             })
           );
