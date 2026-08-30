@@ -6,6 +6,7 @@ import { fetchUserProfile } from '../../services/supabase/progress';
 import { signOut } from '../../services/supabase/auth';
 import toriiLogo from '../../img/torii.svg';
 import MobileNavigation from './MobileNavigation';
+import FeedbackModal from '../ui/FeedbackModal';
 
 const navItems = [
   { to: '/', label: 'Inicio' },
@@ -55,8 +56,11 @@ export default function AppLayout({ children }) {
   const [profileName, setProfileName] = useState('Jugador');
   const [profileLevel, setProfileLevel] = useState(1);
   const [profileExperience, setProfileExperience] = useState(0);
+  const [profileRole, setProfileRole] = useState('player');
+  const [profileTitle, setProfileTitle] = useState('Novato del Kanji');
   const [streak, setStreak] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const { isMuted, toggleSound } = useSoundEffects();
   const menuRef = useRef(null);
 
@@ -69,6 +73,8 @@ export default function AppLayout({ children }) {
           setProfileName('Jugador');
           setProfileLevel(1);
           setProfileExperience(0);
+          setProfileRole('player');
+          setProfileTitle('Novato del Kanji');
         }
         return;
       }
@@ -82,6 +88,8 @@ export default function AppLayout({ children }) {
           setProfileName(data.username || 'Jugador');
           setProfileLevel(data.level ?? 1);
           setProfileExperience(data.experience ?? 0);
+          setProfileRole(data.role ?? 'player');
+          setProfileTitle(data.title ?? 'Novato del Kanji');
         }
       } catch (error) {
         console.warn('No se pudo cargar el perfil:', error?.message ?? error);
@@ -94,6 +102,8 @@ export default function AppLayout({ children }) {
       const nextUsername = event?.detail?.username;
       const nextLevel = event?.detail?.level;
       const nextExperience = event?.detail?.experience;
+      const nextRole = event?.detail?.role;
+      const nextTitle = event?.detail?.title;
       if (!isMounted) return;
       if (nextUsername !== undefined) {
         setProfileName(nextUsername || 'Jugador');
@@ -103,6 +113,12 @@ export default function AppLayout({ children }) {
       }
       if (nextExperience !== undefined) {
         setProfileExperience(nextExperience ?? 0);
+      }
+      if (nextRole !== undefined) {
+        setProfileRole(nextRole ?? 'player');
+      }
+      if (nextTitle !== undefined) {
+        setProfileTitle(nextTitle ?? 'Novato del Kanji');
       }
     };
 
@@ -170,20 +186,20 @@ export default function AppLayout({ children }) {
             </Link>
 
             <nav className="hidden items-center gap-8 lg:gap-10 text-sm font-medium text-[rgb(var(--color-accent))] md:flex">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  [
-                    'transition-colors hover:text-[rgb(var(--color-accent-dark))]',
-                    isActive ? 'font-semibold text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-accent))]/75',
-                  ].join(' ')
-                }
-              >
-                {item.label}
-              </NavLink>
-            ))}
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) =>
+                    [
+                      'transition-colors hover:text-[rgb(var(--color-accent-dark))]',
+                      isActive ? 'font-semibold text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-accent))]/75',
+                    ].join(' ')
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              ))}
             </nav>
 
             <div className="flex items-center gap-2 sm:gap-3">
@@ -225,39 +241,71 @@ export default function AppLayout({ children }) {
                 </button>
 
                 {menuOpen ? (
-                  <div className="absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-[1.1rem] border border-[#eaded6] bg-white p-2 shadow-[0_18px_35px_rgba(128,43,56,0.14)] animate-fadeIn">
+                  <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-[1.2rem] border border-[#eaded6] bg-white p-2 shadow-[0_18px_35px_rgba(128,43,56,0.14)] animate-fadeIn">
                     {user ? (
                       <>
-                        <div className="px-3 py-2 text-xs uppercase tracking-[0.25em] text-[rgb(var(--color-accent))]/55">Sesión</div>
+                        <div className="px-3 py-1.5 text-[10px] uppercase tracking-[0.25em] text-[rgb(var(--color-accent))]/55 font-bold">
+                          Mi Cuenta
+                        </div>
                         <Link
                           to="/profile"
                           onClick={() => setMenuOpen(false)}
-                          className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea] min-h-[44px]"
+                          className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold text-[rgb(var(--color-neutral))] transition hover:bg-[#f9efea]"
                         >
-                          Mi Perfil
+                          <span>Mi Perfil</span>
                         </Link>
                         <button
                           type="button"
-                          onClick={handleSignOut}
-                          className="mt-1 flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea] min-h-[44px]"
+                          onClick={() => {
+                            setMenuOpen(false);
+                            setFeedbackModalOpen(true);
+                          }}
+                          className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea]"
                         >
-                          Cerrar sesión
+                          <span>Enviar Feedback</span>
+                        </button>
+
+                        {profileRole === 'admin' && (
+                          <>
+                            <div className="my-1 border-t border-[#f0e4de]" />
+                            <div className="px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-[rgb(var(--color-accent))]/60 font-bold">
+                              Administración
+                            </div>
+                            <Link
+                              to="/admin/feedback"
+                              onClick={() => setMenuOpen(false)}
+                              className="flex w-full items-center gap-2 rounded-xl bg-[rgb(var(--color-surface-alt))] px-3 py-2 text-xs sm:text-sm font-bold text-[rgb(var(--color-accent))] transition hover:bg-[#f3dfd7]"
+                            >
+                              <span>Panel de Feedbacks</span>
+                            </Link>
+                          </>
+                        )}
+
+                        <div className="my-1 border-t border-[#f0e4de]" />
+                        <button
+                          type="button"
+                          onClick={handleSignOut}
+                          className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold text-rose-600 transition hover:bg-rose-50"
+                        >
+                          <span>Cerrar sesión</span>
                         </button>
                       </>
                     ) : (
                       <>
-                        <div className="px-3 py-2 text-xs uppercase tracking-[0.25em] text-[rgb(var(--color-accent))]/55">Cuenta</div>
+                        <div className="px-3 py-1.5 text-[10px] uppercase tracking-[0.25em] text-[rgb(var(--color-accent))]/55 font-bold">
+                          Acceso
+                        </div>
                         <Link
                           to="/login"
                           onClick={() => setMenuOpen(false)}
-                          className="flex rounded-xl px-3 py-2.5 text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea] min-h-[44px]"
+                          className="flex rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea]"
                         >
                           Iniciar sesión
                         </Link>
                         <Link
                           to="/register"
                           onClick={() => setMenuOpen(false)}
-                          className="mt-1 flex rounded-xl px-3 py-2.5 text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea] min-h-[44px]"
+                          className="mt-1 flex rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold text-[rgb(var(--color-accent))] transition hover:bg-[#f9efea]"
                         >
                           Registrarse
                         </Link>
@@ -273,6 +321,11 @@ export default function AppLayout({ children }) {
         <div className="mx-auto w-full max-w-7xl px-3 py-3 sm:px-6 sm:py-5 lg:px-8 pb-24 lg:pb-8">{children}</div>
         <MobileNavigation />
       </div>
+
+      <FeedbackModal
+        isOpen={feedbackModalOpen}
+        onClose={() => setFeedbackModalOpen(false)}
+      />
     </main>
   );
 }

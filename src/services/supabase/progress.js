@@ -3,7 +3,7 @@ import { supabase } from './client';
 export async function fetchUserProfile(userId) {
   return await supabase
     .from('profiles')
-    .select('username,avatar_url,level,experience')
+    .select('username,avatar_url,level,experience,role,title')
     .eq('user_id', userId)
     .maybeSingle();
 }
@@ -18,7 +18,7 @@ export async function updateUserProfile(userId, updates) {
 export async function fetchRankingProfiles(limit = 10) {
   return await supabase
     .from('profiles')
-    .select('user_id,username,avatar_url,level,experience,games_played,correct_answers,wrong_answers,created_at')
+    .select('user_id,username,avatar_url,level,experience,games_played,correct_answers,wrong_answers,role,title,created_at')
     .order('experience', { ascending: false })
     .order('level', { ascending: false })
     .limit(limit);
