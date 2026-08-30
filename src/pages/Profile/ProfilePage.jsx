@@ -40,11 +40,15 @@ export default function ProfilePage() {
         ]);
 
         if (profileRes.error) throw profileRes.error;
-        if (!mounted) return;
 
-        setProfile(profileRes.data ?? null);
-        setUsername(profileRes.data?.username ?? '');
-        setAvatarPreviewUrl(await resolveAvatarPreviewUrl(profileRes.data?.avatar_url ?? ''));
+        const data = profileRes.data;
+        setProfile(data ?? null);
+        setUsername(data?.username ?? '');
+        setStreak(data?.current_streak ?? 0);
+        
+        if (data?.avatar_url) {
+          setAvatarPreviewUrl(await resolveAvatarPreviewUrl(data.avatar_url));
+        }
 
         if (progressRes.data) {
           const rows = progressRes.data;
@@ -55,24 +59,13 @@ export default function ProfilePage() {
       } catch (err) {
         setError('No se pudo cargar el perfil.');
         console.warn(err);
+      } finally {
+        setLoading(false);
       }
     };
 
     load();
-
-    return () => {
-      mounted = false;
-    };
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (!user?.id) {
-      setStreak(0);
-      return;
-    }
-    const saved = Number(sessionStorage.getItem(getStreakStorageKey(user.id)) ?? 0);
-    setStreak(Number.isFinite(saved) ? saved : 0);
-  }, [user?.id]);
+  }, [user?.id, authLoading]);
 
   const handleSave = async (e) => {
     e.preventDefault();

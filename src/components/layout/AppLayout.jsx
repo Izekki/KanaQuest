@@ -90,6 +90,7 @@ export default function AppLayout({ children }) {
           setProfileExperience(data.experience ?? 0);
           setProfileRole(data.role ?? 'player');
           setProfileTitle(data.title ?? 'Novato del Kanji');
+          setStreak(data.current_streak ?? 0);
         }
       } catch (error) {
         console.warn('No se pudo cargar el perfil:', error?.message ?? error);
@@ -104,6 +105,7 @@ export default function AppLayout({ children }) {
       const nextExperience = event?.detail?.experience;
       const nextRole = event?.detail?.role;
       const nextTitle = event?.detail?.title;
+      const nextStreak = event?.detail?.current_streak;
       if (!isMounted) return;
       if (nextUsername !== undefined) {
         setProfileName(nextUsername || 'Jugador');
@@ -120,6 +122,9 @@ export default function AppLayout({ children }) {
       if (nextTitle !== undefined) {
         setProfileTitle(nextTitle ?? 'Novato del Kanji');
       }
+      if (nextStreak !== undefined) {
+        setStreak(nextStreak ?? 0);
+      }
     };
 
     window.addEventListener('kanaquest-profile-updated', handleProfileUpdated);
@@ -127,29 +132,6 @@ export default function AppLayout({ children }) {
     return () => {
       isMounted = false;
       window.removeEventListener('kanaquest-profile-updated', handleProfileUpdated);
-    };
-  }, [user?.id]);
-
-  useEffect(() => {
-    const syncStreak = () => {
-      if (!user?.id) {
-        setStreak(0);
-        return;
-      }
-
-      const storedStreak = Number(sessionStorage.getItem(getStreakStorageKey(user.id)) ?? 0);
-      setStreak(Number.isFinite(storedStreak) ? storedStreak : 0);
-    };
-
-    syncStreak();
-
-    const handleStreakChange = () => syncStreak();
-    window.addEventListener('kanaquest-streak-change', handleStreakChange);
-    window.addEventListener('storage', handleStreakChange);
-
-    return () => {
-      window.removeEventListener('kanaquest-streak-change', handleStreakChange);
-      window.removeEventListener('storage', handleStreakChange);
     };
   }, [user?.id]);
 
@@ -215,8 +197,12 @@ export default function AppLayout({ children }) {
                 </span>
               </button>
 
-              <div className="flex items-center gap-1.5 rounded-full bg-[#f8ebe6] px-3 py-1.5 sm:px-4 sm:py-2 text-[rgb(var(--color-accent))] shadow-sm">
-                <span className="text-sm sm:text-base">🔥</span>
+              <div
+                className="flex items-center gap-1.5 rounded-full bg-[#f8ebe6] px-3 py-1.5 sm:px-4 sm:py-2 text-[rgb(var(--color-accent))] shadow-sm"
+                title={`Racha diaria de estudio: ${streak} ${streak === 1 ? 'día activo' : 'días activos'}`}
+                aria-label={`Racha diaria: ${streak} días`}
+              >
+                <span className="text-sm sm:text-base select-none" aria-hidden="true">🔥</span>
                 <span className="text-xs sm:text-sm font-bold">{streak}</span>
               </div>
 

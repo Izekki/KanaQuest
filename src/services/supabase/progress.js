@@ -3,7 +3,7 @@ import { supabase } from './client';
 export async function fetchUserProfile(userId) {
   return await supabase
     .from('profiles')
-    .select('username,avatar_url,level,experience,role,title')
+    .select('username,avatar_url,level,experience,role,title,current_streak,last_active_date')
     .eq('user_id', userId)
     .maybeSingle();
 }
