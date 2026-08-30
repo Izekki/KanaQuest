@@ -3,6 +3,7 @@ import AppLayout from './components/layout/AppLayout';
 import Card from './components/ui/Card';
 import AuthRedirectRoute from './components/auth/AuthRedirectRoute';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import AdminRoute from './components/auth/AdminRoute';
 import HomePage from './pages/Home/HomePage';
 import GamePage from './pages/Game/GamePage';
 import HistoryPage from './pages/History/HistoryPage';
@@ -13,6 +14,7 @@ import RegisterPage from './pages/Register/RegisterPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 import SentenceBuilderPage from './pages/SentenceBuilder/SentenceBuilderPage';
 import PairMatchPage from './pages/PairMatch/PairMatchPage';
+import AdminFeedbackPage from './pages/Admin/AdminFeedbackPage';
 
 export default function App() {
   return (
@@ -162,6 +164,18 @@ export default function App() {
             <AppLayout>
               <HistoryPage />
             </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/feedback"
+        element={
+          <ProtectedRoute>
+            <AdminRoute>
+              <AppLayout>
+                <AdminFeedbackPage />
+              </AppLayout>
+            </AdminRoute>
           </ProtectedRoute>
         }
       />

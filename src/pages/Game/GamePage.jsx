@@ -455,14 +455,6 @@ export default function GamePage() {
                   {option.label}
                 </button>
               ))}
-
-              <button
-                type="button"
-                onClick={() => navigate('/pair-match')}
-                className="rounded-xl px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-[#6b2832]/75 hover:text-[#6b2832] hover:bg-white transition-all"
-              >
-                Parejas 🎴
-              </button>
             </div>
           </div>
 

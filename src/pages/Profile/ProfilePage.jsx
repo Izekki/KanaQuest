@@ -274,11 +274,27 @@ export default function ProfilePage() {
                 </div>
 
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-[rgb(var(--color-neutral))]/70">Nivel de Jugador</div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-[rgb(var(--color-neutral))]/70">Nivel de Jugador</span>
+                    {profile.role === 'admin' ? (
+                      <span className="rounded-full bg-[rgb(var(--color-accent))] px-2 py-0.5 text-[9px] font-extrabold text-white uppercase tracking-wider">
+                        Admin
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-[#f0e4de] px-2 py-0.5 text-[9px] font-bold text-[rgb(var(--color-accent))] uppercase tracking-wider">
+                        Jugador
+                      </span>
+                    )}
+                  </div>
                   <div className="text-xl sm:text-2xl font-bold text-[#6b2832]">Nivel {profile.level ?? 1}</div>
                   <div className="mt-0.5 text-xs text-[rgb(var(--color-neutral))]/70 font-mono font-medium">
                     {profile.experience ?? 0} XP acumulados
                   </div>
+                  {profile.title && (
+                    <div className="mt-1 inline-flex items-center rounded-md bg-[rgb(var(--color-surface-alt))] px-2.5 py-0.5 text-[11px] font-semibold text-[rgb(var(--color-accent))] border border-[#ebdcd3]">
+                      <span>{profile.title}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
