@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthSession } from '../../hooks/useAuthSession';
 import { getUser } from '../../services/supabase/auth';
 import { fetchWordsForHistory } from '../../services/supabase/words';
@@ -77,6 +78,7 @@ const modeLabels = {
 export default function HistoryPage() {
   const { user } = useAuthSession();
   const { playFlip } = useSoundEffects();
+  const navigate = useNavigate();
 
   const [mode, setMode] = useState('recognize');
   const [loading, setLoading] = useState(true);
@@ -359,6 +361,44 @@ export default function HistoryPage() {
           </div>
         </div>
       </div>
+
+      {/* Smart Error Review CTA Banner */}
+      {!loading && totals.wrong > 0 && (
+        <div className="rounded-2xl border border-rose-200 bg-[linear-gradient(135deg,#fff8f6,#feece7)] p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4 animate-fadeIn">
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-rose-500 text-white shadow-sm">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-sm sm:text-base font-bold text-rose-950">
+                Tienes {totals.wrong} {totals.wrong === 1 ? 'palabra pendiente' : 'palabras pendientes'} por repasar
+              </h3>
+              <p className="text-xs text-rose-800/80 mt-0.5">
+                Refuerza los términos que fallaste para consolidar tu maestría en el juego.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              const wrongWordIds = allItems.filter((item) => item.status === 'wrong').map((item) => item.id);
+              navigate('/game', {
+                state: {
+                  reviewMode: 'errors',
+                  wordIds: wrongWordIds,
+                  sourceMode: mode,
+                },
+              });
+            }}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-rose-700 active:scale-[0.98] transition whitespace-nowrap w-full sm:w-auto"
+          >
+            <span>⚡ Repasar mis {totals.wrong} palabras pendientes</span>
+          </button>
+        </div>
+      )}
 
       {/* Filter and Search Controls */}
       <div className="rounded-[1.75rem] border border-[#eaded6] bg-white p-4 sm:p-6 shadow-[0_14px_34px_rgba(128,43,56,0.08)]">

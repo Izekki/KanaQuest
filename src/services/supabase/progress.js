@@ -71,11 +71,12 @@ export async function awardWordExperience(userId, wordId) {
     );
 }
 
-export async function submitWordAnswer(wordId, mode, isCorrect) {
+export async function submitWordAnswer(wordId, mode, isCorrect, skipXp = false) {
   return await supabase.rpc('handle_word_submission', {
     p_word_id: wordId,
     p_mode: mode,
     p_is_correct: isCorrect,
+    p_skip_xp: skipXp,
   });
 }
 
