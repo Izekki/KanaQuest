@@ -1,16 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchUserProfile, fetchUserProgress } from '../../services/supabase/progress';
+import { getSignedAvatarUrl } from '../../services/supabase/storage';
 import avatarRimuruRedPink from '../../img/avatar_rimuru_version_red-pink.svg';
 
 const getStreakStorageKey = (userId) => `kanaquest-streak:${userId}`;
 
 export default function UserDashboard({ user }) {
   const [profile, setProfile] = useState(null);
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [streak, setStreak] = useState(0);
   const [progressCount, setProgressCount] = useState(0);
   const [learnedCount, setLearnedCount] = useState(0);
   const [loadingStats, setLoadingStats] = useState(true);
+
+  const resolveAvatarUrl = async (storedAvatar) => {
+    if (!storedAvatar) return '';
+    if (storedAvatar.startsWith('http://') || storedAvatar.startsWith('https://') || storedAvatar.startsWith('blob:')) {
+      return storedAvatar;
+    }
+    try {
+      const fn = await getSignedAvatarUrl(storedAvatar, 60);
+      return fn?.data?.signedUrl ?? '';
+    } catch (err) {
+      console.warn('No se pudo resolver el avatar en dashboard:', err);
+      return '';
+    }
+  };
 
   // Load User Stats & Profile from Supabase
   useEffect(() => {
@@ -31,6 +47,11 @@ export default function UserDashboard({ user }) {
         if (isMounted) {
           if (profileRes.data) {
             setProfile(profileRes.data);
+            if (profileRes.data.avatar_url) {
+              resolveAvatarUrl(profileRes.data.avatar_url).then((url) => {
+                if (isMounted) setAvatarUrl(url);
+              });
+            }
           }
           if (progressRes.data) {
             const rows = progressRes.data;
@@ -191,13 +212,21 @@ export default function UserDashboard({ user }) {
           
           {/* Header with Mascot & Greeting */}
           <div className="flex items-center gap-3.5 pb-4 border-b border-[#f2e6df]">
-            <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#fbeae5] border-2 border-white shadow-xs">
-              <img
-                src={avatarRimuruRedPink}
-                alt="Avatar Rimuru"
-                className="h-10 w-10 object-contain drop-shadow-[0_4px_8px_rgba(107,40,50,0.15)]"
-                loading="eager"
-              />
+            <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#fbeae5] border-2 border-[#e3b8b1] shadow-xs">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={`Avatar de ${username}`}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <img
+                  src={avatarRimuruRedPink}
+                  alt="Avatar Rimuru"
+                  className="h-10 w-10 object-contain drop-shadow-[0_4px_8px_rgba(107,40,50,0.15)]"
+                  loading="eager"
+                />
+              )}
             </div>
 
             <div className="min-w-0">

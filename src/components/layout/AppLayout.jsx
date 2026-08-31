@@ -3,7 +3,8 @@ import { Link, NavLink } from 'react-router-dom';
 import { useAuthSession } from '../../hooks/useAuthSession';
 import { useSoundEffects } from '../../hooks/useSoundEffects';
 import { fetchUserProfile } from '../../services/supabase/progress';
-import { signOut } from '../../services/supabase/auth';
+import { getUser, signOut } from '../../services/supabase/auth';
+import { getSignedAvatarUrl } from '../../services/supabase/storage';
 import toriiLogo from '../../img/torii.svg';
 import MobileNavigation from './MobileNavigation';
 import FeedbackModal from '../ui/FeedbackModal';
@@ -58,29 +59,51 @@ export default function AppLayout({ children }) {
   const [profileExperience, setProfileExperience] = useState(0);
   const [profileRole, setProfileRole] = useState('player');
   const [profileTitle, setProfileTitle] = useState('Novato del Kanji');
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [streak, setStreak] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const { isMuted, toggleSound } = useSoundEffects();
   const menuRef = useRef(null);
 
+  const resolveAvatarUrl = async (storedAvatar) => {
+    if (!storedAvatar) return '';
+    if (storedAvatar.startsWith('http://') || storedAvatar.startsWith('https://') || storedAvatar.startsWith('blob:')) {
+      return storedAvatar;
+    }
+    try {
+      const fn = await getSignedAvatarUrl(storedAvatar, 60);
+      return fn?.data?.signedUrl ?? '';
+    } catch (err) {
+      console.warn('No se pudo resolver el avatar en navbar:', err);
+      return '';
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
 
     const loadProfile = async () => {
-      if (!user?.id) {
+      let activeUserId = user?.id;
+      if (!activeUserId) {
+        const { data: authData } = await getUser();
+        activeUserId = authData?.user?.id;
+      }
+
+      if (!activeUserId) {
         if (isMounted) {
           setProfileName('Jugador');
           setProfileLevel(1);
           setProfileExperience(0);
           setProfileRole('player');
           setProfileTitle('Novato del Kanji');
+          setAvatarUrl('');
         }
         return;
       }
 
       try {
-        const { data, error } = await fetchUserProfile(user.id);
+        const { data, error } = await fetchUserProfile(activeUserId);
 
         if (error) throw error;
 
@@ -91,9 +114,16 @@ export default function AppLayout({ children }) {
           setProfileRole(data.role ?? 'player');
           setProfileTitle(data.title ?? 'Novato del Kanji');
           setStreak(data.current_streak ?? 0);
+
+          if (data.avatar_url) {
+            const preview = await resolveAvatarUrl(data.avatar_url);
+            if (isMounted) setAvatarUrl(preview);
+          } else {
+            if (isMounted) setAvatarUrl('');
+          }
         }
       } catch (error) {
-        console.warn('No se pudo cargar el perfil:', error?.message ?? error);
+        console.warn('No se pudo cargar el perfil en navbar:', error?.message ?? error);
       }
     };
 
@@ -106,7 +136,10 @@ export default function AppLayout({ children }) {
       const nextRole = event?.detail?.role;
       const nextTitle = event?.detail?.title;
       const nextStreak = event?.detail?.current_streak;
+      const nextAvatar = event?.detail?.avatar_url;
+
       if (!isMounted) return;
+
       if (nextUsername !== undefined) {
         setProfileName(nextUsername || 'Jugador');
       }
@@ -124,6 +157,15 @@ export default function AppLayout({ children }) {
       }
       if (nextStreak !== undefined) {
         setStreak(nextStreak ?? 0);
+      }
+      if (nextAvatar !== undefined) {
+        if (nextAvatar) {
+          resolveAvatarUrl(nextAvatar).then((preview) => {
+            if (isMounted) setAvatarUrl(preview);
+          });
+        } else {
+          setAvatarUrl('');
+        }
       }
     };
 
@@ -214,8 +256,16 @@ export default function AppLayout({ children }) {
                   aria-expanded={menuOpen}
                   aria-label="Menú de usuario"
                 >
-                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f5d2dd,#b86773)] text-xs sm:text-sm font-semibold text-white shadow-sm shrink-0">
-                    {profileInitial}
+                  <div className="relative flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f5d2dd,#b86773)] text-xs sm:text-sm font-bold text-white shadow-sm shrink-0 overflow-hidden ring-2 ring-[#e3b8b1]">
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt={`Avatar de ${profileName}`}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      profileInitial
+                    )}
                   </div>
                   <div className="hidden min-[460px]:block leading-tight max-w-[110px] sm:max-w-[160px]">
                     <div className="truncate text-xs sm:text-sm font-semibold text-[rgb(var(--color-neutral))]">{profileName}</div>
@@ -227,10 +277,25 @@ export default function AppLayout({ children }) {
                 </button>
 
                 {menuOpen ? (
-                  <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-[1.2rem] border border-[#eaded6] bg-white p-2 shadow-[0_18px_35px_rgba(128,43,56,0.14)] animate-fadeIn">
+                  <div className="absolute right-0 top-full z-50 mt-2 w-60 overflow-hidden rounded-[1.2rem] border border-[#eaded6] bg-white p-2 shadow-[0_18px_35px_rgba(128,43,56,0.14)] animate-fadeIn">
                     {user ? (
                       <>
-                        <div className="px-3 py-1.5 text-[10px] uppercase tracking-[0.25em] text-[rgb(var(--color-accent))]/55 font-bold">
+                        {/* Dropdown User Header */}
+                        <div className="flex items-center gap-3 px-3 py-2.5 border-b border-[#f2e6df] mb-1.5 bg-[#fcfaf8] rounded-xl">
+                          <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f5d2dd,#b86773)] text-xs font-bold text-white shadow-xs shrink-0 overflow-hidden ring-1.5 ring-[#e3b8b1]">
+                            {avatarUrl ? (
+                              <img src={avatarUrl} alt={`Avatar de ${profileName}`} className="h-full w-full object-cover" />
+                            ) : (
+                              profileInitial
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-xs font-bold text-[#6b2832]">{profileName}</div>
+                            <div className="truncate text-[10px] text-[rgb(var(--color-neutral))]/70">Nv. {profileLevel} · {profileExperience} XP</div>
+                          </div>
+                        </div>
+
+                        <div className="px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-[rgb(var(--color-accent))]/55 font-bold">
                           Mi Cuenta
                         </div>
                         <Link
