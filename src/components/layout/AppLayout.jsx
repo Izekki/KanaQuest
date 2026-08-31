@@ -5,6 +5,7 @@ import { useSoundEffects } from '../../hooks/useSoundEffects';
 import { fetchUserProfile } from '../../services/supabase/progress';
 import { getUser, signOut } from '../../services/supabase/auth';
 import { getSignedAvatarUrl } from '../../services/supabase/storage';
+import { preloadWords } from '../../services/supabase/words';
 import toriiLogo from '../../img/torii.svg';
 import MobileNavigation from './MobileNavigation';
 import FeedbackModal from '../ui/FeedbackModal';
@@ -128,6 +129,7 @@ export default function AppLayout({ children }) {
     };
 
     loadProfile();
+    preloadWords();
 
     const handleProfileUpdated = (event) => {
       const nextUsername = event?.detail?.username;
