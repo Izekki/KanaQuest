@@ -1,18 +1,59 @@
 import { supabase } from './client';
 
-export async function fetchUserProfile(userId) {
-  return await supabase
+const profileCache = new Map();
+const PROFILE_TTL_MS = 60 * 1000; // 60 segundos de caché para el perfil
+
+export async function fetchUserProfile(userId, forceRefresh = false) {
+  if (!userId) return { data: null, error: 'User ID is required' };
+
+  const cached = profileCache.get(userId);
+  const now = Date.now();
+  if (!forceRefresh && cached && now - cached.timestamp < PROFILE_TTL_MS) {
+    return { data: cached.data, error: null };
+  }
+
+  const res = await supabase
     .from('profiles')
     .select('username,avatar_url,level,experience,role,title,current_streak,last_active_date')
     .eq('user_id', userId)
     .maybeSingle();
+
+  if (!res.error && res.data) {
+    profileCache.set(userId, { data: res.data, timestamp: Date.now() });
+  }
+
+  return res;
+}
+
+export function invalidateProfileCache(userId = null) {
+  if (userId) {
+    profileCache.delete(userId);
+  } else {
+    profileCache.clear();
+  }
 }
 
 export async function updateUserProfile(userId, updates) {
-  return await supabase
+  // Actualización optimista de la caché
+  const cached = profileCache.get(userId);
+  if (cached?.data) {
+    profileCache.set(userId, {
+      data: { ...cached.data, ...updates },
+      timestamp: Date.now(),
+    });
+  }
+
+  const res = await supabase
     .from('profiles')
     .update(updates)
     .eq('user_id', userId);
+
+  if (res.error && cached?.data) {
+    // Si falla la actualización en BD, revertir la caché
+    profileCache.delete(userId);
+  }
+
+  return res;
 }
 
 export async function fetchRankingProfiles(limit = 10) {

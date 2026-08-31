@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchUserProfile, fetchUserProgress } from '../../services/supabase/progress';
 import { getSignedAvatarUrl } from '../../services/supabase/storage';
+import { preloadWords } from '../../services/supabase/words';
 import avatarRimuruRedPink from '../../img/avatar_rimuru_version_red-pink.svg';
 
 const getStreakStorageKey = (userId) => `kanaquest-streak:${userId}`;
@@ -68,6 +69,7 @@ export default function UserDashboard({ user }) {
     };
 
     loadData();
+    preloadWords();
 
     return () => {
       isMounted = false;
