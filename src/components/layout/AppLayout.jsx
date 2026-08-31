@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useAuthSession } from '../../hooks/useAuthSession';
 import { useSoundEffects } from '../../hooks/useSoundEffects';
 import { fetchUserProfile } from '../../services/supabase/progress';
@@ -371,7 +371,9 @@ export default function AppLayout({ children }) {
           </div>
         </header>
 
-        <div className="mx-auto w-full max-w-7xl px-3 py-3 sm:px-6 sm:py-5 lg:px-8 pb-24 lg:pb-8">{children}</div>
+        <div className="mx-auto w-full max-w-7xl px-3 py-3 sm:px-6 sm:py-5 lg:px-8 pb-24 lg:pb-8">
+          {children || <Outlet />}
+        </div>
         <MobileNavigation />
       </div>
 

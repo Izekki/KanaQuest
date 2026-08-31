@@ -19,178 +19,153 @@ import AdminFeedbackPage from './pages/Admin/AdminFeedbackPage';
 export default function App() {
   return (
     <Routes>
-      <Route
-        path="/"
-        element={
-          <AppLayout>
-            <HomePage />
-          </AppLayout>
-        }
-      />
-      <Route
-        path="/game"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
+      {/* Persistent AppLayout: Navbar, Petals Animation & Header stay mounted across all page navigations */}
+      <Route element={<AppLayout />}>
+        {/* Public / Dashboard */}
+        <Route path="/" element={<HomePage />} />
+
+        {/* Learning & Game Practice Modes */}
+        <Route
+          path="/game"
+          element={
+            <ProtectedRoute>
               <GamePage />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/aprender"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/aprender"
+          element={
+            <ProtectedRoute>
               <GamePage />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/pair-match"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/pair-match"
+          element={
+            <ProtectedRoute>
               <PairMatchPage />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/par-parejas"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/par-parejas"
+          element={
+            <ProtectedRoute>
               <PairMatchPage />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/sentence-builder"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/sentence-builder"
+          element={
+            <ProtectedRoute>
               <SentenceBuilderPage />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/constructor"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/constructor"
+          element={
+            <ProtectedRoute>
               <SentenceBuilderPage />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/login"
-        element={
-          <AuthRedirectRoute>
-            <AppLayout>
-              <LoginPage />
-            </AppLayout>
-          </AuthRedirectRoute>
-        }
-      />
-      <Route
-        path="/forgot-password"
-        element={
-          <AuthRedirectRoute>
-            <AppLayout>
-              <ForgotPasswordPage />
-            </AppLayout>
-          </AuthRedirectRoute>
-        }
-      />
-      <Route
-        path="/reset-password"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <ResetPasswordPage />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <AuthRedirectRoute>
-            <AppLayout>
-              <RegisterPage />
-            </AppLayout>
-          </AuthRedirectRoute>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* User Profile & Vocabulary History */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
               <ProfilePage />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/vocabulary"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vocabulary"
+          element={
+            <ProtectedRoute>
               <HistoryPage />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/vocabulario"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vocabulario"
+          element={
+            <ProtectedRoute>
               <HistoryPage />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/historial"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/historial"
+          element={
+            <ProtectedRoute>
               <HistoryPage />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/feedback"
-        element={
-          <ProtectedRoute>
-            <AdminRoute>
-              <AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Authentication Flow (Redirects to /game if already logged in) */}
+        <Route
+          path="/login"
+          element={
+            <AuthRedirectRoute>
+              <LoginPage />
+            </AuthRedirectRoute>
+          }
+        />
+        <Route
+          path="/forgot-password"
+          element={
+            <AuthRedirectRoute>
+              <ForgotPasswordPage />
+            </AuthRedirectRoute>
+          }
+        />
+        <Route
+          path="/reset-password"
+          element={
+            <ProtectedRoute>
+              <ResetPasswordPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <AuthRedirectRoute>
+              <RegisterPage />
+            </AuthRedirectRoute>
+          }
+        />
+
+        {/* Admin Dashboard */}
+        <Route
+          path="/admin/feedback"
+          element={
+            <ProtectedRoute>
+              <AdminRoute>
                 <AdminFeedbackPage />
-              </AppLayout>
-            </AdminRoute>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="*"
-        element={
-          <AppLayout>
+              </AdminRoute>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 404 Fallback */}
+        <Route
+          path="*"
+          element={
             <Card
               eyebrow="404"
               title="Page not found"
               description="The route you requested does not exist yet. Use the navigation to move through the scaffold."
             />
-          </AppLayout>
-        }
-      />
+          }
+        />
+      </Route>
     </Routes>
   );
 }
