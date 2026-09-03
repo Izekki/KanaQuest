@@ -2,7 +2,14 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuthSession } from '../../hooks/useAuthSession';
 import { getUser } from '../../services/supabase/auth';
 import { fetchUserProfile, fetchUserProgress, updateUserProfile } from '../../services/supabase/progress';
-import { getSignedAvatarUrl, uploadAvatar, deleteAvatar } from '../../services/supabase/storage';
+import {
+  getSignedAvatarUrl,
+  uploadAvatar,
+  deleteAvatar,
+  validateAvatarFile,
+  ALLOWED_AVATAR_EXTENSIONS,
+  MAX_AVATAR_SIZE_BYTES,
+} from '../../services/supabase/storage';
 
 const getStreakStorageKey = (userId) => `kanaquest-streak:${userId}`;
 
@@ -30,7 +37,7 @@ export default function ProfilePage() {
     }
 
     try {
-      const fn = await getSignedAvatarUrl(storedAvatar, 60);
+      const fn = await getSignedAvatarUrl(storedAvatar, 3600);
       return fn?.data?.signedUrl ?? '';
     } catch (err) {
       console.warn('No se pudo obtener signed url para avatar:', err);
@@ -166,18 +173,6 @@ export default function ProfilePage() {
     }
   };
 
-  const validateFile = (file) => {
-    const allowed = ['image/png', 'image/jpeg', 'image/webp'];
-    const maxBytes = 2 * 1024 * 1024; // 2MB
-    if (!allowed.includes(file.type)) {
-      return 'Solo se permiten imágenes PNG, JPEG o WEBP.';
-    }
-    if (file.size > maxBytes) {
-      return 'La imagen supera el tamaño máximo de 2MB.';
-    }
-    return null;
-  };
-
   const processImage = (file, maxDim = 1024) =>
     new Promise((resolve, reject) => {
       const img = new Image();
@@ -192,23 +187,24 @@ export default function ProfilePage() {
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
+        if (!ctx) return reject(new Error('No se pudo inicializar el procesador de imagen.'));
         ctx.drawImage(img, 0, 0, width, height);
         canvas.toBlob(
           (blob) => {
-            if (!blob) return reject(new Error('No se pudo procesar la imagen'));
+            if (!blob) return reject(new Error('No se pudo procesar la imagen de forma segura.'));
             resolve(blob);
           },
           'image/png',
-          0.9,
+          0.92,
         );
       };
-      img.onerror = (err) => reject(err);
+      img.onerror = () => reject(new Error('El archivo seleccionado no es una imagen válida o está corrupto.'));
       img.crossOrigin = 'anonymous';
       const reader = new FileReader();
       reader.onload = () => {
         img.src = String(reader.result);
       };
-      reader.onerror = (err) => reject(err);
+      reader.onerror = () => reject(new Error('Error al leer el archivo.'));
       reader.readAsDataURL(file);
     });
 
@@ -222,9 +218,10 @@ export default function ProfilePage() {
       return;
     }
 
-    const validation = validateFile(file);
-    if (validation) {
-      setError(validation);
+    const validationError = validateAvatarFile(file);
+    if (validationError) {
+      setError(validationError);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 

@@ -21,7 +21,7 @@ export default function UserDashboard({ user }) {
       return storedAvatar;
     }
     try {
-      const fn = await getSignedAvatarUrl(storedAvatar, 60);
+      const fn = await getSignedAvatarUrl(storedAvatar, 3600);
       return fn?.data?.signedUrl ?? '';
     } catch (err) {
       console.warn('No se pudo resolver el avatar en dashboard:', err);

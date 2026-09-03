@@ -109,14 +109,14 @@ function CatIllustration({ animationState }) {
   return (
     <div
       className={[
-        'relative flex h-24 w-24 sm:h-[180px] sm:w-[180px] items-center justify-center overflow-hidden rounded-full bg-[#f5dbe0] border-4 border-white shadow-[0_12px_28px_rgba(128,43,56,0.14)] transition-transform duration-300',
+        'relative flex h-20 w-20 min-[400px]:h-24 min-[400px]:w-24 sm:h-[150px] sm:w-[150px] items-center justify-center overflow-hidden rounded-full bg-[#f5dbe0] border-4 border-white shadow-[0_12px_28px_rgba(128,43,56,0.14)] transition-transform duration-300',
         animationClass,
       ].join(' ')}
     >
       <img
         src={avatarRimuruRedPink}
         alt="Avatar de Rimuru"
-        className="h-16 w-16 sm:h-[115px] sm:w-[115px] max-w-none object-contain drop-shadow-[0_8px_12px_rgba(128,43,56,0.15)]"
+        className="h-14 w-14 min-[400px]:h-16 min-[400px]:w-16 sm:h-[95px] sm:w-[95px] max-w-none object-contain drop-shadow-[0_8px_12px_rgba(128,43,56,0.15)]"
         loading="eager"
         decoding="async"
       />
@@ -375,7 +375,9 @@ export default function GamePage() {
   };
 
   const promptIsJapanese = containsJapaneseScript(currentQuestion?.prompt ?? '');
-  const promptSizeClass = promptIsJapanese ? 'text-6xl sm:text-7xl md:text-8xl' : 'text-3xl sm:text-4xl md:text-5xl';
+  const promptSizeClass = promptIsJapanese
+    ? 'text-5xl min-[400px]:text-6xl sm:text-7xl md:text-8xl'
+    : 'text-2xl min-[400px]:text-3xl sm:text-4xl md:text-5xl';
 
   const handleModeChange = (nextMode) => {
     setMode(nextMode);
@@ -715,7 +717,7 @@ export default function GamePage() {
             </div>
           ) : (
             /* Central Question Card */
-            <section className="rounded-[1.75rem] border border-[#eaded6] bg-white p-5 sm:p-7 shadow-[0_14px_32px_rgba(107,40,50,0.06)]">
+            <section className="rounded-2xl sm:rounded-[1.75rem] border border-[#eaded6] bg-white p-4 sm:p-7 shadow-[0_14px_32px_rgba(107,40,50,0.06)]">
               {loading ? (
                 <p className="py-8 text-center text-sm font-semibold text-[#6b2832]/60 animate-pulse">
                   Cargando palabras desde Supabase...
@@ -751,8 +753,8 @@ export default function GamePage() {
               </div>
 
               {/* Prompt + Mascot Section */}
-              <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-4 items-center text-center sm:text-left">
-                <div className="flex flex-col justify-center min-h-[130px] sm:min-h-[160px]">
+              <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-3 sm:gap-4 items-center text-center sm:text-left">
+                <div className="flex flex-col justify-center min-h-[105px] sm:min-h-[150px]">
                   <div className="flex items-center justify-center sm:justify-start gap-3">
                     <div
                       className={[

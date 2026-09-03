@@ -81,14 +81,14 @@ export default function WordBlock({
       title={isFixed ? 'Bloque fijo' : 'Arrastra o haz clic para mover'}
       className={[
         'group relative inline-flex items-center justify-center select-none',
-        'rounded-2xl border-2 px-3 py-2 sm:px-4 sm:py-3 min-h-[44px] min-w-[56px] sm:min-w-[76px]',
-        'font-medium transition-all duration-200 cursor-grab active:cursor-grabbing active:scale-95 shadow-sm max-w-full',
+        'rounded-xl sm:rounded-2xl border-2 px-2.5 py-1.5 min-[400px]:px-3 min-[400px]:py-2 sm:px-4 sm:py-3 min-h-[38px] sm:min-h-[46px] min-w-[44px] min-[400px]:min-w-[54px] sm:min-w-[68px]',
+        'font-medium transition-all duration-200 cursor-grab active:cursor-grabbing active:scale-95 shadow-xs max-w-full',
         isDragging ? 'opacity-40 scale-95' : 'opacity-100',
         stateClasses,
       ].join(' ')}
     >
       {/* Block Text - Reading Priority: Hiragana -> Katakana -> Japanese */}
-      <span className="text-base sm:text-xl md:text-2xl font-bold tracking-wide font-sans text-center max-w-full">
+      <span className="text-sm min-[400px]:text-base sm:text-lg md:text-xl font-bold tracking-wide font-sans text-center max-w-full break-words">
         {displayText}
       </span>
 

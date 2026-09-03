@@ -31,6 +31,23 @@ const petals = [
 
 const getStreakStorageKey = (userId) => `kanaquest-streak:${userId}`;
 
+const getStoredProfileSnapshot = (userId) => {
+  if (!userId || typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(`kanaquest_profile_snapshot:${userId}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const saveProfileSnapshot = (userId, data) => {
+  if (!userId || typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(`kanaquest_profile_snapshot:${userId}`, JSON.stringify(data));
+  } catch {}
+};
+
 function PetalsLayer() {
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -55,13 +72,15 @@ function PetalsLayer() {
 
 export default function AppLayout({ children }) {
   const { user } = useAuthSession();
-  const [profileName, setProfileName] = useState('Jugador');
-  const [profileLevel, setProfileLevel] = useState(1);
-  const [profileExperience, setProfileExperience] = useState(0);
-  const [profileRole, setProfileRole] = useState('player');
-  const [profileTitle, setProfileTitle] = useState('Novato del Kanji');
-  const [avatarUrl, setAvatarUrl] = useState('');
-  const [streak, setStreak] = useState(0);
+  const initialSnapshot = user?.id ? getStoredProfileSnapshot(user.id) : null;
+
+  const [profileName, setProfileName] = useState(initialSnapshot?.username || 'Jugador');
+  const [profileLevel, setProfileLevel] = useState(initialSnapshot?.level ?? 1);
+  const [profileExperience, setProfileExperience] = useState(initialSnapshot?.experience ?? 0);
+  const [profileRole, setProfileRole] = useState(initialSnapshot?.role ?? 'player');
+  const [profileTitle, setProfileTitle] = useState(initialSnapshot?.title ?? 'Novato del Kanji');
+  const [avatarUrl, setAvatarUrl] = useState(initialSnapshot?.avatarUrl || '');
+  const [streak, setStreak] = useState(initialSnapshot?.streak ?? 0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const { isMuted, toggleSound } = useSoundEffects();
@@ -73,7 +92,7 @@ export default function AppLayout({ children }) {
       return storedAvatar;
     }
     try {
-      const fn = await getSignedAvatarUrl(storedAvatar, 60);
+      const fn = await getSignedAvatarUrl(storedAvatar, 3600);
       return fn?.data?.signedUrl ?? '';
     } catch (err) {
       console.warn('No se pudo resolver el avatar en navbar:', err);
@@ -83,6 +102,20 @@ export default function AppLayout({ children }) {
 
   useEffect(() => {
     let isMounted = true;
+
+    // Si ya teníamos snapshot para este usuario, hidratar inmediatamente
+    if (user?.id) {
+      const snapshot = getStoredProfileSnapshot(user.id);
+      if (snapshot && isMounted) {
+        if (snapshot.username) setProfileName(snapshot.username);
+        if (snapshot.level !== undefined) setProfileLevel(snapshot.level);
+        if (snapshot.experience !== undefined) setProfileExperience(snapshot.experience);
+        if (snapshot.role) setProfileRole(snapshot.role);
+        if (snapshot.title) setProfileTitle(snapshot.title);
+        if (snapshot.avatarUrl) setAvatarUrl(snapshot.avatarUrl);
+        if (snapshot.streak !== undefined) setStreak(snapshot.streak);
+      }
+    }
 
     const loadProfile = async () => {
       let activeUserId = user?.id;
@@ -109,19 +142,37 @@ export default function AppLayout({ children }) {
         if (error) throw error;
 
         if (isMounted && data) {
-          setProfileName(data.username || 'Jugador');
-          setProfileLevel(data.level ?? 1);
-          setProfileExperience(data.experience ?? 0);
-          setProfileRole(data.role ?? 'player');
-          setProfileTitle(data.title ?? 'Novato del Kanji');
-          setStreak(data.current_streak ?? 0);
+          const nextName = data.username || 'Jugador';
+          const nextLevel = data.level ?? 1;
+          const nextExp = data.experience ?? 0;
+          const nextRole = data.role ?? 'player';
+          const nextTitle = data.title ?? 'Novato del Kanji';
+          const nextStreak = data.current_streak ?? 0;
 
+          setProfileName(nextName);
+          setProfileLevel(nextLevel);
+          setProfileExperience(nextExp);
+          setProfileRole(nextRole);
+          setProfileTitle(nextTitle);
+          setStreak(nextStreak);
+
+          let nextAvatarUrl = '';
           if (data.avatar_url) {
-            const preview = await resolveAvatarUrl(data.avatar_url);
-            if (isMounted) setAvatarUrl(preview);
+            nextAvatarUrl = await resolveAvatarUrl(data.avatar_url);
+            if (isMounted) setAvatarUrl(nextAvatarUrl);
           } else {
             if (isMounted) setAvatarUrl('');
           }
+
+          saveProfileSnapshot(activeUserId, {
+            username: nextName,
+            level: nextLevel,
+            experience: nextExp,
+            role: nextRole,
+            title: nextTitle,
+            streak: nextStreak,
+            avatarUrl: nextAvatarUrl,
+          });
         }
       } catch (error) {
         console.warn('No se pudo cargar el perfil en navbar:', error?.message ?? error);
@@ -141,6 +192,8 @@ export default function AppLayout({ children }) {
       const nextAvatar = event?.detail?.avatar_url;
 
       if (!isMounted) return;
+
+      let currentAvatar = avatarUrl;
 
       if (nextUsername !== undefined) {
         setProfileName(nextUsername || 'Jugador');
@@ -163,11 +216,28 @@ export default function AppLayout({ children }) {
       if (nextAvatar !== undefined) {
         if (nextAvatar) {
           resolveAvatarUrl(nextAvatar).then((preview) => {
-            if (isMounted) setAvatarUrl(preview);
+            if (isMounted) {
+              setAvatarUrl(preview);
+              if (user?.id) {
+                const snap = getStoredProfileSnapshot(user.id) || {};
+                saveProfileSnapshot(user.id, { ...snap, avatarUrl: preview, username: nextUsername || snap.username });
+              }
+            }
           });
         } else {
           setAvatarUrl('');
+          if (user?.id) {
+            const snap = getStoredProfileSnapshot(user.id) || {};
+            saveProfileSnapshot(user.id, { ...snap, avatarUrl: '', username: nextUsername || snap.username });
+          }
         }
+      } else if (user?.id) {
+        const snap = getStoredProfileSnapshot(user.id) || {};
+        saveProfileSnapshot(user.id, {
+          ...snap,
+          username: nextUsername !== undefined ? nextUsername : snap.username,
+          level: nextLevel !== undefined ? nextLevel : snap.level,
+        });
       }
     };
 

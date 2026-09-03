@@ -85,6 +85,7 @@ export default function SentenceBuilderGame({
   const [attempts, setAttempts] = useState(0);
   const [failedSentences, setFailedSentences] = useState([]);
   const [isGameOver, setIsGameOver] = useState(false);
+  const [showMobileLegend, setShowMobileLegend] = useState(false);
 
   useEffect(() => {
     if (initialTopicId) {
@@ -506,12 +507,47 @@ export default function SentenceBuilderGame({
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto">
+    <div className="w-full max-w-7xl mx-auto space-y-2.5 sm:space-y-6">
+      {/* MOBILE COMPACT HEADER (sm:hidden) - Zero clutter, maximum game focus */}
+      <div className="sm:hidden flex items-center justify-between gap-2 rounded-2xl bg-white/95 border border-[#eaded6] px-3 py-2 shadow-xs">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="rounded-lg bg-[#f8ebe6] px-2 py-0.5 text-xs font-bold text-[#6b2832] shrink-0 font-mono">
+            {currentIndex + 1}/{sentences.length}
+          </span>
+          {currentSentence.topics?.title_es && (
+            <span className="truncate text-xs font-semibold text-[rgb(var(--color-neutral))]/70">
+              {currentSentence.topics.title_es}
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2.5 shrink-0">
+          <span className="text-xs font-bold text-emerald-700">🔥 {streak}</span>
+          <span className="text-xs font-bold text-[rgb(var(--color-accent))]">⭐ {score}</span>
+          <button
+            type="button"
+            onClick={() => setShowMobileLegend((p) => !p)}
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#eaded6] bg-white text-xs font-bold text-[#6b2832] hover:bg-[#faf4f2] transition shadow-2xs"
+            title="Guía de colores gramaticales"
+            aria-label="Ver guía de colores gramaticales"
+          >
+            {showMobileLegend ? '✕' : '🎨'}
+          </button>
+        </div>
+      </div>
+
+      {/* MOBILE COLLAPSIBLE GRAMMAR GUIDE */}
+      {showMobileLegend && (
+        <div className="sm:hidden animate-fadeIn">
+          <GrammarColorLegend />
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
         {/* Main Interactive Construction Zone (Left Column) */}
-        <div className="lg:col-span-8 space-y-4 sm:space-y-6 w-full min-w-0">
-          {/* Header & Stats Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-4 rounded-2xl sm:rounded-3xl bg-surface/90 border border-cream/50 p-3.5 sm:p-5 shadow-sm">
+        <div className="lg:col-span-8 space-y-3 sm:space-y-6 w-full min-w-0">
+          {/* DESKTOP Header & Stats Bar (hidden sm:flex) */}
+          <div className="hidden sm:flex flex-wrap items-center justify-between gap-2.5 sm:gap-4 rounded-2xl sm:rounded-3xl bg-surface/90 border border-cream/50 p-3.5 sm:p-5 shadow-sm">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <Badge variant="accent">
                 Oración {currentIndex + 1} de {sentences.length}
@@ -530,13 +566,13 @@ export default function SentenceBuilderGame({
           </div>
 
           {/* Main Prompt Card */}
-          <div className="rounded-2xl sm:rounded-3xl border border-cream/80 bg-surface p-4 sm:p-6 md:p-8 shadow-md text-center space-y-4">
-            <div className="text-[11px] sm:text-xs uppercase font-bold tracking-[0.2em] text-neutral/50">
+          <div className="rounded-2xl sm:rounded-3xl border border-cream/80 bg-surface p-3.5 sm:p-6 md:p-8 shadow-md text-center space-y-3 sm:space-y-4">
+            <div className="hidden sm:block text-[11px] sm:text-xs uppercase font-bold tracking-[0.2em] text-neutral/50">
               Traduce y construye la oración en japonés
             </div>
 
             {/* Spanish Translation Prompt */}
-            <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-neutral leading-snug px-1">
+            <h2 className="text-base min-[400px]:text-lg sm:text-2xl md:text-3xl font-bold text-neutral leading-snug px-1">
               "{currentSentence.translation}"
             </h2>
 
@@ -545,12 +581,12 @@ export default function SentenceBuilderGame({
               <img
                 src={currentSentence.image_url}
                 alt={currentSentence.translation}
-                className="mx-auto h-28 sm:h-36 rounded-2xl object-cover shadow-sm border border-cream/30"
+                className="mx-auto h-20 sm:h-36 rounded-xl sm:rounded-2xl object-cover shadow-sm border border-cream/30"
               />
             )}
 
             {/* Drop Zone (Response Construction Area) */}
-            <div className="pt-2 sm:pt-4">
+            <div className="pt-1 sm:pt-4">
               <SentenceDropZone
                 placedBlocks={placedBlocks}
                 totalRequired={totalBlocksCount}
@@ -564,7 +600,7 @@ export default function SentenceBuilderGame({
             </div>
 
             {/* Word Bank (Available Options) */}
-            <div className="pt-2">
+            <div className="pt-1 sm:pt-2">
               <WordBank
                 availableBlocks={availableBlocks}
                 onDropToAvailable={handleDropToAvailable}
@@ -577,14 +613,14 @@ export default function SentenceBuilderGame({
 
             {/* Feedback Message */}
             {validationState === 'correct' && (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-300 bg-emerald-50 p-3.5 sm:p-4 text-emerald-800 text-sm font-medium animate-fadeIn">
-                <div className="text-left text-xs sm:text-sm">
-                  🎉 ¡Excelente! Orden correcto: <strong className="font-bold text-sm sm:text-base ml-1">{currentSentence.full_japanese}</strong>
+              <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl sm:rounded-2xl border border-emerald-300 bg-emerald-50 p-2.5 sm:p-4 text-emerald-800 text-xs sm:text-sm font-medium animate-fadeIn">
+                <div className="text-left">
+                  🎉 ¡Correcto! <strong className="font-bold text-sm sm:text-base ml-1">{currentSentence.full_japanese}</strong>
                 </div>
                 <button
                   type="button"
                   onClick={() => speakJapanese(currentSentence.full_japanese, 0.85)}
-                  className="inline-flex min-h-[36px] items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm hover:bg-emerald-100 transition-colors cursor-pointer"
+                  className="inline-flex min-h-[32px] sm:min-h-[36px] items-center gap-1 rounded-xl border border-emerald-300 bg-white px-2.5 py-1 text-xs font-semibold text-emerald-800 shadow-sm hover:bg-emerald-100 transition-colors cursor-pointer"
                   title="Volver a escuchar pronunciación"
                 >
                   <span>🔊</span> Escuchar
@@ -593,21 +629,21 @@ export default function SentenceBuilderGame({
             )}
 
             {validationState === 'incorrect' && (
-              <div className="rounded-2xl border border-rose-300 bg-rose-50 p-3.5 sm:p-4 text-rose-800 text-xs sm:text-sm font-medium animate-shake">
+              <div className="rounded-xl sm:rounded-2xl border border-rose-300 bg-rose-50 p-2.5 sm:p-4 text-rose-800 text-xs sm:text-sm font-medium animate-shake">
                 ❌ El orden de las palabras no es el correcto. ¡Inténtalo de nuevo!
               </div>
             )}
 
-            {/* Actions Bar */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-2 sm:pt-4">
+            {/* Actions Bar: 2 compact buttons side by side on mobile */}
+            <div className="grid grid-cols-2 sm:flex sm:flex-row items-center justify-center gap-2 sm:gap-4 pt-1 sm:pt-4">
               <Button
                 type="button"
                 variant="secondary"
                 onClick={handleReset}
                 disabled={placedBlocks.length === 0 && validationState === 'idle'}
-                className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 text-sm font-semibold"
+                className="w-full sm:w-auto min-h-[42px] sm:min-h-[44px] px-3 sm:px-5 py-2 text-xs sm:text-sm font-semibold truncate"
               >
-                ↺ Reiniciar Fichas
+                ↺ <span className="hidden min-[380px]:inline">Reiniciar</span> Fichas
               </Button>
 
               {validationState !== 'correct' ? (
@@ -616,26 +652,26 @@ export default function SentenceBuilderGame({
                   variant="primary"
                   onClick={checkAnswer}
                   disabled={placedBlocks.length === 0}
-                  className="w-full sm:w-auto min-h-[44px] px-6 py-2.5 text-sm font-semibold"
+                  className="w-full sm:w-auto min-h-[42px] sm:min-h-[44px] px-3 sm:px-6 py-2 text-xs sm:text-sm font-semibold truncate"
                 >
-                  ✓ Comprobar Respuesta
+                  ✓ Comprobar
                 </Button>
               ) : (
                 <Button
                   type="button"
                   variant="primary"
                   onClick={handleNext}
-                  className="w-full sm:w-auto min-h-[44px] px-6 py-2.5 text-sm font-semibold"
+                  className="w-full sm:w-auto min-h-[42px] sm:min-h-[44px] px-3 sm:px-6 py-2 text-xs sm:text-sm font-semibold truncate"
                 >
-                  {currentIndex < sentences.length - 1 ? 'Siguiente Oración ➔' : 'Finalizar Sesión 🏁'}
+                  {currentIndex < sentences.length - 1 ? 'Siguiente ➔' : 'Finalizar 🏁'}
                 </Button>
               )}
             </div>
           </div>
         </div>
 
-        {/* Right Sidebar Column: Grammar Color Legend */}
-        <div className="lg:col-span-4 lg:sticky lg:top-6 space-y-4 sm:space-y-6 w-full">
+        {/* Right Sidebar Column: Grammar Color Legend (Desktop only, on mobile accessible via toggle) */}
+        <div className="hidden lg:block lg:col-span-4 lg:sticky lg:top-6 space-y-4 sm:space-y-6 w-full">
           <GrammarColorLegend />
         </div>
       </div>
