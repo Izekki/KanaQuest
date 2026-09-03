@@ -90,6 +90,7 @@ export default function HistoryPage() {
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'correct' | 'wrong' | 'pending'
   const [difficultyFilter, setDifficultyFilter] = useState('all'); // 'all' | 'beginner' | 'intermediate' | 'advanced'
   const [sortBy, setSortBy] = useState('default'); // 'default' | 'mastery_desc' | 'attempts_desc' | 'recent' | 'alpha'
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -255,9 +256,179 @@ export default function HistoryPage() {
   };
 
   return (
-    <section className="grid gap-5 w-full max-w-7xl mx-auto">
-      {/* Header & Mode Switcher */}
-      <div className="rounded-[1.75rem] border border-[#eaded6] bg-white p-4 sm:p-6 shadow-[0_14px_34px_rgba(128,43,56,0.08)]">
+    <section className="grid gap-3 sm:gap-5 w-full max-w-7xl mx-auto">
+      {/* MOBILE COMPACT HEADER (sm:hidden) - Maximum screen space for vocabulary cards */}
+      <div className="sm:hidden rounded-2xl border border-[#eaded6] bg-white/95 p-3 shadow-xs space-y-2.5">
+        {/* Mode switcher tabs */}
+        <div className="grid grid-cols-3 p-1 bg-[#fbf5f2] border border-[#eaded6] rounded-xl gap-1">
+          {['recognize', 'translate', 'pair_match'].map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => {
+                playFlip();
+                setMode(option);
+              }}
+              className={[
+                'rounded-lg py-1.5 text-xs font-bold transition-all text-center min-h-[34px] flex items-center justify-center',
+                mode === option
+                  ? 'bg-[rgb(var(--color-accent))] text-white shadow-xs'
+                  : 'text-[rgb(var(--color-neutral))]/70 hover:text-[rgb(var(--color-accent))]',
+              ].join(' ')}
+            >
+              {modeLabels[option]}
+            </button>
+          ))}
+        </div>
+
+        {/* 4 Mini KPI Chips */}
+        <div className="grid grid-cols-4 gap-1.5 text-center">
+          <div className="rounded-xl bg-[#fdf8f6] p-1.5 border border-[#f2e6df]">
+            <span className="text-[10px] text-[rgb(var(--color-neutral))]/60 font-medium block truncate">Total</span>
+            <span className="text-sm font-extrabold text-[rgb(var(--color-accent))]">{loading ? '—' : totals.total}</span>
+          </div>
+          <div className="rounded-xl bg-emerald-50/80 p-1.5 border border-emerald-100">
+            <span className="text-[10px] text-emerald-800 font-medium block truncate">Dominadas</span>
+            <span className="text-sm font-extrabold text-emerald-700">{loading ? '—' : totals.correct}</span>
+          </div>
+          <div className="rounded-xl bg-rose-50/80 p-1.5 border border-rose-100">
+            <span className="text-[10px] text-rose-800 font-medium block truncate">Repasar</span>
+            <span className="text-sm font-extrabold text-rose-600">{loading ? '—' : totals.wrong}</span>
+          </div>
+          <div className="rounded-xl bg-amber-50/80 p-1.5 border border-amber-100">
+            <span className="text-[10px] text-amber-800 font-medium block truncate">Pendientes</span>
+            <span className="text-sm font-extrabold text-amber-700">{loading ? '—' : totals.pending}</span>
+          </div>
+        </div>
+
+        {/* Compact Review CTA Button */}
+        {!loading && totals.wrong > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              const wrongWordIds = allItems.filter((item) => item.status === 'wrong').map((item) => item.id);
+              navigate('/game', {
+                state: {
+                  reviewMode: 'errors',
+                  wordIds: wrongWordIds,
+                  sourceMode: mode,
+                },
+              });
+            }}
+            className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-rose-600 py-2 px-3 text-xs font-bold text-white shadow-xs hover:bg-rose-700 active:scale-[0.98] transition"
+          >
+            <span>⚡ Repasar {totals.wrong} palabras pendientes →</span>
+          </button>
+        )}
+
+        {/* Mobile Search & Filter Action Bar */}
+        <div className="pt-1">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar palabra..."
+                className="w-full rounded-xl border border-[#eaded6] bg-[#fdfaf8] px-3 py-2 pl-8 text-xs text-[rgb(var(--color-neutral))] outline-none transition focus:border-[rgb(var(--color-accent))] focus:bg-white"
+              />
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[rgb(var(--color-neutral))]/40 select-none">
+                🔍
+              </span>
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[rgb(var(--color-neutral))]/50"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowMobileFilters((p) => !p)}
+              className={[
+                'flex h-[34px] items-center gap-1 rounded-xl border px-2.5 text-xs font-bold transition shadow-2xs shrink-0',
+                showMobileFilters || statusFilter !== 'all' || difficultyFilter !== 'all' || sortBy !== 'default'
+                  ? 'bg-[#6b2832] text-white border-[#6b2832]'
+                  : 'bg-white text-[#6b2832] border-[#eaded6] hover:bg-[#faf4f2]',
+              ].join(' ')}
+            >
+              <span>⚙️</span>
+              <span>Filtros</span>
+            </button>
+          </div>
+
+          {/* Collapsible filters on mobile */}
+          {showMobileFilters && (
+            <div className="pt-2.5 mt-2 border-t border-[#f2e7e1] space-y-2 animate-fadeIn">
+              {/* Status Pills */}
+              <div className="grid grid-cols-4 gap-1 text-[10px]">
+                {[
+                  { id: 'all', label: 'Todos' },
+                  { id: 'correct', label: 'Aprend.' },
+                  { id: 'wrong', label: 'Repaso' },
+                  { id: 'pending', label: 'Pend.' },
+                ].map((filter) => (
+                  <button
+                    key={filter.id}
+                    type="button"
+                    onClick={() => setStatusFilter(filter.id)}
+                    className={[
+                      'rounded-lg py-1.5 font-semibold transition text-center',
+                      statusFilter === filter.id
+                        ? 'bg-[#6b2832] text-white shadow-2xs'
+                        : 'bg-[#f8ebe6] text-[rgb(var(--color-neutral))]/75',
+                    ].join(' ')}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-0.5">
+                <select
+                  value={difficultyFilter}
+                  onChange={(e) => setDifficultyFilter(e.target.value)}
+                  className="rounded-lg border border-[#eaded6] bg-[#fdfaf8] px-2 py-1.5 text-[11px] font-medium text-[rgb(var(--color-neutral))]"
+                >
+                  <option value="all">Todas dificultades</option>
+                  <option value="beginner">Principiante (N5)</option>
+                  <option value="intermediate">Intermedio (N4)</option>
+                  <option value="advanced">Avanzado (N3+)</option>
+                </select>
+
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="rounded-lg border border-[#eaded6] bg-[#fdfaf8] px-2 py-1.5 text-[11px] font-medium text-[rgb(var(--color-neutral))]"
+                >
+                  <option value="default">Por defecto</option>
+                  <option value="mastery_desc">Mayor maestría</option>
+                  <option value="attempts_desc">Más intentos</option>
+                  <option value="recent">Más recientes</option>
+                  <option value="alpha">Alfabético</option>
+                </select>
+              </div>
+
+              {(statusFilter !== 'all' || difficultyFilter !== 'all' || sortBy !== 'default' || searchQuery) && (
+                <button
+                  type="button"
+                  onClick={handleClearFilters}
+                  className="w-full text-center text-xs text-[rgb(var(--color-accent))] font-bold py-1 hover:underline"
+                >
+                  Limpiar todos los filtros
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* DESKTOP Header & Mode Switcher (hidden sm:block) */}
+      <div className="hidden sm:block rounded-[1.75rem] border border-[#eaded6] bg-white p-4 sm:p-6 shadow-[0_14px_34px_rgba(128,43,56,0.08)]">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-xs sm:text-sm uppercase tracking-[0.35em] text-[rgb(var(--color-accent))]/70">
@@ -362,9 +533,9 @@ export default function HistoryPage() {
         </div>
       </div>
 
-      {/* Smart Error Review CTA Banner */}
+      {/* DESKTOP Smart Error Review CTA Banner (hidden sm:block) */}
       {!loading && totals.wrong > 0 && (
-        <div className="rounded-2xl border border-rose-200 bg-[linear-gradient(135deg,#fff8f6,#feece7)] p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4 animate-fadeIn">
+        <div className="hidden sm:flex rounded-2xl border border-rose-200 bg-[linear-gradient(135deg,#fff8f6,#feece7)] p-4 sm:p-5 shadow-xs flex-col sm:flex-row items-center justify-between gap-4 animate-fadeIn">
           <div className="flex items-center gap-3.5">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-rose-500 text-white shadow-sm">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
@@ -400,9 +571,10 @@ export default function HistoryPage() {
         </div>
       )}
 
-      {/* Filter and Search Controls */}
-      <div className="rounded-[1.75rem] border border-[#eaded6] bg-white p-4 sm:p-6 shadow-[0_14px_34px_rgba(128,43,56,0.08)]">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      {/* Main Vocabulary Card Section */}
+      <div className="rounded-[1.75rem] border border-[#eaded6] bg-white p-3.5 sm:p-6 shadow-[0_14px_34px_rgba(128,43,56,0.08)]">
+        {/* DESKTOP Filter and Search Controls (hidden sm:block) */}
+        <div className="hidden sm:flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           {/* Search bar */}
           <div className="relative flex-1 min-w-[240px]">
             <input
@@ -536,7 +708,7 @@ export default function HistoryPage() {
             </button>
           </div>
         ) : (
-          <div className="mt-5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="mt-3 sm:mt-5 grid grid-cols-1 min-[440px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3.5">
             {pagedItems.map((item) => {
               const statusCfg = statusConfig[item.status] || statusConfig.pending;
               const hasJapanesePrompt = containsJapaneseScript(item.japanese || item.hiragana);
@@ -545,19 +717,19 @@ export default function HistoryPage() {
                 <div
                   key={item.id}
                   className={[
-                    'group relative flex flex-col justify-between rounded-2xl border border-[#eaded6] bg-[#fffdfb] p-4 shadow-sm transition-all duration-200 hover:shadow-md',
+                    'group relative flex flex-col justify-between rounded-xl sm:rounded-2xl border border-[#eaded6] bg-[#fffdfb] p-3 sm:p-4 shadow-2xs transition-all duration-200 hover:shadow-md',
                     statusCfg.cardBorder,
                   ].join(' ')}
                 >
                   {/* Top Badges */}
                   <div className="flex items-center justify-between gap-1">
-                    <span className="rounded-full bg-[#f6eadf] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[rgb(var(--color-accent))]">
+                    <span className="rounded-full bg-[#f6eadf] px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-[rgb(var(--color-accent))]">
                       {difficultyLabels[item.difficulty] || item.difficulty || 'Nivel ' + (item.level || 1)}
                     </span>
 
                     <span
                       className={[
-                        'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider',
+                        'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider',
                         statusCfg.badgeClass,
                       ].join(' ')}
                     >
@@ -567,11 +739,11 @@ export default function HistoryPage() {
                   </div>
 
                   {/* Main Content */}
-                  <div className="my-3 text-center">
+                  <div className="my-2 sm:my-3 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <span
                         className={[
-                          'text-3xl sm:text-4xl font-extrabold text-[rgb(var(--color-accent))] leading-tight tracking-tight',
+                          'text-2xl sm:text-4xl font-extrabold text-[rgb(var(--color-accent))] leading-tight tracking-tight',
                           hasJapanesePrompt ? 'font-jp' : '',
                         ].join(' ')}
                       >

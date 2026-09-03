@@ -40,6 +40,7 @@ export default function ParParejasGame({ onBackToLobby }) {
   const [isGameOver, setIsGameOver] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [showMobileInfo, setShowMobileInfo] = useState(false);
 
   const timerRef = useRef(null);
 
@@ -291,9 +292,71 @@ export default function ParParejasGame({ onBackToLobby }) {
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-4 sm:space-y-6">
-      {/* Header & Controls */}
-      <div className="rounded-[1.5rem] border border-[#eaded6] bg-white p-4 sm:p-5 shadow-[0_10px_30px_rgba(128,43,56,0.06)]">
+    <div className="w-full max-w-5xl mx-auto space-y-2.5 sm:space-y-6">
+      {/* MOBILE COMPACT HEADER (sm:hidden) - Maximum screen space for cards */}
+      <div className="sm:hidden rounded-2xl border border-[#eaded6] bg-white/95 p-2 shadow-xs backdrop-blur-sm space-y-2">
+        <div className="flex items-center justify-between gap-1.5">
+          {/* Level Selector Pills */}
+          <div className="grid grid-cols-3 p-0.5 bg-[#fbf5f2] border border-rose-100/90 rounded-xl gap-0.5 flex-1 min-w-0">
+            {DIFFICULTIES.map((d) => (
+              <button
+                key={d.id}
+                type="button"
+                onClick={() => setDifficulty(d.id)}
+                className={[
+                  'rounded-lg py-1 px-1 text-[11px] font-bold transition-all text-center min-h-[30px] flex items-center justify-center gap-0.5 truncate',
+                  difficulty === d.id
+                    ? 'bg-[#6b2832] text-white shadow-xs'
+                    : 'text-[#6b2832]/70 hover:text-[#6b2832]',
+                ].join(' ')}
+              >
+                <span>{d.label.slice(0, 4)}.</span>
+                <span className="text-[9px] opacity-75 font-normal">({d.pairs})</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Quick Metrics Chip */}
+          <div className="flex items-center gap-1.5 bg-[#fdf8f6] border border-[#f0e4de] rounded-xl px-2.5 py-1 text-xs font-bold text-[rgb(var(--color-accent))] shrink-0 font-mono">
+            <span>⏱️ {formatTime(timerSeconds)}</span>
+            <span className="text-emerald-700">🎯 {matchedPairsCount}/{targetPairsCount}</span>
+          </div>
+
+          {/* Info Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setShowMobileInfo((prev) => !prev)}
+            className="flex h-[30px] w-[30px] items-center justify-center rounded-xl border border-[#eaded6] bg-white text-xs font-bold text-[#6b2832] hover:bg-[#faf4f2] transition shadow-2xs shrink-0"
+            title="Cómo jugar"
+            aria-label="Ver instrucciones"
+          >
+            {showMobileInfo ? '✕' : 'ℹ️'}
+          </button>
+        </div>
+
+        {/* Collapsible Info Dropdown (Closed by default to preserve flow) */}
+        {showMobileInfo && (
+          <div className="rounded-xl border border-rose-100 bg-[#fdf8f6] p-2.5 text-xs text-[#6b2832] space-y-1 animate-fadeIn">
+            <div className="font-bold flex items-center gap-1">
+              <span>🎴 Reglas de Par-Parejas:</span>
+            </div>
+            <p className="text-[11px] text-[rgb(var(--color-neutral))]/80 leading-relaxed">
+              Encuentra los pares volteando una carta en japonés y su correspondiente significado en español.
+            </p>
+          </div>
+        )}
+
+        {/* Thin Progress bar */}
+        <div className="w-full bg-[#f0e4de] h-1.5 rounded-full overflow-hidden">
+          <div
+            className="bg-gradient-to-r from-[rgb(var(--color-accent))] to-emerald-500 h-full transition-all duration-300 rounded-full"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+      </div>
+
+      {/* DESKTOP / TABLET HEADER (hidden sm:block) */}
+      <div className="hidden sm:block rounded-[1.5rem] border border-[#eaded6] bg-white p-5 shadow-[0_10px_30px_rgba(128,43,56,0.06)]">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -308,7 +371,7 @@ export default function ParParejasGame({ onBackToLobby }) {
           </div>
 
           {/* Difficulty Selector (Centered Pills) */}
-          <div className="flex justify-center md:justify-end">
+          <div className="flex justify-center md:justify-end w-full md:w-auto">
             <div className="inline-flex items-center p-1 bg-white/80 border border-rose-100/90 rounded-2xl gap-1 shadow-2xs">
               {DIFFICULTIES.map((d) => (
                 <button
@@ -316,13 +379,14 @@ export default function ParParejasGame({ onBackToLobby }) {
                   type="button"
                   onClick={() => setDifficulty(d.id)}
                   className={[
-                    'rounded-xl px-3.5 sm:px-4 py-1.5 text-xs font-semibold transition-all whitespace-nowrap min-h-[34px]',
+                    'rounded-xl px-4 py-1.5 text-xs font-semibold transition-all text-center min-h-[36px] flex items-center justify-center gap-1',
                     difficulty === d.id
                       ? 'bg-[#6b2832] text-white shadow-xs'
                       : 'text-[#6b2832]/70 hover:text-[#6b2832] hover:bg-white',
                   ].join(' ')}
                 >
-                  {d.label} ({d.pairs} pares)
+                  <span className="font-bold">{d.label}</span>
+                  <span className="text-[11px] opacity-80">({d.pairs} p.)</span>
                 </button>
               ))}
             </div>
@@ -330,31 +394,31 @@ export default function ParParejasGame({ onBackToLobby }) {
         </div>
 
         {/* Live Metrics Bar */}
-        <div className="mt-4 pt-4 border-t border-[#f2e7e1] grid grid-cols-2 min-[480px]:grid-cols-4 gap-2.5 sm:gap-4 text-center">
-          <div className="rounded-xl bg-[#fdf8f6] p-2 sm:p-3 border border-[#f0e4de]">
-            <span className="text-[11px] sm:text-xs text-[rgb(var(--color-neutral))]/60 font-medium">⏱️ Tiempo</span>
-            <div className="text-base sm:text-lg font-bold text-[rgb(var(--color-accent))] font-mono">
+        <div className="mt-4 pt-4 border-t border-[#f2e7e1] grid grid-cols-4 gap-4 text-center">
+          <div className="rounded-xl bg-[#fdf8f6] p-3 border border-[#f0e4de]">
+            <span className="text-xs text-[rgb(var(--color-neutral))]/60 font-medium">⏱️ Tiempo</span>
+            <div className="text-lg font-bold text-[rgb(var(--color-accent))] font-mono">
               {formatTime(timerSeconds)}
             </div>
           </div>
 
-          <div className="rounded-xl bg-[#fdf8f6] p-2 sm:p-3 border border-[#f0e4de]">
-            <span className="text-[11px] sm:text-xs text-[rgb(var(--color-neutral))]/60 font-medium">🔄 Intentos</span>
-            <div className="text-base sm:text-lg font-bold text-[rgb(var(--color-neutral))]">
+          <div className="rounded-xl bg-[#fdf8f6] p-3 border border-[#f0e4de]">
+            <span className="text-xs text-[rgb(var(--color-neutral))]/60 font-medium">🔄 Intentos</span>
+            <div className="text-lg font-bold text-[rgb(var(--color-neutral))]">
               {attempts}
             </div>
           </div>
 
-          <div className="rounded-xl bg-[#fdf8f6] p-2 sm:p-3 border border-[#f0e4de]">
-            <span className="text-[11px] sm:text-xs text-[rgb(var(--color-neutral))]/60 font-medium">🎯 Parejas</span>
-            <div className="text-base sm:text-lg font-bold text-emerald-600">
+          <div className="rounded-xl bg-[#fdf8f6] p-3 border border-[#f0e4de]">
+            <span className="text-xs text-[rgb(var(--color-neutral))]/60 font-medium">🎯 Parejas</span>
+            <div className="text-lg font-bold text-emerald-600">
               {matchedPairsCount} / {targetPairsCount}
             </div>
           </div>
 
-          <div className="rounded-xl bg-[#fdf8f6] p-2 sm:p-3 border border-[#f0e4de]">
-            <span className="text-[11px] sm:text-xs text-[rgb(var(--color-neutral))]/60 font-medium">⭐ XP Ganada</span>
-            <div className="text-base sm:text-lg font-bold text-amber-600">
+          <div className="rounded-xl bg-[#fdf8f6] p-3 border border-[#f0e4de]">
+            <span className="text-xs text-[rgb(var(--color-neutral))]/60 font-medium">⭐ XP Ganada</span>
+            <div className="text-lg font-bold text-amber-600">
               +{earnedXp} XP
             </div>
           </div>
@@ -370,8 +434,8 @@ export default function ParParejasGame({ onBackToLobby }) {
       </div>
 
       {/* Card Grid */}
-      <div className="rounded-[1.75rem] border border-[#eaded6] bg-white/80 backdrop-blur-sm p-3.5 sm:p-6 shadow-[0_14px_34px_rgba(128,43,56,0.06)]">
-        <div className={`grid ${activeDifficulty.cols} gap-2.5 sm:gap-4`}>
+      <div className="rounded-2xl sm:rounded-[1.75rem] border border-[#eaded6] bg-white/80 backdrop-blur-sm p-2 sm:p-6 shadow-[0_14px_34px_rgba(128,43,56,0.06)]">
+        <div className={`grid ${activeDifficulty.cols} gap-2 sm:gap-4`}>
           {cards.map((card) => (
             <ParParejasCard
               key={card.id}

@@ -44,9 +44,9 @@ export default function WordBank({
 
   return (
     <div className="w-full space-y-2">
-      <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-neutral/60">
+      <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-neutral/60">
         <span>Banco de Palabras ({availableBlocks.length})</span>
-        <span>Toca para agregar</span>
+        <span className="hidden min-[420px]:inline">Toca para agregar</span>
       </div>
 
       <div
@@ -54,8 +54,8 @@ export default function WordBank({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={[
-          'min-h-[90px] sm:min-h-[110px] w-full rounded-3xl border border-cream/40 bg-surface/50 p-3 sm:p-5 md:p-6',
-          'flex flex-wrap items-center justify-center gap-2 sm:gap-3 transition-all duration-200 overflow-hidden',
+          'min-h-[76px] sm:min-h-[105px] w-full rounded-2xl sm:rounded-3xl border border-cream/40 bg-surface/50 p-2.5 sm:p-5 md:p-6',
+          'flex flex-wrap items-center justify-center gap-1.5 sm:gap-3 transition-all duration-200 overflow-hidden',
           isOver ? 'border-accent bg-accent/5 ring-2 ring-accent/20' : '',
         ].join(' ')}
       >

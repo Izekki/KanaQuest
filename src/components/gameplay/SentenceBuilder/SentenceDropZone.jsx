@@ -57,9 +57,9 @@ export default function SentenceDropZone({
 
   return (
     <div className="w-full space-y-2">
-      <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-neutral/60">
+      <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-neutral/60">
         <span>Zona de Construcción ({placedBlocks.length}/{totalRequired})</span>
-        <span>Haz clic o arrastra para reordenar</span>
+        <span className="hidden min-[420px]:inline">Toca o arrastra para ordenar</span>
       </div>
 
       <div
@@ -67,15 +67,15 @@ export default function SentenceDropZone({
         onDragLeave={handleDragLeave}
         onDrop={(e) => handleDrop(e)}
         className={[
-          'relative min-h-[90px] sm:min-h-[110px] w-full rounded-3xl border-2 border-dashed p-3 sm:p-5 md:p-6',
-          'flex flex-wrap items-center justify-center gap-2 sm:gap-3 transition-all duration-200 overflow-hidden',
+          'relative min-h-[76px] sm:min-h-[105px] w-full rounded-2xl sm:rounded-3xl border-2 border-dashed p-2.5 sm:p-5 md:p-6',
+          'flex flex-wrap items-center justify-center gap-1.5 sm:gap-3 transition-all duration-200 overflow-hidden',
           containerStyles,
         ].join(' ')}
       >
         {placedBlocks.length === 0 ? (
-          <div className="pointer-events-none text-center text-sm font-medium text-neutral/40">
-            <span className="block text-2xl mb-1">✍️</span>
-            Arrastra o toca las fichas para formar la oración
+          <div className="pointer-events-none text-center text-xs sm:text-sm font-medium text-neutral/40">
+            <span className="hidden sm:block text-2xl mb-1">✍️</span>
+            <span>Toca las fichas de abajo para ordenar</span>
           </div>
         ) : (
           placedBlocks.map((block, index) => (
