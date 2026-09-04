@@ -146,3 +146,20 @@ body {
 .animate-toastSlideIn {
   animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+@keyframes shake-subtle {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  20%, 60% {
+    transform: translateX(-4px);
+  }
+  40%, 80% {
+    transform: translateX(4px);
+  }
+}
+
+.animate-shake-subtle {
+  animation: shake-subtle 0.35s ease-in-out;
+}
+
