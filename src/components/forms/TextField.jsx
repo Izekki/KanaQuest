@@ -1,8 +1,12 @@
 import { useState } from 'react';
 
-export default function TextField({ type, className = '', ...props }) {
+export default function TextField({ type, className = '', error = false, ...props }) {
   const [showPassword, setShowPassword] = useState(false);
   const isPasswordType = type === 'password';
+
+  const stateClasses = error
+    ? 'border-rose-400/90 bg-rose-50/30 text-[rgb(var(--color-neutral))] ring-2 ring-rose-300/40 focus:border-rose-500 focus:ring-rose-300/70'
+    : 'border-[rgba(128,43,56,0.18)] bg-white text-[rgb(var(--color-neutral))] focus:border-accent focus:ring-2 focus:ring-[rgba(128,43,56,0.12)]';
 
   if (isPasswordType) {
     return (
@@ -10,7 +14,8 @@ export default function TextField({ type, className = '', ...props }) {
         <input
           type={showPassword ? 'text' : 'password'}
           className={[
-            'w-full min-h-[44px] rounded-2xl border border-[rgba(128,43,56,0.18)] bg-white pl-4 pr-11 py-3 text-sm sm:text-base text-[rgb(var(--color-neutral))] outline-none transition-colors placeholder:text-[rgb(var(--color-neutral))]/40 focus:border-accent focus:ring-2 focus:ring-[rgba(128,43,56,0.12)]',
+            'w-full min-h-[44px] rounded-2xl border pl-4 pr-11 py-3 text-sm sm:text-base outline-none transition-all placeholder:text-[rgb(var(--color-neutral))]/40',
+            stateClasses,
             className,
           ].join(' ')}
           {...props}
@@ -67,7 +72,8 @@ export default function TextField({ type, className = '', ...props }) {
     <input
       type={type}
       className={[
-        'w-full min-h-[44px] rounded-2xl border border-[rgba(128,43,56,0.18)] bg-white px-4 py-3 text-sm sm:text-base text-[rgb(var(--color-neutral))] outline-none transition-colors placeholder:text-[rgb(var(--color-neutral))]/40 focus:border-accent focus:ring-2 focus:ring-[rgba(128,43,56,0.12)]',
+        'w-full min-h-[44px] rounded-2xl border px-4 py-3 text-sm sm:text-base outline-none transition-all placeholder:text-[rgb(var(--color-neutral))]/40',
+        stateClasses,
         className,
       ].join(' ')}
       {...props}
