@@ -5,6 +5,7 @@ import FormStatus from '../forms/FormStatus';
 import TextField from '../forms/TextField';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
+import Icon from '../ui/Icon';
 import { updateUser } from '../../services/supabase/auth';
 
 export default function ResetPasswordForm() {
@@ -59,9 +60,7 @@ export default function ResetPasswordForm() {
       {showToast && (
         <div className="fixed top-6 left-1/2 z-[9999] animate-toastSlideIn">
           <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-6 py-4 shadow-xl shadow-emerald-900/10">
-            <span className="text-xl" role="img" aria-label="success">
-              ✅
-            </span>
+            <Icon name="check-circle" className="w-5 h-5 text-emerald-600 flex-shrink-0" />
             <div>
               <p className="font-semibold text-emerald-900 text-sm">¡Contraseña actualizada!</p>
               <p className="text-xs text-emerald-700/95 mt-0.5 font-medium">

@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { fetchUserProfile, fetchUserProgress } from '../../services/supabase/progress';
 import { getSignedAvatarUrl } from '../../services/supabase/storage';
 import { preloadWords } from '../../services/supabase/words';
-import avatarRimuruRedPink from '../../img/avatar_rimuru_version_red-pink.svg';
+import Icon from '../../components/ui/Icon';
+import mascotTransparent from '../../img/mascot_pink_slime_transparent.png';
 
 const getStreakStorageKey = (userId) => `kanaquest-streak:${userId}`;
 
@@ -98,15 +99,16 @@ export default function UserDashboard({ user }) {
     {
       id: 'translate',
       title: 'Traducir',
-      badge: '翻訳',
+      iconName: 'pencil',
       badgeColor: 'bg-[#fff6e6] text-[#9c6615] border-[#fae2be]',
-      description: 'Español → Escribe en caracteres japoneses.',
+      description: 'Español → Elige o escribe en japonés.',
       to: '/aprender',
+      state: { sourceMode: 'translate' },
     },
     {
       id: 'pair_match',
       title: 'Par-Parejas',
-      badge: '🎴',
+      iconName: 'cards-memory',
       badgeColor: 'bg-[#eef3fb] text-[#2c5282] border-[#d2e1f5]',
       description: 'Juego de memoria: empareja caracteres y significados.',
       to: '/par-parejas',
@@ -114,7 +116,7 @@ export default function UserDashboard({ user }) {
     {
       id: 'sentence_builder',
       title: 'Constructor de Oraciones',
-      badge: '⛩️',
+      iconName: 'puzzle-blocks',
       badgeColor: 'bg-[#eef8f2] text-[#22633e] border-[#cfe9d8]',
       description: 'Arrastra y ordena fichas para formar frases reales.',
       to: '/constructor',
@@ -125,15 +127,13 @@ export default function UserDashboard({ user }) {
     <div className="w-full max-w-6xl mx-auto space-y-6 py-2">
       {/* 2-COLUMN DASHBOARD LAYOUT */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
         {/* LEFT COLUMN: Study Flow (col-span-7 / 8) */}
         <div className="lg:col-span-7 xl:col-span-8 space-y-5">
-          
           {/* Main Action Banner: Active Mode ("Continuar lección") */}
-          <div className="rounded-[1.6rem] border border-[#e3b8b1] bg-gradient-to-r from-[#fff9f6] via-[#fffdfc] to-[#fbf0ec] p-5 sm:p-7 shadow-[0_10px_28px_rgba(107,40,50,0.06)] flex flex-col justify-between gap-4">
-            <div className="space-y-2">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-[#6b2832] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-2xs">
-                <span>✦</span>
+          <div className="rounded-[1.75rem] border border-[#e3b8b1] bg-gradient-to-r from-[#fff9f6] via-[#fffdfc] to-[#fbf0ec] p-5 sm:p-7 shadow-[0_10px_28px_rgba(107,40,50,0.06)] flex flex-col justify-between gap-4 relative overflow-hidden">
+            <div className="space-y-2 relative z-10">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-[#6b2832] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-2xs">
+                <Icon name="sparkles" className="w-3 h-3 text-amber-300" />
                 <span>Continuar lección</span>
               </div>
 
@@ -146,7 +146,7 @@ export default function UserDashboard({ user }) {
               </p>
             </div>
 
-            <div className="pt-1 flex items-center justify-between gap-3">
+            <div className="pt-1 flex items-center justify-between gap-3 relative z-10">
               <Link
                 to="/aprender"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#6b2832] px-6 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md transition-all hover:bg-[#581f27] hover:-translate-y-0.5 active:scale-98"
@@ -154,8 +154,9 @@ export default function UserDashboard({ user }) {
                 <span>Comenzar ronda</span>
                 <span aria-hidden="true">→</span>
               </Link>
-              <span className="text-[11px] font-semibold text-[#6b2832]/70">
-                +50 XP por acierto
+              <span className="text-[11px] font-semibold text-[#6b2832]/70 flex items-center gap-1">
+                <Icon name="sparkles" className="w-3.5 h-3.5 text-amber-600" />
+                <span>+50 XP por acierto</span>
               </span>
             </div>
           </div>
@@ -176,16 +177,17 @@ export default function UserDashboard({ user }) {
                 <Link
                   key={mode.id}
                   to={mode.to}
+                  state={mode.state}
                   className="group flex items-center justify-between gap-3.5 rounded-2xl border border-[#eaded6] bg-white p-3.5 sm:p-4 shadow-2xs transition-all duration-200 hover:border-[#dfc3be] hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     <div
                       className={[
-                        'flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl border font-bold text-sm shadow-2xs font-jp transition-transform duration-200 group-hover:scale-105',
+                        'flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl border font-bold text-sm shadow-2xs transition-transform duration-200 group-hover:scale-105',
                         mode.badgeColor,
                       ].join(' ')}
                     >
-                      {mode.badge}
+                      <Icon name={mode.iconName} className="w-5 h-5" />
                     </div>
 
                     <div className="min-w-0">
@@ -211,7 +213,6 @@ export default function UserDashboard({ user }) {
 
         {/* RIGHT COLUMN: User Progress Sidebar (col-span-5 / 4) */}
         <aside className="lg:col-span-5 xl:col-span-4 rounded-[1.75rem] border border-[#eaded6] bg-white p-5 sm:p-6 shadow-[0_12px_32px_rgba(107,40,50,0.06)] space-y-4">
-          
           {/* Header with Mascot & Greeting */}
           <div className="flex items-center gap-3.5 pb-4 border-b border-[#f2e6df]">
             <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#fbeae5] border-2 border-[#e3b8b1] shadow-xs">
@@ -223,9 +224,9 @@ export default function UserDashboard({ user }) {
                 />
               ) : (
                 <img
-                  src={avatarRimuruRedPink}
-                  alt="Avatar Rimuru"
-                  className="h-10 w-10 object-contain drop-shadow-[0_4px_8px_rgba(107,40,50,0.15)]"
+                  src={mascotTransparent}
+                  alt="Mascota de KanaQuest"
+                  className="h-11 w-11 object-contain drop-shadow-[0_4px_8px_rgba(107,40,50,0.18)]"
                   loading="eager"
                 />
               )}
@@ -244,7 +245,7 @@ export default function UserDashboard({ user }) {
           {/* Widget 1: Racha Activa */}
           <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#fffdfb] border border-[#f2e6df] shadow-2xs">
             <div className="flex items-center gap-3">
-              <span className="text-xl select-none" aria-hidden="true">🔥</span>
+              <Icon name="fire-streak" className="w-5 h-5 text-amber-500" />
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-wider text-[rgb(var(--color-neutral))]/60">
                   Racha de Estudio
@@ -254,7 +255,7 @@ export default function UserDashboard({ user }) {
                 </div>
               </div>
             </div>
-            <span className="rounded-full bg-[#faece9] px-2 py-0.5 text-[10px] font-bold text-[#6b2832]">
+            <span className="rounded-full bg-[#faece9] px-2.5 py-0.5 text-[10px] font-bold text-[#6b2832]">
               {streak > 0 ? 'Activo' : 'Comienza'}
             </span>
           </div>
@@ -262,8 +263,9 @@ export default function UserDashboard({ user }) {
           {/* Widget 2: Nivel y Progreso de XP */}
           <div className="p-3.5 rounded-xl bg-[#fffdfb] border border-[#f2e6df] shadow-2xs space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-[#6b2832]">
-                Nivel {level}
+              <span className="font-bold text-[#6b2832] flex items-center gap-1">
+                <Icon name="trophy" className="w-3.5 h-3.5 text-amber-600" />
+                <span>Nivel {level}</span>
               </span>
               <span className="font-mono text-[11px] font-bold text-[rgb(var(--color-neutral))]/70">
                 {experience} XP
@@ -285,7 +287,7 @@ export default function UserDashboard({ user }) {
           {/* Widget 3: Palabras Dominadas */}
           <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#fffdfb] border border-[#f2e6df] shadow-2xs">
             <div className="flex items-center gap-3">
-              <span className="text-xl select-none" aria-hidden="true">📚</span>
+              <Icon name="book-open" className="w-5 h-5 text-emerald-700" />
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-wider text-[rgb(var(--color-neutral))]/60">
                   Palabras Dominadas
@@ -306,8 +308,8 @@ export default function UserDashboard({ user }) {
               to="/vocabulary"
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#6b2832]/30 bg-[#fffdfb] px-4 py-2.5 text-xs sm:text-sm font-semibold text-[#6b2832] shadow-2xs transition-all hover:bg-[#faece9] hover:border-[#6b2832]/50 active:scale-98"
             >
-              <span>Ver vocabulario</span>
-              <span aria-hidden="true">📖</span>
+              <Icon name="book-open" className="w-4 h-4" />
+              <span>Ver vocabulario completo</span>
             </Link>
           </div>
         </aside>

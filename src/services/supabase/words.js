@@ -23,7 +23,7 @@ export async function fetchWords(limit = 200, forceRefresh = false) {
     try {
       const res = await supabase
         .from('words')
-        .select('id,japanese,hiragana,katakana,romaji,translation,accepted_answers,difficulty,type_id,level,experience_reward')
+        .select('id,japanese,hiragana,katakana,romaji,translation,accepted_answers,difficulty,type_id,level,experience_reward,item_type,kunyomi,onyomi,target_question_type')
         .limit(300);
 
       if (!res.error && res.data) {

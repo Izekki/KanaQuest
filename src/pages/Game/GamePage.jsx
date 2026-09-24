@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
-import SessionProgressCard from '../../components/gameplay/SessionProgressCard';
 import { fetchWords } from '../../services/supabase/words';
 import {
   fetchRankingProfiles,
@@ -10,7 +9,14 @@ import {
 } from '../../services/supabase/progress';
 import { useAuthSession } from '../../hooks/useAuthSession';
 import { useSoundEffects } from '../../hooks/useSoundEffects';
-import avatarRimuruRedPink from '../../img/avatar_rimuru_version_red-pink.svg';
+import Icon from '../../components/ui/Icon';
+import MultipleChoiceGrid from '../../components/gameplay/MultipleChoiceGrid';
+import {
+  createExercise,
+  generateMultipleChoiceOptions,
+  calculateAwardXp,
+  isAnswerCorrect,
+} from '../../utils/gameplayLogic';
 
 const ROUND_SIZE = 10;
 
@@ -78,8 +84,6 @@ const getAnswersFromWord = (word, mode) => {
   return [word?.hiragana, word?.katakana, word?.romaji, word?.translation].filter(Boolean);
 };
 
-const getStreakStorageKey = (userId) => `kanaquest-streak:${userId}`;
-
 function getInitials(player) {
   const name = player?.username || player?.name || 'U';
   return name.slice(0, 1).toUpperCase();
@@ -96,43 +100,6 @@ function speakWord(text) {
   } catch (e) {
     console.debug('Speech synthesis error:', e);
   }
-}
-
-function CatIllustration({ animationState }) {
-  const animationClass =
-    animationState === 'success'
-      ? 'animate-mascot-success'
-      : animationState === 'error'
-        ? 'animate-mascot-error'
-        : '';
-
-  return (
-    <div
-      className={[
-        'relative flex h-20 w-20 min-[400px]:h-24 min-[400px]:w-24 sm:h-[150px] sm:w-[150px] items-center justify-center overflow-hidden rounded-full bg-[#f5dbe0] border-4 border-white shadow-[0_12px_28px_rgba(128,43,56,0.14)] transition-transform duration-300',
-        animationClass,
-      ].join(' ')}
-    >
-      <img
-        src={avatarRimuruRedPink}
-        alt="Avatar de Rimuru"
-        className="h-14 w-14 min-[400px]:h-16 min-[400px]:w-16 sm:h-[95px] sm:w-[95px] max-w-none object-contain drop-shadow-[0_8px_12px_rgba(128,43,56,0.15)]"
-        loading="eager"
-        decoding="async"
-      />
-    </div>
-  );
-}
-
-function KeyboardIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 text-[#6b2832]">
-      <path
-        fill="currentColor"
-        d="M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Zm0 2v8h16V8H4Zm2 1h2v2H6V9Zm3 0h2v2H9V9Zm3 0h2v2h-2V9Zm3 0h2v2h-2V9Zm3 0h2v2h-2V9ZM6 12h2v2H6v-2Zm3 0h8v2H9v-2Zm9 0h2v2h-2v-2Zm-12 3h12v2H6v-2Z"
-      />
-    </svg>
-  );
 }
 
 export default function GamePage() {
@@ -162,26 +129,48 @@ export default function GamePage() {
     missedQuestions: [],
   });
 
-  // Current Question State
+  // Learning Mode & Current Question State
+  const [isLearningMode, setIsLearningMode] = useState(() => {
+    try {
+      const saved = localStorage.getItem('kanaquest_learning_mode');
+      if (saved !== null) {
+        return saved === 'true';
+      }
+      const diff = localStorage.getItem('kanaquest_difficulty_mode');
+      if (diff !== null) {
+        return diff === 'apprentice';
+      }
+      return true;
+    } catch {
+      return true;
+    }
+  });
+  const [selectedOption, setSelectedOption] = useState(null);
   const [answer, setAnswer] = useState('');
   const [feedback, setFeedback] = useState(null);
   const [combo, setCombo] = useState(0);
   const [hintUsed, setHintUsed] = useState(false);
   const [hintText, setHintText] = useState('');
 
-  // Ranking State for Sidebar
+  // Ranking Drawer / Modal State
   const [rankingProfiles, setRankingProfiles] = useState([]);
   const [rankingLoading, setRankingLoading] = useState(true);
-  const [rankingModalOpen, setRankingModalOpen] = useState(false);
+  const [rankingDrawerOpen, setRankingDrawerOpen] = useState(false);
 
   const inputRef = useRef(null);
   const nextButtonRef = useRef(null);
 
-  // Helper to map raw word rows to question objects
-  const mapWordsToQuestions = useCallback((rows, targetMode) => {
+  // Helper to map raw word rows to pedagogical exercise objects
+  const mapWordsToQuestions = useCallback((rows, targetMode, learningActive, wordPool) => {
+    const diffMode = learningActive ? 'apprentice' : 'master';
+    const pool = wordPool || rows;
     return rows.map((row) => {
+      const exercise = createExercise(row, pool, diffMode, targetMode);
+      if (exercise) return exercise;
+
       const isRecognize = targetMode === 'recognize';
       return {
+        id: row.id,
         wordId: row.id,
         prompt: isRecognize
           ? row.japanese || row.hiragana || row.katakana
@@ -194,15 +183,18 @@ export default function GamePage() {
         experienceReward: row.experience_reward ?? 10,
         answers: getAnswersFromWord(row, targetMode),
         instruction: isRecognize
-          ? 'Escribe la lectura (hiragana, katakana o romaji).'
-          : 'Escribe la palabra en japonés (hiragana, katakana o kanji).',
+          ? 'Escribe la lectura (hiragana o romaji)'
+          : 'Escribe la palabra en japonés',
+        presentation: learningActive ? 'multiple_choice' : 'open_input',
+        options: null,
+        _rawItem: row,
       };
     });
   }, []);
 
   // Initialize a new round queue (10 questions or custom deck)
   const initRound = useCallback(
-    (wordsSource, targetMode, customWordIds = null, continuous = false) => {
+    (wordsSource, targetMode, customWordIds = null, continuous = false, learningActive = isLearningMode) => {
       let filtered = [...wordsSource];
 
       if (customWordIds && customWordIds.length > 0) {
@@ -213,10 +205,9 @@ export default function GamePage() {
         filtered = [...wordsSource];
       }
 
-      // Shuffle
       const shuffled = [...filtered].sort(() => Math.random() - 0.5);
       const selected = continuous ? shuffled : shuffled.slice(0, ROUND_SIZE);
-      const mapped = mapWordsToQuestions(selected, targetMode);
+      const mapped = mapWordsToQuestions(selected, targetMode, learningActive, wordsSource);
 
       setRoundQuestions(mapped);
       setRoundIndex(0);
@@ -229,11 +220,12 @@ export default function GamePage() {
         missedQuestions: [],
       });
       setAnswer('');
+      setSelectedOption(null);
       setFeedback(null);
       setHintUsed(false);
       setHintText('');
     },
-    [mapWordsToQuestions]
+    [mapWordsToQuestions, isLearningMode]
   );
 
   // Load words from Supabase & configure Review Mode if triggered
@@ -250,7 +242,6 @@ export default function GamePage() {
         if (!isMounted) return;
         setAllWords(rows);
 
-        // Check if navigated with review state or query param
         const reviewRequested =
           location.state?.reviewMode === 'errors' ||
           searchParams.get('review') === 'errors';
@@ -264,7 +255,6 @@ export default function GamePage() {
           let targetWordIds = location.state?.wordIds || [];
 
           if (!targetWordIds.length && user?.id) {
-            // Fetch failed words from progress table
             const { data: progressData } = await fetchUserProgress(user.id);
             if (progressData) {
               targetWordIds = progressData
@@ -296,7 +286,7 @@ export default function GamePage() {
     };
   }, [location.state, searchParams, user?.id, initRound]);
 
-  // Load Ranking Profiles for Sidebar
+  // Load Ranking Profiles for Leaderboard
   useEffect(() => {
     let isMounted = true;
 
@@ -344,27 +334,28 @@ export default function GamePage() {
     return () => window.removeEventListener('kanaquest-profile-updated', handleProfileUpdate);
   }, [user?.id]);
 
-  // Ranking Computations
   const top3 = useMemo(() => rankingProfiles.slice(0, 3), [rankingProfiles]);
   const currentUserIndex = useMemo(() => {
     if (!user?.id) return -1;
     return rankingProfiles.findIndex((p) => p.user_id === user.id);
   }, [rankingProfiles, user?.id]);
 
-  const currentUserRank = currentUserIndex >= 0 ? currentUserIndex + 1 : (rankingProfiles.length ? rankingProfiles.length + 1 : 1);
-  const isUserInTop3 = currentUserIndex >= 0 && currentUserIndex < 3;
+  const currentUserRank = currentUserIndex >= 0 ? currentUserIndex + 1 : rankingProfiles.length + 1;
   const currentUserProfile = currentUserIndex >= 0 ? rankingProfiles[currentUserIndex] : null;
-  const currentUserXP = currentUserProfile?.experience ?? 0;
-
-  const xpToNext = useMemo(() => {
-    if (currentUserIndex > 0 && rankingProfiles[currentUserIndex - 1]) {
-      const prevXP = rankingProfiles[currentUserIndex - 1].experience ?? 0;
-      return Math.max(10, prevXP - currentUserXP + 10);
-    }
-    return 0;
-  }, [currentUserIndex, rankingProfiles, currentUserXP]);
 
   const currentQuestion = roundQuestions[roundIndex] ?? roundQuestions[0];
+
+  // Dynamic Options for Learning Mode (Cards)
+  const activeOptions = useMemo(() => {
+    if (!isLearningMode || !currentQuestion) return [];
+    if (currentQuestion.options && currentQuestion.options.length > 0) {
+      return currentQuestion.options;
+    }
+    if (allWords.length > 0) {
+      return generateMultipleChoiceOptions(currentQuestion, allWords, mode);
+    }
+    return [];
+  }, [isLearningMode, currentQuestion, allWords, mode]);
 
   const sessionStats = {
     streak: combo,
@@ -375,40 +366,132 @@ export default function GamePage() {
   };
 
   const promptIsJapanese = containsJapaneseScript(currentQuestion?.prompt ?? '');
-  const promptSizeClass = promptIsJapanese
-    ? 'text-5xl min-[400px]:text-6xl sm:text-7xl md:text-8xl'
-    : 'text-2xl min-[400px]:text-3xl sm:text-4xl md:text-5xl';
+
+  const handleToggleLearningMode = () => {
+    playFlip();
+    const nextMode = !isLearningMode;
+    setIsLearningMode(nextMode);
+    const diffMode = nextMode ? 'apprentice' : 'master';
+    try {
+      localStorage.setItem('kanaquest_learning_mode', nextMode ? 'true' : 'false');
+      localStorage.setItem('kanaquest_difficulty_mode', diffMode);
+    } catch (e) {
+      console.debug('Error saving learning mode preference:', e);
+    }
+
+    setRoundQuestions((prev) =>
+      prev.map((q) => {
+        const raw = q._rawItem || q.rawRow || q;
+        return createExercise(raw, allWords, diffMode, mode) || q;
+      })
+    );
+
+    setAnswer('');
+    setSelectedOption(null);
+    setFeedback(null);
+    setHintUsed(false);
+    setHintText('');
+  };
 
   const handleModeChange = (nextMode) => {
     setMode(nextMode);
     setIsReviewMode(false);
     setReviewWordIds([]);
-    initRound(allWords, nextMode, null, false);
+    initRound(allWords, nextMode, null, false, isLearningMode);
   };
 
-  // Trigger Hint Feature
   const handleUseHint = () => {
     if (hintUsed || feedback !== null || !currentQuestion) return;
 
     playFlip();
     setHintUsed(true);
-
-    // Speak audio
     speakWord(currentQuestion.hiragana || currentQuestion.prompt);
 
-    // Generate helpful text clue
     const mainAnswer = currentQuestion.answers?.[0] || '';
     let clue = '';
     if (mode === 'recognize') {
       const reading = currentQuestion.hiragana || currentQuestion.romaji || mainAnswer;
-      clue = `Comienza con "${reading.slice(0, 1)}..." (${currentQuestion.romaji ? currentQuestion.romaji.slice(0, 2) + '..' : ''})`;
+      clue = `Empieza con "${reading.slice(0, 1)}..." (${currentQuestion.romaji ? currentQuestion.romaji.slice(0, 2) + '..' : ''})`;
     } else {
-      clue = `Comienza con "${mainAnswer.slice(0, 1)}..."`;
+      clue = `Empieza con "${mainAnswer.slice(0, 1)}..."`;
     }
     setHintText(clue);
   };
 
-  // Next Question / Finish Round Handler
+  const handleSelectOption = async (option) => {
+    if (feedback !== null || !currentQuestion) return;
+
+    setSelectedOption(option);
+    const isCorrect = option.isCorrect;
+    const diffMode = isLearningMode ? 'apprentice' : 'master';
+    const xpBase = currentQuestion.experienceReward ?? 10;
+    const xpEarned = calculateAwardXp(xpBase, diffMode);
+
+    if (isCorrect) {
+      playSuccess();
+      setFeedback({
+        tone: 'success',
+        message: '¡Correcto!',
+        hintUsed: false,
+      });
+      setCombo((c) => c + 1);
+      setRoundStats((prev) => ({
+        ...prev,
+        correctCount: prev.correctCount + 1,
+        xpEarned: prev.xpEarned + xpEarned,
+      }));
+    } else {
+      playError();
+      setFeedback({
+        tone: 'error',
+        message: 'No exactamente',
+      });
+      setCombo(0);
+      setRoundStats((prev) => ({
+        ...prev,
+        wrongCount: prev.wrongCount + 1,
+        missedQuestions: [...prev.missedQuestions, currentQuestion],
+      }));
+    }
+
+    if (user?.id && currentQuestion?.wordId) {
+      try {
+        const { data: rpcResult, error: rpcError } = await submitWordAnswer(
+          currentQuestion.wordId,
+          mode,
+          isCorrect,
+          false
+        );
+
+        if (rpcError) {
+          console.warn('Error registrando respuesta:', rpcError.message);
+        } else if (rpcResult) {
+          window.dispatchEvent(
+            new CustomEvent('kanaquest-profile-updated', {
+              detail: {
+                experience: rpcResult.new_total_xp,
+                level: rpcResult.new_level,
+                current_streak: rpcResult.current_streak,
+                last_active_date: rpcResult.last_active_date,
+              },
+            })
+          );
+        }
+
+        const { data: profileData } = await fetchUserProfile(user.id);
+        if (profileData) {
+          window.dispatchEvent(
+            new CustomEvent('kanaquest-profile-updated', {
+              detail: profileData,
+            })
+          );
+        }
+      } catch (err) {
+        console.warn('Error en la llamada RPC:', err);
+      }
+    }
+  };
+
   const handleNext = useCallback(() => {
     if (!roundQuestions.length) return;
 
@@ -423,39 +506,40 @@ export default function GamePage() {
 
     setRoundIndex((val) => (val + 1) % roundQuestions.length);
     setAnswer('');
+    setSelectedOption(null);
     setFeedback(null);
     setHintUsed(false);
     setHintText('');
 
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 50);
-  }, [roundIndex, roundQuestions.length, isContinuousMode, playFlip, playComplete]);
+    if (!isLearningMode) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
+    }
+  }, [roundIndex, roundQuestions.length, isContinuousMode, isLearningMode, playFlip, playComplete]);
 
-  // Round completion action handlers
   const handleStartNextRound = () => {
     playFlip();
-    initRound(allWords, mode, isReviewMode ? reviewWordIds : null, false);
+    initRound(allWords, mode, isReviewMode ? reviewWordIds : null, false, isLearningMode);
   };
 
   const handleStartContinuousMode = () => {
     playFlip();
-    initRound(allWords, mode, isReviewMode ? reviewWordIds : null, true);
+    initRound(allWords, mode, isReviewMode ? reviewWordIds : null, true, isLearningMode);
   };
 
   const handleReviewRoundErrors = () => {
     playFlip();
     const missedIds = roundStats.missedQuestions.map((q) => q.wordId);
-    initRound(allWords, mode, missedIds, false);
+    initRound(allWords, mode, missedIds, false, isLearningMode);
   };
 
   const handleExitReviewMode = () => {
     setIsReviewMode(false);
     setReviewWordIds([]);
-    initRound(allWords, mode, null, false);
+    initRound(allWords, mode, null, false, isLearningMode);
   };
 
-  // Global Enter Key Handler when feedback is active
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
       if (e.key === 'Enter' && feedback) {
@@ -468,12 +552,11 @@ export default function GamePage() {
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [feedback, handleNext]);
 
-  // Auto focus input on question load
   useEffect(() => {
-    if (!feedback && !isRoundFinished) {
+    if (!feedback && !isRoundFinished && !isLearningMode) {
       inputRef.current?.focus();
     }
-  }, [roundIndex, feedback, isRoundFinished]);
+  }, [roundIndex, feedback, isRoundFinished, isLearningMode]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -487,16 +570,20 @@ export default function GamePage() {
 
     const normalizedAnswer = normalize(answer);
     const acceptedAnswers = getAcceptedAnswers(currentQuestion?.answers ?? [], mode);
-    const isCorrect = acceptedAnswers.some((item) => item && normalize(item) === normalizedAnswer);
+    const isCorrect =
+      isAnswerCorrect(answer, currentQuestion) ||
+      acceptedAnswers.some((item) => item && normalize(item) === normalizedAnswer);
 
-    const xpForWord = currentQuestion.experienceReward ?? 10;
+    const diffMode = isLearningMode ? 'apprentice' : 'master';
+    const xpBase = currentQuestion.experienceReward ?? 10;
+    const xpForWord = calculateAwardXp(xpBase, diffMode);
 
     if (isCorrect) {
       playSuccess();
       if (hintUsed) {
         setFeedback({
           tone: 'success',
-          message: '¡Correcto con pista! Has acertado el término (0 XP en esta palabra).',
+          message: '¡Correcto con pista!',
           hintUsed: true,
         });
         setRoundStats((prev) => ({
@@ -506,7 +593,7 @@ export default function GamePage() {
       } else {
         setFeedback({
           tone: 'success',
-          message: `¡Correcto! Excelente trabajo (+${xpForWord} XP).`,
+          message: '¡Correcto!',
           hintUsed: false,
         });
         setRoundStats((prev) => ({
@@ -518,7 +605,10 @@ export default function GamePage() {
       setCombo((value) => value + 1);
     } else {
       playError();
-      setFeedback({ tone: 'error', message: 'Respuesta incorrecta.' });
+      setFeedback({
+        tone: 'error',
+        message: 'No exactamente',
+      });
       setCombo(0);
       setRoundStats((prev) => ({
         ...prev,
@@ -566,529 +656,500 @@ export default function GamePage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-6xl py-2">
-      {/* 2-Column Layout: Main Exercise (Left) + Compact Podium Ranking (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_290px] xl:grid-cols-[1fr_310px] gap-5 items-start">
-        {/* LEFT COLUMN: Main Practice Flow */}
-        <div className="w-full max-w-2xl mx-auto lg:max-w-none space-y-3.5">
-          {/* Review Mode Notice Banner */}
-          {isReviewMode && (
-            <div className="flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50/90 px-4 py-2.5 text-xs text-rose-900 shadow-2xs">
-              <div className="flex items-center gap-2">
-                <span className="font-bold">⚡ Modo Repaso Inteligente:</span>
-                <span>{roundQuestions.length} palabras pendientes</span>
-              </div>
-              <button
-                type="button"
-                onClick={handleExitReviewMode}
-                className="font-bold underline text-rose-800 hover:text-rose-950"
-              >
-                Volver a práctica normal
-              </button>
-            </div>
-          )}
+    <div className="mx-auto w-full max-w-2xl px-4 py-3 sm:py-6 flex flex-col min-h-[calc(100vh-100px)] justify-between">
+      {/* 1. TOP BAR: Navigation, Mode Switcher & Progress */}
+      <header className="w-full space-y-3">
+        {/* Review Mode Banner (if active) */}
+        {isReviewMode && (
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2 text-xs text-rose-900 shadow-2xs">
+            <span className="font-semibold">
+              Repaso de errores: <strong>{roundQuestions.length} palabras</strong>
+            </span>
+            <button
+              type="button"
+              onClick={handleExitReviewMode}
+              className="font-bold underline hover:text-rose-950 cursor-pointer"
+            >
+              Salir del repaso
+            </button>
+          </div>
+        )}
 
-          {/* Mode Selector Pills & Mode Indicator */}
-          <div className="flex items-center justify-between gap-2.5">
-            <div className="flex items-center gap-1 rounded-2xl bg-[#fbf5f2] p-1 border border-[#eaded6] shadow-xs">
-              {[
-                { id: 'recognize', label: 'Reconocer' },
-                { id: 'translate', label: 'Traducir' },
-              ].map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => handleModeChange(option.id)}
-                  className={[
-                    'rounded-xl px-3.5 py-1.5 text-xs sm:text-sm font-semibold transition-all',
-                    mode === option.id
-                      ? 'bg-[#6b2832] text-white shadow-sm'
-                      : 'text-[#6b2832]/75 hover:text-[#6b2832] hover:bg-white',
-                  ].join(' ')}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
+        {/* Top Controls Row */}
+        <div className="flex items-center justify-between gap-2">
+          {/* Exit / Back */}
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#6b2832]/75 hover:text-[#6b2832] transition py-1 px-2 rounded-lg hover:bg-black/5"
+            aria-label="Salir de la práctica"
+          >
+            <span className="text-base leading-none">←</span>
+            <span>Salir</span>
+          </button>
 
-            {isContinuousMode && (
-              <span className="rounded-full bg-[#fdf6f3] border border-[#eaded6] px-3 py-1 text-[11px] font-bold text-[rgb(var(--color-accent))]">
-                ♾️ Práctica Continua
-              </span>
-            )}
+          {/* Mode Switcher Tabs */}
+          <div className="inline-flex items-center p-1 bg-[#f5ebe6]/80 border border-[#eaded6] rounded-xl text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => handleModeChange('recognize')}
+              className={`px-3 py-1 rounded-lg transition-all ${
+                mode === 'recognize'
+                  ? 'bg-[#6b2832] text-white shadow-xs'
+                  : 'text-[#6b2832]/70 hover:text-[#6b2832]'
+              }`}
+            >
+              Reconocer
+            </button>
+            <button
+              type="button"
+              onClick={() => handleModeChange('translate')}
+              className={`px-3 py-1 rounded-lg transition-all ${
+                mode === 'translate'
+                  ? 'bg-[#6b2832] text-white shadow-xs'
+                  : 'text-[#6b2832]/70 hover:text-[#6b2832]'
+              }`}
+            >
+              Traducir
+            </button>
           </div>
 
-          {/* Top Progress Bar */}
-          <SessionProgressCard
-            streak={sessionStats.streak}
-            questionNumber={sessionStats.questionNumber}
-            totalQuestions={sessionStats.totalQuestions}
-            score={sessionStats.score}
-            progress={sessionStats.progress}
-            className="mb-0"
-          />
+          {/* Ranking Button (Opens slide-over modal) */}
+          <button
+            type="button"
+            onClick={() => setRankingDrawerOpen(true)}
+            className="inline-flex items-center gap-1 rounded-xl border border-[#eaded6] bg-white px-2.5 py-1.5 text-xs font-bold text-[#6b2832] shadow-2xs hover:bg-[#fbf5f2] transition active:scale-98"
+            title="Ver tabla de líderes"
+            aria-label="Ver ranking de usuarios"
+          >
+            <Icon name="crown" className="w-3.5 h-3.5 text-amber-600" />
+            <span className="hidden sm:inline">Ranking</span>
+          </button>
+        </div>
 
-          {/* Central Stage: Either Round Summary Card OR Question Card */}
-          {isRoundFinished ? (
-            <div className="rounded-[1.75rem] border border-[#eaded6] bg-white p-6 sm:p-8 shadow-[0_14px_32px_rgba(107,40,50,0.06)] text-center space-y-6 animate-fadeIn">
-              <div className="flex flex-col items-center justify-center">
-                <CatIllustration animationState={roundStats.wrongCount === 0 ? 'success' : 'default'} />
-                <h2 className="mt-4 text-2xl sm:text-3xl font-bold text-[#6b2832]">
-                  ¡Ronda Completada!
-                </h2>
-                <p className="text-xs sm:text-sm text-[rgb(var(--color-accent))]/75 mt-1">
-                  {roundStats.wrongCount === 0
-                    ? '¡Puntuación perfecta! Has dominado todas las palabras de esta ronda.'
-                    : `Has finalizado los ${roundQuestions.length} ejercicios de esta ronda.`}
-                </p>
-              </div>
-
-              {/* Round metrics grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5">
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-emerald-800">
-                    Aciertos
-                  </div>
-                  <div className="text-2xl font-bold text-emerald-900 mt-1">
-                    {roundStats.correctCount} / {roundQuestions.length}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-rose-200 bg-rose-50/70 p-3.5">
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-rose-800">
-                    Fallos
-                  </div>
-                  <div className="text-2xl font-bold text-rose-900 mt-1">
-                    {roundStats.wrongCount}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-3.5">
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-amber-800">
-                    XP Obtenida
-                  </div>
-                  <div className="text-2xl font-bold text-amber-900 mt-1">
-                    +{roundStats.xpEarned} XP
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-[#eaded6] bg-[#fdfaf8] p-3.5">
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-[#6b2832]">
-                    Precisión
-                  </div>
-                  <div className="text-2xl font-bold text-[#6b2832] mt-1">
-                    {roundQuestions.length > 0
-                      ? Math.round((roundStats.correctCount / roundQuestions.length) * 100)
-                      : 0}
-                    %
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={handleStartNextRound}
-                  className="inline-flex min-h-[48px] w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[#6b2832] px-6 py-3 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-[#581f27] active:scale-98 transition"
-                >
-                  <span>Siguiente ronda rápida (10 preguntas)</span>
-                  <span>→</span>
-                </button>
-
-                {roundStats.missedQuestions.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleReviewRoundErrors}
-                    className="inline-flex min-h-[48px] w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-rose-300 bg-rose-50 px-5 py-3 text-xs sm:text-sm font-bold text-rose-900 hover:bg-rose-100 active:scale-98 transition"
-                  >
-                    <span>Repasar errores de esta ronda ({roundStats.missedQuestions.length})</span>
-                  </button>
+        {/* Clean Progress Strip + Modo Aprendizaje Switch */}
+        <div className="w-full pt-1 space-y-1.5">
+          <div className="flex items-center justify-between text-xs font-medium text-[rgb(var(--color-neutral))]/70">
+            {/* The Modo Aprendizaje Switch */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isLearningMode}
+                onClick={handleToggleLearningMode}
+                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border border-[#eaded6] transition-colors duration-200 ease-in-out cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6b2832] ${
+                  isLearningMode ? 'bg-[#6b2832]' : 'bg-[#e5d8d0]'
+                }`}
+                title={
+                  isLearningMode
+                    ? 'Modo aprendizaje activo: Opciones múltiples'
+                    : 'Modo aprendizaje desactivado: Escritura libre (+50% XP)'
+                }
+              >
+                <span
+                  className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-xs transition duration-200 ease-in-out ${
+                    isLearningMode ? 'translate-x-4.5' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+              <button
+                type="button"
+                onClick={handleToggleLearningMode}
+                className="text-xs font-semibold text-[#6b2832] hover:text-[#581f27] flex items-center gap-1.5 cursor-pointer select-none"
+              >
+                <span>Modo aprendizaje</span>
+                {!isLearningMode ? (
+                  <span className="text-[10px] font-bold text-amber-900 bg-amber-100/90 border border-amber-300/80 px-1.5 py-0.2 rounded-full font-mono">
+                    ⚡ +50% XP
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-medium text-[rgb(var(--color-neutral))]/60 bg-[#f5ebe6] border border-[#eaded6] px-1.5 py-0.2 rounded-full">
+                    Tarjetas
+                  </span>
                 )}
+              </button>
+            </div>
 
-                <button
-                  type="button"
-                  onClick={handleStartContinuousMode}
-                  className="inline-flex min-h-[48px] w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-[#eaded6] bg-white px-5 py-3 text-xs sm:text-sm font-semibold text-[#6b2832] hover:bg-[#faf5f2] active:scale-98 transition"
-                >
-                  <span>Modo práctica continua / Infinita</span>
-                </button>
+            {/* Question Counter */}
+            <span className="font-mono font-bold text-[#6b2832]">
+              {sessionStats.questionNumber} / {sessionStats.totalQuestions}
+            </span>
+          </div>
+
+          {/* Progress bar line */}
+          <div className="w-full bg-[#f0e4de] h-2 rounded-full overflow-hidden">
+            <div
+              className="bg-[#6b2832] h-full transition-all duration-300 rounded-full"
+              style={{ width: `${sessionStats.progress}%` }}
+            />
+          </div>
+        </div>
+      </header>
+
+      {/* 2. MAIN INTERACTIVE AREA: Focus Mode */}
+      <main className="my-auto w-full py-4 sm:py-6">
+        {loading ? (
+          <div className="py-16 text-center text-sm font-semibold text-[#6b2832]/60 animate-pulse">
+            Cargando ejercicio...
+          </div>
+        ) : isRoundFinished ? (
+          /* Round Completed Summary */
+          <div className="rounded-3xl border border-[#eaded6] bg-white p-6 sm:p-10 shadow-sm text-center space-y-6 animate-fadeIn">
+            <div className="space-y-2">
+              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-[#fceee9] text-2xl text-amber-600 shadow-inner">
+                {roundStats.wrongCount === 0 ? '🏆' : '✨'}
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-[#6b2832]">
+                {roundStats.wrongCount === 0 ? '¡Ronda Perfecta!' : '¡Ronda Completada!'}
+              </h2>
+              <p className="text-xs sm:text-sm text-[rgb(var(--color-neutral))]/70">
+                Has completado las {roundQuestions.length} preguntas de esta sesión.
+              </p>
+            </div>
+
+            {/* Flat Metrics Grid */}
+            <div className="grid grid-cols-3 gap-3 border-y border-[#f2e7e1] py-4">
+              <div>
+                <div className="text-2xl font-bold text-emerald-700">
+                  {roundStats.correctCount}
+                </div>
+                <div className="text-[11px] font-semibold text-[rgb(var(--color-neutral))]/60 uppercase tracking-wider">
+                  Aciertos
+                </div>
+              </div>
+
+              <div>
+                <div className="text-2xl font-bold text-rose-600">
+                  {roundStats.wrongCount}
+                </div>
+                <div className="text-[11px] font-semibold text-[rgb(var(--color-neutral))]/60 uppercase tracking-wider">
+                  Fallos
+                </div>
+              </div>
+
+              <div>
+                <div className="text-2xl font-bold text-[#6b2832]">
+                  +{roundStats.xpEarned}
+                </div>
+                <div className="text-[11px] font-semibold text-[rgb(var(--color-neutral))]/60 uppercase tracking-wider">
+                  XP Ganada
+                </div>
               </div>
             </div>
-          ) : (
-            /* Central Question Card */
-            <section className="rounded-2xl sm:rounded-[1.75rem] border border-[#eaded6] bg-white p-4 sm:p-7 shadow-[0_14px_32px_rgba(107,40,50,0.06)]">
-              {loading ? (
-                <p className="py-8 text-center text-sm font-semibold text-[#6b2832]/60 animate-pulse">
-                  Cargando palabras desde Supabase...
-                </p>
-              ) : null}
 
-              {/* Top Card Utilities: Reward Badge + Hint Button */}
-              <div className="flex items-center justify-between gap-2 mb-3">
-                {/* EXP Reward Badge */}
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-[#f8ebe6]/90 px-3 py-1 text-xs font-bold text-[rgb(var(--color-accent))] border border-[#eaded6]/60 opacity-60 shadow-2xs">
-                  <span>✨</span>
-                  <span>+{currentQuestion?.experienceReward ?? 10} XP</span>
-                </div>
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleStartNextRound}
+                className="w-full sm:w-auto min-h-[48px] px-6 py-3 rounded-xl bg-[#6b2832] text-white text-sm font-bold shadow-md hover:bg-[#581f27] active:scale-98 transition cursor-pointer"
+              >
+                Siguiente ronda (10 preguntas) →
+              </button>
 
-                {/* Hint Button */}
+              {roundStats.missedQuestions.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleReviewRoundErrors}
+                  className="w-full sm:w-auto min-h-[48px] px-5 py-3 rounded-xl border border-rose-300 bg-rose-50 text-rose-900 text-sm font-bold hover:bg-rose-100 active:scale-98 transition cursor-pointer"
+                >
+                  Repasar errores ({roundStats.missedQuestions.length})
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Single Question Focus Stage */
+          <div className="space-y-6">
+            {/* The absolute protagonist: Giant Japanese prompt / word */}
+            <div className="flex flex-col items-center justify-center text-center space-y-3">
+              <div className="relative group inline-flex items-center justify-center gap-3">
+                <span
+                  className={`font-bold text-[#6b2832] select-none tracking-tight leading-none ${
+                    promptIsJapanese
+                      ? 'text-6xl sm:text-7xl md:text-8xl font-jp py-2'
+                      : 'text-3xl sm:text-4xl md:text-5xl py-3'
+                  }`}
+                >
+                  {currentQuestion?.prompt ?? '...'}
+                </span>
+
+                {/* Subtle speech button */}
+                <button
+                  type="button"
+                  onClick={() =>
+                    speakWord(currentQuestion?.hiragana || currentQuestion?.prompt)
+                  }
+                  className="rounded-full p-2 text-[#6b2832]/60 hover:text-[#6b2832] hover:bg-[#f5ebe6] transition active:scale-95 cursor-pointer"
+                  title="Escuchar pronunciación"
+                  aria-label="Escuchar pronunciación"
+                >
+                  <Icon name="volume-high" className="w-5 h-5 sm:w-6 sm:h-6" />
+                </button>
+              </div>
+
+              {/* Clean single instruction */}
+              <p className="text-xs sm:text-sm font-medium text-[rgb(var(--color-neutral))]/70">
+                {currentQuestion?.instruction ?? 'Escribe la lectura'}
+              </p>
+
+              {/* Discreet Hint Option */}
+              {!hintUsed && !feedback && (
                 <button
                   type="button"
                   onClick={handleUseHint}
-                  disabled={hintUsed || feedback !== null}
-                  className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1 text-xs font-bold transition-all ${hintUsed
-                      ? 'border-amber-300 bg-amber-50 text-amber-800 opacity-90 cursor-default'
-                      : 'border-amber-200/90 bg-amber-50/70 text-amber-900 hover:bg-amber-100/80 active:scale-98'
-                    }`}
-                  title="Revela una pista a cambio de no recibir XP en esta palabra"
+                  className="inline-flex items-center gap-1 text-xs text-amber-800/80 hover:text-amber-900 hover:underline pt-0.5 cursor-pointer"
                 >
-                  <span>💡</span>
-                  <span>
-                    {hintUsed
-                      ? 'Pista activa'
-                      : `Pista (-${currentQuestion?.experienceReward ?? 10} XP)`}
-                  </span>
+                  <Icon name="lightbulb" className="w-3.5 h-3.5 text-amber-600" />
+                  <span>¿Necesitas una pista?</span>
                 </button>
-              </div>
-
-              {/* Prompt + Mascot Section */}
-              <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-3 sm:gap-4 items-center text-center sm:text-left">
-                <div className="flex flex-col justify-center min-h-[105px] sm:min-h-[150px]">
-                  <div className="flex items-center justify-center sm:justify-start gap-3">
-                    <div
-                      className={[
-                        'font-bold leading-tight text-[#6b2832] tracking-tight select-none',
-                        promptSizeClass,
-                        promptIsJapanese ? 'font-jp' : '',
-                      ].join(' ')}
-                    >
-                      {currentQuestion?.prompt ?? '...'}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-center sm:justify-end">
-                  <CatIllustration animationState={feedback?.tone} />
-                </div>
-              </div>
-
-              {/* Hint Revealed Callout Banner */}
-              {hintUsed && hintText && (
-                <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50/90 p-3 text-xs text-amber-900 flex items-center justify-between gap-2 animate-fadeIn">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-amber-800">💡 Pista:</span>
-                    <span className="font-semibold">{hintText}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => speakWord(currentQuestion?.hiragana || currentQuestion?.prompt)}
-                    className="inline-flex items-center gap-1 rounded-lg bg-white px-2 py-1 text-[11px] font-bold text-amber-900 border border-amber-200 shadow-2xs hover:bg-amber-100/50"
-                  >
-                    <span>🔊 Escuchar</span>
-                  </button>
-                </div>
               )}
 
-              {/* Practice Form */}
-              <form className="mx-auto mt-4 max-w-xl" onSubmit={handleSubmit}>
-                <p className="text-center text-sm sm:text-base font-semibold text-[rgb(var(--color-neutral))]">
-                  {currentQuestion?.instruction ?? 'Escribe la respuesta:'}
-                </p>
-
-                <div className="relative mt-3">
-                  <input
-                    ref={inputRef}
-                    className="w-full min-h-[50px] rounded-[1.2rem] border border-[rgba(107,40,50,0.22)] bg-[#fffdfb] px-4 py-3.5 pr-14 text-base text-[rgb(var(--color-neutral))] outline-none transition placeholder:text-[rgb(var(--color-neutral))]/35 focus:border-[#6b2832] focus:bg-white focus:ring-2 focus:ring-[rgba(107,40,50,0.12)] disabled:bg-stone-50 disabled:opacity-80 sm:px-5 sm:py-4 sm:text-lg"
-                    value={answer}
-                    onChange={(event) => setAnswer(event.target.value)}
-                    placeholder="Escribe aquí..."
-                    autoComplete="off"
-                    disabled={feedback !== null}
-                  />
-
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                    <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#f6e7e0] sm:h-10 sm:w-10">
-                      <KeyboardIcon />
-                    </div>
-                  </div>
+              {hintUsed && hintText && (
+                <div className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 border border-amber-200/80 px-3 py-1 text-xs text-amber-900 animate-fadeIn">
+                  <Icon name="lightbulb" className="w-3.5 h-3.5 text-amber-600" />
+                  <span className="font-semibold">{hintText}</span>
                 </div>
+              )}
+            </div>
 
-                {/* Answer Feedback Banner */}
-                {feedback ? (
+            {/* Response Area: Multiple Choice (Modo Aprendizaje) vs Open Input (Modo Maestro) */}
+            {isLearningMode ? (
+              <div className="w-full space-y-4 pt-1">
+                <MultipleChoiceGrid
+                  options={activeOptions}
+                  selectedOption={selectedOption}
+                  feedback={feedback}
+                  onSelectOption={handleSelectOption}
+                  disabled={feedback !== null}
+                />
+
+                {/* Semantic Feedback Banner for Learning Mode */}
+                {feedback && (
                   <div
-                    className={[
-                      'mt-4 rounded-2xl p-4 transition-all duration-300 shadow-xs animate-fadeIn',
+                    className={`rounded-2xl p-4 sm:p-5 transition-all duration-200 animate-fadeIn border ${
                       feedback.tone === 'success'
-                        ? 'bg-emerald-50/90 border border-emerald-200 text-emerald-900'
-                        : 'bg-rose-50/90 border border-rose-200 text-rose-900',
-                    ].join(' ')}
+                        ? 'border-emerald-200 bg-emerald-50/90 text-emerald-950'
+                        : 'border-rose-200 bg-rose-50/90 text-rose-950'
+                    }`}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3 min-w-0">
-                        <span className="text-2xl select-none" aria-hidden="true">
-                          {feedback.tone === 'success' ? '🎉' : '❌'}
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xl font-bold">
+                          {feedback.tone === 'success' ? '✓' : '✕'}
                         </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-bold text-sm sm:text-base">{feedback.message}</p>
-
-                          {/* Detailed word explanation revealed ONLY after answering */}
-                          <div className="mt-1.5 text-xs sm:text-sm space-y-0.5">
-                            {currentQuestion?.hiragana || currentQuestion?.romaji ? (
-                              <div className="font-medium text-[rgb(var(--color-neutral))]/80">
-                                Lectura:{' '}
-                                <span className="font-semibold">
-                                  {currentQuestion.hiragana || currentQuestion.romaji}
-                                </span>
-                                {currentQuestion.romaji && currentQuestion.hiragana
-                                  ? ` (${currentQuestion.romaji})`
-                                  : ''}
-                              </div>
-                            ) : null}
-
-                            {currentQuestion?.translation && mode === 'recognize' ? (
-                              <div className="text-[rgb(var(--color-neutral))]/70">
-                                Significado:{' '}
-                                <span className="font-semibold">{currentQuestion.translation}</span>
-                              </div>
-                            ) : null}
-
-                            {feedback.tone === 'error' && currentQuestion?.answers?.length ? (
-                              <p className="pt-0.5 text-xs sm:text-sm font-medium text-rose-800">
-                                Respuesta aceptada:{' '}
-                                <strong className="font-bold text-rose-950">
-                                  {currentQuestion.answers[0]}
+                        <div>
+                          <div className="font-bold text-sm sm:text-base">
+                            {feedback.tone === 'success'
+                              ? '¡Correcto!'
+                              : 'No exactamente'}
+                          </div>
+                          <div className="text-xs sm:text-sm font-medium opacity-85 mt-0.5">
+                            {feedback.tone === 'success' ? (
+                              <span>
+                                {currentQuestion?.prompt} →{' '}
+                                <strong className="font-bold">
+                                  {currentQuestion?.correctOptionLabel ||
+                                    currentQuestion?.hiragana ||
+                                    currentQuestion?.romaji ||
+                                    currentQuestion?.translation}
                                 </strong>
-                                {currentQuestion.answers.length > 1 ? (
-                                  <span className="text-rose-700/80 font-normal">
-                                    {' '}
-                                    (o {currentQuestion.answers.slice(1, 3).join(', ')})
-                                  </span>
-                                ) : null}
-                              </p>
-                            ) : null}
+                              </span>
+                            ) : (
+                              <span>
+                                Respuesta correcta:{' '}
+                                <strong className="font-bold">
+                                  {currentQuestion?.correctOptionLabel ||
+                                    currentQuestion?.hiragana ||
+                                    currentQuestion?.romaji ||
+                                    currentQuestion?.answers?.[0]}
+                                </strong>
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex flex-col items-end gap-1.5 shrink-0">
-                        {feedback.tone === 'success' && !feedback.hintUsed ? (
-                          <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-extrabold text-emerald-800 tracking-wider">
-                            +{currentQuestion?.experienceReward ?? 10} XP
+                      <div className="flex items-center gap-2 shrink-0">
+                        {feedback.tone === 'success' && !feedback.hintUsed && (
+                          <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
+                            +{calculateAwardXp(currentQuestion?.experienceReward ?? 10, 'apprentice')} XP
                           </span>
-                        ) : null}
-
-                        {/* Audio pronunciation button */}
+                        )}
                         <button
                           type="button"
                           onClick={() =>
                             speakWord(currentQuestion?.hiragana || currentQuestion?.prompt)
                           }
-                          className="inline-flex items-center gap-1 rounded-full bg-white/80 border border-[#eaded6] px-2.5 py-1 text-xs font-semibold text-[#6b2832] hover:bg-white transition shadow-2xs"
-                          title="Escuchar pronunciación"
+                          className="rounded-full p-2 text-stone-600 hover:bg-black/5 transition cursor-pointer"
+                          title="Escuchar"
                           aria-label="Escuchar pronunciación"
                         >
-                          <span aria-hidden="true">🔊</span>
-                          <span className="hidden sm:inline text-[11px]">Audio</span>
+                          <Icon name="volume-high" className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
                   </div>
-                ) : null}
+                )}
 
-                {/* Dynamic Action Button: Verificar / Siguiente pregunta */}
-                <div className="mt-5 flex justify-center">
+                {/* Dynamic Next Button for Learning Mode */}
+                {feedback && (
+                  <div className="pt-2 animate-fadeIn">
+                    <button
+                      type="button"
+                      ref={nextButtonRef}
+                      onClick={handleNext}
+                      className={`w-full min-h-[54px] rounded-2xl text-base sm:text-lg font-bold text-white shadow-md transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 ${
+                        feedback.tone === 'success'
+                          ? 'bg-emerald-700 hover:bg-emerald-800'
+                          : 'bg-[#6b2832] hover:bg-[#581f27]'
+                      }`}
+                    >
+                      <span>
+                        {!isContinuousMode && roundIndex + 1 >= roundQuestions.length
+                          ? 'Ver resultados'
+                          : 'Siguiente'}
+                      </span>
+                      <span>→</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Master Mode: Open Text Input (+50% XP Bonus) */
+              <form onSubmit={handleSubmit} className="w-full space-y-4 pt-2">
+                <div className="relative">
+                  <input
+                    ref={inputRef}
+                    className="w-full min-h-[58px] sm:min-h-[64px] rounded-2xl border-2 border-[#eaded6] bg-white px-5 text-center text-xl sm:text-2xl text-[rgb(var(--color-neutral))] outline-none transition focus:border-[#6b2832] focus:ring-4 focus:ring-[#6b2832]/10 placeholder:text-[rgb(var(--color-neutral))]/30 disabled:bg-[#fbf9f7] disabled:opacity-90 font-medium"
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    placeholder={
+                      mode === 'translate'
+                        ? 'Escribe en japonés o romaji...'
+                        : 'Escribe aquí...'
+                    }
+                    autoComplete="off"
+                    disabled={feedback !== null}
+                  />
+                </div>
+
+                {/* Semantic Feedback Banner for Master Mode */}
+                {feedback && (
+                  <div
+                    className={`rounded-2xl p-4 sm:p-5 transition-all duration-200 animate-fadeIn border ${
+                      feedback.tone === 'success'
+                        ? 'border-emerald-200 bg-emerald-50/90 text-emerald-950'
+                        : 'border-rose-200 bg-rose-50/90 text-rose-950'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xl font-bold">
+                          {feedback.tone === 'success' ? '✓' : '✕'}
+                        </span>
+                        <div>
+                          <div className="font-bold text-sm sm:text-base">
+                            {feedback.tone === 'success'
+                              ? '¡Correcto!'
+                              : 'No exactamente'}
+                          </div>
+                          <div className="text-xs sm:text-sm font-medium opacity-85 mt-0.5">
+                            {feedback.tone === 'success' ? (
+                              <span>
+                                {currentQuestion?.prompt} →{' '}
+                                <strong className="font-bold">
+                                  {currentQuestion?.hiragana || currentQuestion?.romaji || currentQuestion?.translation}
+                                </strong>
+                              </span>
+                            ) : (
+                              <span>
+                                Respuesta correcta:{' '}
+                                <strong className="font-bold">
+                                  {currentQuestion?.hiragana || currentQuestion?.romaji || currentQuestion?.answers?.[0]}
+                                </strong>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {feedback.tone === 'success' && !feedback.hintUsed && (
+                          <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
+                            +{calculateAwardXp(currentQuestion?.experienceReward ?? 10, 'master')} XP ⚡
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            speakWord(currentQuestion?.hiragana || currentQuestion?.prompt)
+                          }
+                          className="rounded-full p-2 text-stone-600 hover:bg-black/5 transition cursor-pointer"
+                          title="Escuchar"
+                          aria-label="Escuchar pronunciación"
+                        >
+                          <Icon name="volume-high" className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Dynamic Action Button for Master Mode */}
+                <div className="pt-2">
                   {feedback ? (
                     <button
                       type="button"
                       ref={nextButtonRef}
                       onClick={handleNext}
-                      className={[
-                        'inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-xl sm:rounded-2xl px-6 py-3.5 text-base font-bold text-white shadow-md transition-all duration-150 active:scale-98',
+                      className={`w-full min-h-[54px] rounded-2xl text-base sm:text-lg font-bold text-white shadow-md transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 ${
                         feedback.tone === 'success'
-                          ? 'bg-emerald-700 hover:bg-emerald-800 shadow-[0_10px_22px_rgba(4,120,87,0.25)]'
-                          : 'bg-[#6b2832] hover:bg-[#581f27] shadow-[0_10px_22px_rgba(107,40,50,0.2)]',
-                      ].join(' ')}
+                          ? 'bg-emerald-700 hover:bg-emerald-800'
+                          : 'bg-[#6b2832] hover:bg-[#581f27]'
+                      }`}
                     >
                       <span>
                         {!isContinuousMode && roundIndex + 1 >= roundQuestions.length
-                          ? 'Ver resumen de ronda'
-                          : 'Siguiente pregunta'}
+                          ? 'Ver resultados'
+                          : 'Siguiente'}
                       </span>
-                      <span aria-hidden="true">→</span>
+                      <span>→</span>
                     </button>
                   ) : (
                     <button
                       type="submit"
                       disabled={!answer.trim()}
-                      className="inline-flex min-h-[50px] w-full items-center justify-center gap-2 rounded-xl sm:rounded-2xl bg-[#6b2832] px-6 py-3.5 text-base font-semibold text-white shadow-[0_10px_22px_rgba(107,40,50,0.2)] transition-all duration-150 hover:bg-[#581f27] active:scale-98 disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none"
+                      className="w-full min-h-[54px] rounded-2xl bg-[#6b2832] text-white text-base sm:text-lg font-bold shadow-md transition-all hover:bg-[#581f27] active:scale-98 disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none cursor-pointer"
                     >
-                      <span>Verificar</span>
+                      Verificar
                     </button>
                   )}
                 </div>
               </form>
-            </section>
-          )}
-        </div>
-
-        {/* RIGHT COLUMN: Compact Podium Ranking Sidebar */}
-        <aside className="w-full max-w-2xl mx-auto lg:max-w-[300px] xl:max-w-[320px] rounded-[1.6rem] border border-[#eaded6] bg-white p-4 sm:p-4.5 shadow-[0_14px_32px_rgba(107,40,50,0.06)]">
-          {/* Header */}
-          <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[#f2e2da]">
-            <h3 className="text-base font-bold text-[#6b2832] tracking-tight">
-              Ranking de usuarios
-            </h3>
-          </div>
-
-          {/* Compact Podium (Top 3) */}
-          <div className="mt-3">
-            {rankingLoading ? (
-              <div className="py-6 text-center text-xs text-[rgb(var(--color-neutral))]/60">
-                Cargando ranking...
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 items-end gap-1.5 pt-1">
-                {/* 2DO LUGAR */}
-                {top3[1] ? (
-                  <div className="flex h-[132px] flex-col items-center justify-between rounded-2xl border border-[#eaded6] bg-[#fff8f4] p-2 shadow-2xs">
-                    <div className="inline-flex items-center gap-0.5 rounded-full bg-[#dce9f4] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-[#46688e]">
-                      <span aria-hidden="true">🥈</span>
-                      <span>2°</span>
-                    </div>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#b86773] text-xs font-bold text-white shadow-xs">
-                      {getInitials(top3[1])}
-                    </div>
-                    <div className="w-full text-center">
-                      <div className="truncate text-[11px] font-bold text-[#6b2832]">
-                        {top3[1].username || 'Usuario'}
-                      </div>
-                      <div className="text-[10px] text-[rgb(var(--color-neutral))]/60 font-mono font-medium">
-                        {top3[1].experience ?? 0} XP
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex h-[132px] flex-col items-center justify-center rounded-2xl border border-dashed border-[#eaded6] bg-[#faf6f3]/60 p-2 text-center text-[10px] text-[rgb(var(--color-neutral))]/40">
-                    Disponible
-                  </div>
-                )}
-
-                {/* 1ER LUGAR */}
-                {top3[0] ? (
-                  <div className="flex h-[154px] flex-col items-center justify-between rounded-2xl border border-[#d98b96] bg-[linear-gradient(180deg,#fff2eb,#ffe4d6)] p-2 shadow-xs">
-                    <div className="inline-flex items-center gap-0.5 rounded-full bg-[#fde9a8] px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wider text-[#825c0e]">
-                      <span aria-hidden="true">👑</span>
-                      <span>1°</span>
-                    </div>
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f5d2dd,#b86773)] text-sm font-bold text-white shadow-sm ring-2 ring-[#e3b8b1]">
-                      {getInitials(top3[0])}
-                    </div>
-                    <div className="w-full text-center">
-                      <div className="truncate text-xs font-extrabold text-[#6b2832]">
-                        {top3[0].username || 'Usuario'}
-                      </div>
-                      <div className="text-[10px] text-[#6b2832]/80 font-mono font-bold">
-                        {top3[0].experience ?? 0} XP
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex h-[154px] flex-col items-center justify-center rounded-2xl border border-dashed border-[#eaded6] bg-[#faf6f3]/60 p-2 text-center text-[10px] text-[rgb(var(--color-neutral))]/40">
-                    Disponible
-                  </div>
-                )}
-
-                {/* 3ER LUGAR */}
-                {top3[2] ? (
-                  <div className="flex h-[120px] flex-col items-center justify-between rounded-2xl border border-[#eaded6] bg-[#fff8f4] p-2 shadow-2xs">
-                    <div className="inline-flex items-center gap-0.5 rounded-full bg-[#fae1cf] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-[#8b5a37]">
-                      <span aria-hidden="true">🥉</span>
-                      <span>3°</span>
-                    </div>
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#caa09b] text-xs font-bold text-white shadow-xs">
-                      {getInitials(top3[2])}
-                    </div>
-                    <div className="w-full text-center">
-                      <div className="truncate text-[11px] font-bold text-[#6b2832]">
-                        {top3[2].username || 'Usuario'}
-                      </div>
-                      <div className="text-[10px] text-[rgb(var(--color-neutral))]/60 font-mono font-medium">
-                        {top3[2].experience ?? 0} XP
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex h-[120px] flex-col items-center justify-center rounded-2xl border border-dashed border-[#eaded6] bg-[#faf6f3]/60 p-2 text-center text-[10px] text-[rgb(var(--color-neutral))]/40">
-                    Disponible
-                  </div>
-                )}
-              </div>
             )}
           </div>
+        )}
+      </main>
 
-          {/* Current User Standing Box */}
-          {user ? (
-            <div className="mt-3.5 rounded-2xl border border-[#eaded6] bg-[#faf6f3] p-3 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#6b2832] text-[10px] font-bold text-white">
-                    {getInitials(currentUserProfile)}
-                  </div>
-                  <div className="truncate text-xs font-bold text-[#6b2832] max-w-[100px]">
-                    {currentUserProfile?.username || 'Tú'}
-                  </div>
-                </div>
+      {/* 3. FOOTER / META: Combo & Help Hint */}
+      <footer className="w-full text-center py-2 text-xs text-[rgb(var(--color-neutral))]/50">
+        {combo > 1 ? (
+          <span className="inline-flex items-center gap-1 font-semibold text-amber-800 bg-amber-50/70 border border-amber-200/60 px-3 py-1 rounded-full">
+            <Icon name="fire-streak" className="w-3.5 h-3.5 text-amber-600" />
+            <span>Racha de {combo} aciertos</span>
+          </span>
+        ) : (
+          <span>Pulsa Enter para verificar o continuar</span>
+        )}
+      </footer>
 
-                <div className="flex items-center gap-1">
-                  <span className="text-[10px] text-[rgb(var(--color-neutral))]/60">Puesto:</span>
-                  <span className="rounded-md bg-white border border-[#eaded6] px-1.5 py-0.2 text-[10px] font-extrabold text-[#6b2832]">
-                    #{currentUserRank}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-1 border-t border-[#eaded6]/60 text-[10px]">
-                <span className="text-[rgb(var(--color-neutral))]/70 font-mono font-medium">
-                  {currentUserXP} XP
-                </span>
-                {xpToNext > 0 ? (
-                  <span className="text-amber-800/90 font-medium">
-                    +{xpToNext} XP para subir 🔺
-                  </span>
-                ) : (
-                  <span className="text-emerald-700 font-bold">¡En la cima! 🌟</span>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="mt-3.5 rounded-2xl border border-dashed border-[#eaded6] bg-[#faf6f3] p-3 text-center text-[11px] text-[rgb(var(--color-neutral))]/70">
-              <Link to="/login" className="font-bold text-[#6b2832] hover:underline">
-                Inicia sesión
-              </Link>{' '}
-              para competir en el ranking.
-            </div>
-          )}
-
-          {/* Ver más ranking completo */}
-          <div className="mt-3 pt-2 border-t border-[#f2e2da] text-center">
-            <button
-              type="button"
-              onClick={() => setRankingModalOpen(true)}
-              className="text-xs font-bold text-[#6b2832] hover:text-[#581f27] hover:underline transition"
-            >
-              Ver tabla completa de líderes →
-            </button>
-          </div>
-        </aside>
-      </div>
-
-      {/* Full Leaderboard Modal */}
-      {rankingModalOpen && (
+      {/* 4. SLIDE-OVER / MODAL: Leaderboard Ranking Drawer */}
+      {rankingDrawerOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-fadeIn">
           <div
             className="fixed inset-0"
-            onClick={() => setRankingModalOpen(false)}
+            onClick={() => setRankingDrawerOpen(false)}
             aria-hidden="true"
           />
           <div
@@ -1097,48 +1158,73 @@ export default function GamePage() {
             aria-modal="true"
           >
             <div className="flex items-center justify-between border-b border-[#f2e2da] pb-3">
-              <h3 className="text-lg font-bold text-[#6b2832]">Tabla de Líderes</h3>
+              <div className="flex items-center gap-2">
+                <Icon name="crown" className="w-5 h-5 text-amber-600" />
+                <h3 className="text-base sm:text-lg font-bold text-[#6b2832]">
+                  Ranking de Estudiantes
+                </h3>
+              </div>
               <button
                 type="button"
-                onClick={() => setRankingModalOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-stone-400 hover:bg-[#fbf5f2] hover:text-[#6b2832] transition"
+                onClick={() => setRankingDrawerOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-stone-400 hover:bg-[#fbf5f2] hover:text-[#6b2832] transition cursor-pointer"
+                aria-label="Cerrar modal"
               >
                 ✕
               </button>
             </div>
 
             <div className="overflow-y-auto flex-1 space-y-2 pr-1">
-              {rankingProfiles.map((p, idx) => {
-                const isCurrent = p.user_id === user?.id;
-                return (
-                  <div
-                    key={p.user_id || idx}
-                    className={`flex items-center justify-between p-2.5 rounded-2xl border transition ${isCurrent
-                        ? 'border-[#d98b96] bg-[#fff2eb] shadow-xs'
-                        : 'border-[#eaded6]/70 bg-[#faf6f3]/60'
+              {rankingLoading ? (
+                <div className="py-8 text-center text-xs text-stone-500 animate-pulse">
+                  Cargando clasificación...
+                </div>
+              ) : (
+                rankingProfiles.map((p, idx) => {
+                  const isCurrent = p.user_id === user?.id;
+                  return (
+                    <div
+                      key={p.user_id || idx}
+                      className={`flex items-center justify-between p-2.5 rounded-xl border transition ${
+                        isCurrent
+                          ? 'border-[#d98b96] bg-[#fff2eb] shadow-2xs'
+                          : 'border-[#eaded6]/70 bg-[#faf6f3]/60'
                       }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="w-5 text-center text-xs font-bold text-[#6b2832]">
-                        {idx === 0 ? '👑' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
-                      </span>
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#6b2832] text-xs font-bold text-white shadow-2xs">
-                        {getInitials(p)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-5 text-center text-xs font-bold text-[#6b2832]">
+                          {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
+                        </span>
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#6b2832] text-xs font-bold text-white shadow-2xs">
+                          {getInitials(p)}
+                        </div>
+                        <div className="text-xs font-bold text-[#6b2832]">
+                          {p.username || 'Estudiante'}
+                          {isCurrent ? (
+                            <span className="ml-1 text-[10px] text-amber-800">(Tú)</span>
+                          ) : null}
+                        </div>
                       </div>
-                      <div className="text-xs font-bold text-[#6b2832]">
-                        {p.username || 'Jugador'}
-                        {isCurrent ? (
-                          <span className="ml-1 text-[10px] text-amber-800">(Tú)</span>
-                        ) : null}
+                      <div className="text-xs font-mono font-bold text-[#6b2832]">
+                        {p.experience ?? 0} XP
                       </div>
                     </div>
-                    <div className="text-xs font-mono font-bold text-[#6b2832]">
-                      {p.experience ?? 0} XP
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
+
+            {/* Current user footer if logged in */}
+            {user && currentUserProfile && (
+              <div className="pt-2 border-t border-[#f2e2da] flex items-center justify-between text-xs">
+                <span className="text-[rgb(var(--color-neutral))]/70">
+                  Tu puesto actual: <strong className="text-[#6b2832]">#{currentUserRank}</strong>
+                </span>
+                <span className="font-mono font-bold text-[#6b2832]">
+                  {currentUserProfile.experience ?? 0} XP
+                </span>
+              </div>
+            )}
           </div>
         </div>
       )}

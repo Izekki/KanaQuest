@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Icon from '../../ui/Icon';
 
 /**
  * GrammarColorLegend Component
@@ -6,7 +7,7 @@ import React, { useState } from 'react';
  * Displays an interactive visual guide explaining the semantic colors used for word blocks
  * and highlighting that green is exclusively reserved for victory/correct validation.
  */
-export default function GrammarColorLegend({ className = '' }) {
+export default function GrammarColorLegend({ className = '', showHeader = true }) {
   const [isExpanded, setIsExpanded] = useState(true);
 
   const legendItems = [
@@ -60,28 +61,30 @@ export default function GrammarColorLegend({ className = '' }) {
       ].join(' ')}
     >
       {/* Card Header with Collapse Toggle on Mobile/Tablet */}
-      <div className="flex items-center justify-between pb-3 border-b border-[#eaded6]/60">
-        <div className="flex items-center gap-2.5">
-          <span className="text-xl">🎨</span>
-          <div>
-            <h3 className="text-sm sm:text-base font-bold text-[rgb(var(--color-neutral))] leading-tight">
-              Guía de Colores
-            </h3>
-            <p className="text-[11px] text-[rgb(var(--color-neutral))]/60">
-              Categorías gramaticales
-            </p>
+      {showHeader && (
+        <div className="flex items-center justify-between pb-3 border-b border-[#eaded6]/60">
+          <div className="flex items-center gap-2.5">
+            <Icon name="palette" className="w-5 h-5 text-[#6b2832]" />
+            <div>
+              <h3 className="text-sm sm:text-base font-bold text-[rgb(var(--color-neutral))] leading-tight">
+                Guía de Colores
+              </h3>
+              <p className="text-[11px] text-[rgb(var(--color-neutral))]/60">
+                Categorías gramaticales
+              </p>
+            </div>
           </div>
-        </div>
 
-        <button
-          type="button"
-          onClick={() => setIsExpanded((prev) => !prev)}
-          className="lg:hidden inline-flex min-h-[36px] items-center justify-center rounded-xl px-2.5 py-1 text-xs font-semibold text-accent hover:bg-[#f9efea] active:scale-95 transition-all"
-          aria-label={isExpanded ? 'Contraer guía' : 'Expandir guía'}
-        >
-          {isExpanded ? '▲ Ocultar' : '▼ Ver Guía'}
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => setIsExpanded((prev) => !prev)}
+            className="lg:hidden inline-flex min-h-[36px] items-center justify-center rounded-xl px-2.5 py-1 text-xs font-semibold text-accent hover:bg-[#f9efea] active:scale-95 transition-all"
+            aria-label={isExpanded ? 'Contraer guía' : 'Expandir guía'}
+          >
+            {isExpanded ? '▲ Ocultar' : '▼ Ver Guía'}
+          </button>
+        </div>
+      )}
 
       {/* Color Items List */}
       {isExpanded && (
@@ -118,13 +121,16 @@ export default function GrammarColorLegend({ className = '' }) {
 
           {/* Educational Tip Box */}
           <div className="mt-4 rounded-xl border border-amber-200/80 bg-amber-50/60 p-3 text-[11px] text-amber-900 leading-relaxed">
-            <span className="font-bold">💡 Estructura típica:</span>
-            <div className="mt-1 flex flex-wrap items-center gap-1 font-medium">
-              <span className="rounded bg-blue-100/90 px-1.5 py-0.5 text-blue-800 font-semibold">Sujeto 🔵</span>
-              <span>+</span>
-              <span className="rounded bg-amber-100/90 px-1.5 py-0.5 text-amber-800 font-semibold">Partícula 🟡</span>
-              <span>+</span>
-              <span className="rounded bg-purple-100/90 px-1.5 py-0.5 text-purple-800 font-semibold">Verbo 🟣</span>
+            <span className="font-bold flex items-center gap-1.5">
+              <Icon name="lightbulb" className="w-3.5 h-3.5 text-amber-700" />
+              <span>Estructura típica:</span>
+            </span>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 font-medium">
+              <span className="rounded-md bg-blue-100/90 px-2 py-0.5 text-blue-800 font-semibold border border-blue-200">Sujeto</span>
+              <span className="text-amber-700 font-bold">+</span>
+              <span className="rounded-md bg-amber-100/90 px-2 py-0.5 text-amber-800 font-semibold border border-amber-200">Partícula</span>
+              <span className="text-amber-700 font-bold">+</span>
+              <span className="rounded-md bg-purple-100/90 px-2 py-0.5 text-purple-800 font-semibold border border-purple-200">Verbo</span>
             </div>
           </div>
         </div>

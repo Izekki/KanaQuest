@@ -1,215 +1,293 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import avatarRimuruRedPink from '../../img/avatar_rimuru_version_red-pink.svg';
+import mascotTransparent from '../../img/mascot_pink_slime_transparent.png';
+import Icon from '../../components/ui/Icon';
+import RecognitionPreview from '../../components/landing/RecognitionPreview';
+import TranslationPreview from '../../components/landing/TranslationPreview';
+import PairMatchPreview from '../../components/landing/PairMatchPreview';
+import SentenceBuilderPreview from '../../components/landing/SentenceBuilderPreview';
+
+const LEARNING_STAGES = [
+  {
+    id: 'reconocimiento',
+    stepNumber: '01',
+    title: 'Reconocimiento',
+    tag: 'Lectura y forma',
+    desc: 'Identifica caracteres kanji y su lectura fonética en kana o romaji.',
+    component: <RecognitionPreview />,
+    route: '/game',
+    actionLabel: 'Practicar Reconocimiento',
+  },
+  {
+    id: 'traduccion',
+    stepNumber: '02',
+    title: 'Traducción',
+    tag: 'Vocabulario activo',
+    desc: 'Escribe y consolida el vocabulario desde el significado al japonés.',
+    component: <TranslationPreview />,
+    route: '/vocabulary',
+    actionLabel: 'Explorar Vocabulario',
+  },
+  {
+    id: 'parejas',
+    stepNumber: '03',
+    title: 'Par-Parejas',
+    tag: 'Memoria asociativa',
+    desc: 'Empareja kanji y lecturas correspondientes en rondas de agilidad.',
+    component: <PairMatchPreview />,
+    route: '/pair-match',
+    actionLabel: 'Jugar Par-Parejas',
+  },
+  {
+    id: 'constructor',
+    stepNumber: '04',
+    title: 'Constructor',
+    tag: 'Estructura gramatical',
+    desc: 'Ordena palabras y partículas en la secuencia natural de la oración.',
+    component: <SentenceBuilderPreview />,
+    route: '/sentence-builder',
+    actionLabel: 'Construir Oraciones',
+  },
+];
 
 export default function PublicLanding() {
-  const learningModes = [
-    {
-      id: 'recognize',
-      title: 'Reconocimiento',
-      kanji: '認識',
-      badgeColor: 'bg-[#fbeae5] text-[#6b2832] border-[#f3d3ce]',
-      tag: 'Lectura y Kanji',
-      description: 'Identifica kanji y caracteres kana reconociendo su lectura exacta en romaji o hiragana al instante.',
-    },
-    {
-      id: 'translate',
-      title: 'Traducción',
-      kanji: '翻訳',
-      badgeColor: 'bg-[#fff6e6] text-[#9c6615] border-[#fae2be]',
-      tag: 'Vocabulario Activo',
-      description: 'Refuerza tu vocabulario escribiendo las palabras directamente en japonés a partir de su significado en español.',
-    },
-    {
-      id: 'pair_match',
-      title: 'Par-Parejas',
-      kanji: '🎴',
-      badgeColor: 'bg-[#eef3fb] text-[#2c5282] border-[#d2e1f5]',
-      tag: 'Desafío de Memoria',
-      description: 'Entrena tu memoria visual y agilidad mental volteando y emparejando palabras japonesas con su traducción.',
-    },
-    {
-      id: 'sentence_builder',
-      title: 'Constructor',
-      kanji: '⛩️',
-      badgeColor: 'bg-[#eef8f2] text-[#22633e] border-[#cfe9d8]',
-      tag: 'Estructura & Gramática',
-      description: 'Construye frases reales y comprende el orden gramatical arrastrando fichas interactivas paso a paso.',
-    },
-  ];
-
-  const features = [
-    { icon: '⚡', title: 'Rondas Rápidas', desc: 'Sesiones cortas de 5 a 10 preguntas para estudiar a tu propio ritmo.' },
-    { icon: '📈', title: 'Progreso Diario', desc: 'Guarda tus aciertos, historial de maestría y racha diaria de estudio.' },
-    { icon: '🏆', title: 'Ranking Semanal', desc: 'Gana XP con cada acierto y compite amistosamente en el podio.' },
-  ];
-
-  const handleScrollToFeatures = (e) => {
-    e.preventDefault();
-    const element = document.getElementById('modos-aprendizaje');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+  const [activeStageIndex, setActiveStageIndex] = useState(0);
+  const activeStage = LEARNING_STAGES[activeStageIndex];
 
   return (
-    <div className="w-full max-w-6xl mx-auto space-y-8 sm:space-y-10 py-2 sm:py-4">
-      {/* 1. HERO DE BIENVENIDA */}
-      <section className="relative overflow-hidden rounded-[1.75rem] border border-[#eaded6] bg-white p-6 sm:p-10 shadow-[0_14px_34px_rgba(107,40,50,0.06)]">
-        <div className="flex flex-col-reverse lg:flex-row lg:items-center lg:justify-between gap-8">
+    <div className="w-full max-w-5xl mx-auto space-y-12 sm:space-y-16 py-4 sm:py-6">
+      {/* 1. HERO COMPACTO Y EDITORIAL */}
+      <section className="py-4 sm:py-8 lg:py-10">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-center">
           
-          {/* Left Column: Headline & Call To Action */}
-          <div className="space-y-4 max-w-xl text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#fbf0ec] px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#6b2832] border border-[#f2d2cc]">
-              <span>⛩️</span>
-              <span>Plataforma Interactiva</span>
-            </div>
+          {/* Columna Izquierda: Jerarquía Clara y CTA Dominante */}
+          <div className="md:col-span-7 flex flex-col items-center md:items-start text-center md:text-left space-y-4">
+            <span className="text-xs font-semibold tracking-wider uppercase text-[#6b2832]/75">
+              Plataforma educativa
+            </span>
 
-            <div className="space-y-1.5">
-              <h1 className="text-3xl sm:text-5xl font-extrabold text-[#6b2832] tracking-tight leading-tight">
-                KanaQuest
-              </h1>
-              <p className="text-lg sm:text-2xl font-bold text-[rgb(var(--color-neutral))]/90">
-                Domina el japonés paso a paso
-              </p>
-            </div>
+            <h1 className="text-3xl sm:text-4xl lg:text-[3.25rem] font-bold text-[#38181e] tracking-tight leading-[1.12]">
+              Domina el japonés <br className="hidden sm:inline" />
+              <span className="text-[#6b2832]">paso a paso.</span>
+            </h1>
 
-            <p className="text-sm sm:text-base text-[rgb(var(--color-neutral))]/75 leading-relaxed">
-              Aprende kanji, vocabulario y gramática con rondas dinámicas de práctica, desafíos de memoria interactivos y seguimiento continuo de tu progreso diario.
+            <p className="text-base sm:text-lg text-[#5c4447] max-w-lg leading-relaxed">
+              Aprende kana, vocabulario y gramática con lecciones interactivas cortas.
             </p>
 
-            {/* CTA Buttons */}
-            <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-3">
+            <div className="pt-2 flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
               <Link
-                to="/login"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#6b2832] px-7 py-3 text-sm sm:text-base font-bold text-white shadow-[0_10px_22px_rgba(107,40,50,0.22)] transition-all hover:bg-[#581f27] hover:-translate-y-0.5 active:scale-98"
+                to="/game"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#6b2832] px-8 py-3.5 text-base font-semibold text-white shadow-xs hover:bg-[#561f27] transition-all active:scale-[0.98] min-h-[48px]"
               >
                 <span>Comenzar gratis</span>
-                <span aria-hidden="true">→</span>
+                <span aria-hidden="true" className="text-sm">→</span>
               </Link>
 
-              <button
-                type="button"
-                onClick={handleScrollToFeatures}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#6b2832]/25 bg-white/80 px-6 py-3 text-sm sm:text-base font-semibold text-[#6b2832] shadow-xs transition-all hover:bg-white hover:border-[#6b2832]/45 active:scale-98"
+              <a
+                href="#ruta"
+                className="text-xs sm:text-sm font-medium text-[#6b2832]/80 hover:text-[#38181e] py-2 px-2 hover:underline underline-offset-4"
               >
-                <span>Ver características</span>
-                <span aria-hidden="true">↓</span>
-              </button>
+                Ver cómo funciona ↓
+              </a>
             </div>
           </div>
 
-          {/* Right Column: Mascot & Interactive Badge */}
-          <div className="flex flex-col items-center justify-center shrink-0">
-            <div className="relative flex h-32 w-32 sm:h-40 sm:w-40 lg:h-48 lg:w-48 items-center justify-center overflow-hidden rounded-full bg-[#fbeae5] border-4 border-white shadow-[0_14px_32px_rgba(107,40,50,0.14)] hover:scale-105 transition-transform duration-300">
-              <img
-                src={avatarRimuruRedPink}
-                alt="Mascota KanaQuest"
-                className="h-24 w-24 sm:h-28 sm:w-28 lg:h-36 lg:w-36 max-w-none object-contain drop-shadow-[0_8px_16px_rgba(107,40,50,0.18)]"
-                loading="eager"
-              />
-            </div>
-            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-[#6b2832] border border-[#eaded6] shadow-xs">
-              <span>✨</span>
-              <span>¡Aprende jugando!</span>
-            </div>
-          </div>
+          {/* Columna Derecha: Ilustración de Apoyo Naturalmente Integrada */}
+          <div className="md:col-span-5 flex flex-col items-center justify-center">
+            <div className="relative flex flex-col items-center">
+              {/* Resplandor cálido muy tenue detrás de la mascota */}
+              <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(244,183,195,0.3)_0%,transparent_70%)] blur-2xl transform scale-125 pointer-events-none" />
 
-        </div>
-
-        {/* Feature Highlights Strip */}
-        <div className="mt-8 pt-6 border-t border-[#f2e6df] grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {features.map((feat, idx) => (
-            <div
-              key={idx}
-              className="flex items-start gap-3 rounded-2xl bg-[#fffdfb] border border-[#f2e6df] p-3.5 shadow-2xs transition hover:bg-white"
-            >
-              <span className="text-2xl select-none" aria-hidden="true">{feat.icon}</span>
-              <div>
-                <div className="text-xs sm:text-sm font-bold text-[#6b2832]">
-                  {feat.title}
-                </div>
-                <div className="text-[11px] sm:text-xs text-[rgb(var(--color-neutral))]/70 leading-relaxed">
-                  {feat.desc}
-                </div>
+              {/* Mascota con su tablilla tradicional 学 (Aprender) */}
+              <div className="relative max-w-[190px] sm:max-w-[220px] lg:max-w-[250px] animate-float-subtle select-none">
+                <img
+                  src={mascotTransparent}
+                  alt="Mascota KanaQuest aprendiendo japonés"
+                  className="w-full h-auto object-contain drop-shadow-[0_8px_20px_rgba(107,40,50,0.1)]"
+                  loading="eager"
+                />
               </div>
+
+              {/* Sombra sutil en la base */}
+              <div className="h-2 w-28 rounded-full bg-[#6b2832]/8 blur-xs mt-2" />
             </div>
-          ))}
+          </div>
+
         </div>
       </section>
 
-      {/* 2. SECCIÓN: SHOWCASE DE MODOS DE APRENDIZAJE */}
-      <section id="modos-aprendizaje" className="space-y-4">
-        <div className="text-center sm:text-left px-1">
-          <div className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-[#6b2832]/80">
-            <span>Metodología</span>
-          </div>
-          <h2 className="text-xl sm:text-2xl font-bold text-[#6b2832] tracking-tight">
-            Modos de Aprendizaje
+      {/* 2. RUTA DE APRENDIZAJE: SISTEMA INTERACTIVO EN 4 ETAPAS */}
+      <section id="ruta" className="pt-8 sm:pt-10 border-t border-[#ebdcd3]/70 space-y-6">
+        {/* Cabecera de la Sección con Jerarquía Limpia */}
+        <div className="space-y-1 text-center sm:text-left">
+          <span className="text-xs font-semibold tracking-wider uppercase text-[#6b2832]/75">
+            Ruta de aprendizaje
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-bold text-[#38181e] tracking-tight">
+            4 etapas para dominar el idioma
           </h2>
-          <p className="text-xs sm:text-sm text-[rgb(var(--color-neutral))]/70 mt-0.5">
-            Una suite completa de entrenamiento interactivo para todas las etapas del estudio:
+          <p className="text-xs sm:text-sm text-[#5c4447] max-w-xl">
+            Desde la lectura del carácter hasta la construcción de oraciones reales.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 items-stretch">
-          {learningModes.map((mode) => (
-            <Link
-              key={mode.id}
-              to="/login"
-              className="group flex flex-col justify-between h-full rounded-2xl border border-[#eaded6] bg-white p-5 sm:p-6 shadow-[0_6px_20px_rgba(107,40,50,0.04)] transition-all duration-200 hover:-translate-y-1 hover:shadow-md hover:border-[#dfc3be] cursor-pointer"
-            >
-              <div>
-                {/* Header Icon + Tag */}
-                <div className="flex items-center justify-between gap-2">
-                  <div
+        {/* Selector de Etapas en Móvil (Pestañas Segmentadas) */}
+        <div className="flex md:hidden items-center gap-1.5 p-1 rounded-xl bg-[#f5ede7] border border-[#e8ded6] overflow-x-auto">
+          {LEARNING_STAGES.map((stage, idx) => {
+            const isActive = idx === activeStageIndex;
+            return (
+              <button
+                key={stage.id}
+                type="button"
+                onClick={() => setActiveStageIndex(idx)}
+                className={[
+                  'flex-1 py-2 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all min-h-[44px] flex items-center justify-center gap-1.5',
+                  isActive
+                    ? 'bg-white text-[#6b2832] shadow-xs'
+                    : 'text-[#6b2832]/70 hover:text-[#6b2832]',
+                ].join(' ')}
+              >
+                <span className="font-mono text-[11px] opacity-70">{stage.stepNumber}</span>
+                <span>{stage.title}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Layout en Escritorio: Lista de Etapas (Izquierda) + Estudio Interactivo (Derecha) */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8 items-start">
+          
+          {/* Columna Izquierda: Los 4 Pasos del Plan de Estudio */}
+          <div className="hidden md:flex md:col-span-5 flex-col space-y-2">
+            {LEARNING_STAGES.map((stage, idx) => {
+              const isActive = idx === activeStageIndex;
+              return (
+                <button
+                  key={stage.id}
+                  type="button"
+                  onClick={() => setActiveStageIndex(idx)}
+                  className={[
+                    'w-full text-left p-4 rounded-xl border transition-all duration-150 flex items-start gap-3.5',
+                    isActive
+                      ? 'bg-white border-[#d8c2b7] shadow-xs ring-1 ring-[#d8c2b7]/60'
+                      : 'bg-transparent border-transparent hover:bg-white/60 hover:border-[#ebdcd3]',
+                  ].join(' ')}
+                >
+                  <span
                     className={[
-                      'flex h-11 w-11 items-center justify-center rounded-2xl border font-bold text-base shadow-2xs font-jp transition-transform duration-200 group-hover:scale-105',
-                      mode.badgeColor,
+                      'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg font-mono text-xs font-bold transition-colors',
+                      isActive
+                        ? 'bg-[#6b2832] text-white'
+                        : 'bg-[#f0e4dd] text-[#6b2832]/70',
                     ].join(' ')}
                   >
-                    {mode.kanji}
+                    {stage.stepNumber}
+                  </span>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-sm font-bold text-[#38181e]">
+                        {stage.title}
+                      </span>
+                      <span className="text-[10px] font-medium text-[#6b2832]/65">
+                        {stage.tag}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#5c4447] mt-0.5 leading-relaxed">
+                      {stage.desc}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Columna Derecha: Estudio Interactivo Activo */}
+          <div className="md:col-span-7 flex flex-col">
+            <div className="rounded-2xl border border-[#e4d4cb] bg-white p-4 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between min-h-[360px]">
+              
+              <div>
+                {/* Header del Estudio */}
+                <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#f2e6df]">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-bold text-[#6b2832] bg-[#fbf3f0] px-2 py-0.5 rounded-md border border-[#f0ded8]">
+                      Etapa {activeStage.stepNumber}
+                    </span>
+                    <h3 className="text-sm sm:text-base font-bold text-[#38181e]">
+                      {activeStage.title}
+                    </h3>
                   </div>
 
-                  <span className="rounded-full bg-[#fbf5f2] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#6b2832]/80 border border-[#eaded6]">
-                    {mode.tag}
+                  <span className="text-[11px] font-medium text-[#6b2832]/70">
+                    {activeStage.tag}
                   </span>
                 </div>
 
-                {/* Title & Description */}
-                <div className="mt-4 space-y-1.5">
-                  <h3 className="text-base sm:text-lg font-bold text-[#6b2832] group-hover:text-[#581f27] transition-colors">
-                    {mode.title}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-[rgb(var(--color-neutral))]/75 leading-relaxed">
-                    {mode.description}
-                  </p>
+                {/* Área de Interacción Activa */}
+                <div className="py-1">
+                  {activeStage.component}
                 </div>
               </div>
 
-              {/* Bottom Subtle Indicator */}
-              <div className="mt-5 pt-3 border-t border-[#f6eae4] flex items-center justify-between text-[11px] font-semibold text-[#6b2832]/75">
-                <span>Modo interactivo</span>
-                <span aria-hidden="true" className="text-xs group-hover:translate-x-0.5 transition-transform duration-200">
-                  →
-                </span>
+              {/* Pie con Acción Directa */}
+              <div className="mt-4 pt-3 border-t border-[#f2e6df] flex items-center justify-end">
+                <Link
+                  to={activeStage.route}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#6b2832] hover:text-[#4d1c23] hover:underline underline-offset-4 py-1"
+                >
+                  <span>{activeStage.actionLabel}</span>
+                  <span aria-hidden="true">→</span>
+                </Link>
               </div>
-            </Link>
-          ))}
+
+            </div>
+          </div>
+
         </div>
       </section>
 
-      {/* 3. FOOTER */}
-      <footer className="rounded-2xl border border-[#eaded6] bg-white/70 backdrop-blur p-4 text-center text-xs text-[rgb(var(--color-neutral))]/70 shadow-2xs">
-        © 2026 KanaQuest · Plataforma interactiva para el aprendizaje del idioma japonés ·{' '}
-        <a
-          href="https://github.com/Izekki/KanaQuest"
-          target="_blank"
-          rel="noreferrer"
-          className="font-semibold text-[#6b2832] hover:underline"
+      {/* 3. ACCESO DIRECTO / CONTINUAR PRÁCTICA */}
+      <section className="rounded-2xl border border-[#ebdcd3] bg-[#fbf6f2] p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="space-y-1 text-center sm:text-left">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#6b2832]">
+            Comienza hoy
+          </span>
+          <h3 className="text-xl sm:text-2xl font-bold text-[#38181e]">
+            Listo para tu primera ronda de 5 minutos
+          </h3>
+          <p className="text-xs sm:text-sm text-[#5c4447]">
+            Rondas cortas diseñadas para memorización sin fatiga mental.
+          </p>
+        </div>
+
+        <Link
+          to="/game"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#6b2832] px-6 py-3.5 text-sm font-semibold text-white shadow-xs hover:bg-[#561f27] transition-all whitespace-nowrap min-h-[46px]"
         >
-          GitHub
-        </a>
+          <span>Iniciar sesión de juego</span>
+          <span aria-hidden="true">→</span>
+        </Link>
+      </section>
+
+      {/* 4. FOOTER EDITORIAL Y CALMO */}
+      <footer className="pt-6 pb-4 border-t border-[#ebdcd3]/70 text-xs text-[#5c4447] flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div>
+          © 2026 <span className="font-semibold text-[#38181e]">KanaQuest</span> · Plataforma para aprender japonés a tu ritmo.
+        </div>
+        <div className="flex items-center gap-4 text-[#6b2832]">
+          <Link to="/game" className="hover:underline">Aprender</Link>
+          <Link to="/vocabulary" className="hover:underline">Vocabulario</Link>
+          <Link to="/login" className="hover:underline">Iniciar sesión</Link>
+          <a
+            href="https://github.com/Izekki/KanaQuest"
+            target="_blank"
+            rel="noreferrer"
+            className="hover:underline"
+          >
+            GitHub
+          </a>
+        </div>
       </footer>
     </div>
   );

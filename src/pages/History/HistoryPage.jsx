@@ -5,29 +5,9 @@ import { getUser } from '../../services/supabase/auth';
 import { fetchWordsForHistory } from '../../services/supabase/words';
 import { fetchUserProgress } from '../../services/supabase/progress';
 import { useSoundEffects } from '../../hooks/useSoundEffects';
+import Icon from '../../components/ui/Icon';
 
 const containsJapaneseScript = (value = '') => /[\u3040-\u30ff\u3400-\u9fff]/.test(value);
-
-function formatRelativeTime(dateString) {
-  if (!dateString) return 'Sin intentos';
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return 'Sin intentos';
-
-  const now = new Date();
-  const diffMs = now - date;
-  const diffSec = Math.floor(diffMs / 1000);
-  const diffMin = Math.floor(diffSec / 60);
-  const diffHour = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHour / 24);
-
-  if (diffSec < 60) return 'Hace un momento';
-  if (diffMin < 60) return `Hace ${diffMin} min`;
-  if (diffHour < 24) return `Hace ${diffHour} h`;
-  if (diffDay === 1) return 'Ayer';
-  if (diffDay < 30) return `Hace ${diffDay} días`;
-
-  return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
-}
 
 function speakWord(text) {
   if (typeof window === 'undefined' || !window.speechSynthesis || !text) return;
@@ -45,28 +25,25 @@ function speakWord(text) {
 const statusConfig = {
   correct: {
     label: 'Aprendida',
-    badgeClass: 'bg-emerald-100/90 text-emerald-800 border-emerald-200',
-    cardBorder: 'hover:border-emerald-300',
-    icon: '✓',
+    dotColor: 'bg-emerald-500',
+    textColor: 'text-emerald-800',
+    bgColor: 'bg-emerald-50',
+    borderColor: 'border-emerald-200',
   },
   wrong: {
     label: 'Por repasar',
-    badgeClass: 'bg-rose-100/90 text-rose-800 border-rose-200',
-    cardBorder: 'hover:border-rose-300',
-    icon: '✕',
+    dotColor: 'bg-rose-500',
+    textColor: 'text-rose-800',
+    bgColor: 'bg-rose-50',
+    borderColor: 'border-rose-200',
   },
   pending: {
     label: 'Pendiente',
-    badgeClass: 'bg-stone-100 text-stone-600 border-stone-200',
-    cardBorder: 'hover:border-stone-300',
-    icon: '⏳',
+    dotColor: 'bg-stone-300',
+    textColor: 'text-stone-600',
+    bgColor: 'bg-stone-50',
+    borderColor: 'border-stone-200',
   },
-};
-
-const difficultyLabels = {
-  beginner: 'Principiante',
-  intermediate: 'Intermedio',
-  advanced: 'Avanzado',
 };
 
 const modeLabels = {
@@ -89,8 +66,7 @@ export default function HistoryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'correct' | 'wrong' | 'pending'
   const [difficultyFilter, setDifficultyFilter] = useState('all'); // 'all' | 'beginner' | 'intermediate' | 'advanced'
-  const [sortBy, setSortBy] = useState('default'); // 'default' | 'mastery_desc' | 'attempts_desc' | 'recent' | 'alpha'
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -108,7 +84,10 @@ export default function HistoryPage() {
       }
 
       if (!activeUserId) {
-        setWords([]);
+        // Fallback for guest mode or browsing
+        const { data: wordsData, error: wordsErr } = await fetchWordsForHistory();
+        if (wordsErr) throw wordsErr;
+        setWords(wordsData ?? []);
         setProgressRows([]);
         setLoading(false);
         return;
@@ -125,7 +104,7 @@ export default function HistoryPage() {
       setWords(wordsResult.data ?? []);
       setProgressRows(progressResult.data ?? []);
     } catch (error) {
-      console.warn('Error al cargar datos del historial:', error?.message ?? error);
+      console.warn('Error al cargar vocabulario:', error?.message ?? error);
       setWords([]);
       setProgressRows([]);
     } finally {
@@ -140,7 +119,7 @@ export default function HistoryPage() {
   // Reset pagination on filter changes
   useEffect(() => {
     setPage(1);
-  }, [mode, searchQuery, statusFilter, difficultyFilter, sortBy]);
+  }, [mode, searchQuery, statusFilter, difficultyFilter]);
 
   // 2. Correlate Words with Progress per active mode
   const progressMap = useMemo(() => {
@@ -166,12 +145,11 @@ export default function HistoryPage() {
         status,
         attempts,
         masteryLevel,
-        lastAttempt: progress?.last_attempt ?? null,
       };
     });
   }, [words, progressMap]);
 
-  // 3. Dynamic Metrics (KPIs)
+  // 3. Dynamic Counts
   const totals = useMemo(() => {
     const total = allItems.length;
     let correct = 0;
@@ -184,12 +162,10 @@ export default function HistoryPage() {
       else pending += 1;
     });
 
-    const masteryPercent = total > 0 ? Math.round((correct / total) * 100) : 0;
-
-    return { total, correct, wrong, pending, masteryPercent };
+    return { total, correct, wrong, pending };
   }, [allItems]);
 
-  // 4. Filtering and Sorting
+  // 4. Filtering
   const filteredItems = useMemo(() => {
     let result = [...allItems];
 
@@ -197,19 +173,12 @@ export default function HistoryPage() {
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       result = result.filter((item) => {
-        const japanese = (item.japanese || '').toLowerCase();
-        const hiragana = (item.hiragana || '').toLowerCase();
-        const katakana = (item.katakana || '').toLowerCase();
-        const romaji = (item.romaji || '').toLowerCase();
-        const translation = (item.translation || '').toLowerCase();
-
-        return (
-          japanese.includes(q) ||
-          hiragana.includes(q) ||
-          katakana.includes(q) ||
-          romaji.includes(q) ||
-          translation.includes(q)
-        );
+        const matchesJp = item.japanese?.toLowerCase().includes(q);
+        const matchesHiragana = item.hiragana?.toLowerCase().includes(q);
+        const matchesKatakana = item.katakana?.toLowerCase().includes(q);
+        const matchesRomaji = item.romaji?.toLowerCase().includes(q);
+        const matchesTranslation = item.translation?.toLowerCase().includes(q);
+        return matchesJp || matchesHiragana || matchesKatakana || matchesRomaji || matchesTranslation;
       });
     }
 
@@ -223,44 +192,31 @@ export default function HistoryPage() {
       result = result.filter((item) => item.difficulty === difficultyFilter);
     }
 
-    // Sorting
-    if (sortBy === 'mastery_desc') {
-      result.sort((a, b) => b.masteryLevel - a.masteryLevel || b.attempts - a.attempts);
-    } else if (sortBy === 'attempts_desc') {
-      result.sort((a, b) => b.attempts - a.attempts);
-    } else if (sortBy === 'recent') {
-      result.sort((a, b) => {
-        if (!a.lastAttempt) return 1;
-        if (!b.lastAttempt) return -1;
-        return new Date(b.lastAttempt) - new Date(a.lastAttempt);
-      });
-    } else if (sortBy === 'alpha') {
-      result.sort((a, b) => (a.romaji || a.japanese || '').localeCompare(b.romaji || b.japanese || ''));
-    }
-
     return result;
-  }, [allItems, searchQuery, statusFilter, difficultyFilter, sortBy]);
+  }, [allItems, searchQuery, statusFilter, difficultyFilter]);
 
-  // 5. Pagination
+  // Pagination slice
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
   const pagedItems = useMemo(() => {
-    const startIndex = (page - 1) * pageSize;
-    return filteredItems.slice(startIndex, startIndex + pageSize);
+    const start = (page - 1) * pageSize;
+    return filteredItems.slice(start, start + pageSize);
   }, [filteredItems, page, pageSize]);
 
-  const handleClearFilters = () => {
-    setSearchQuery('');
-    setStatusFilter('all');
-    setDifficultyFilter('all');
-    setSortBy('default');
-  };
-
   return (
-    <section className="grid gap-3 sm:gap-5 w-full max-w-7xl mx-auto">
-      {/* MOBILE COMPACT HEADER (sm:hidden) - Maximum screen space for vocabulary cards */}
-      <div className="sm:hidden rounded-2xl border border-[#eaded6] bg-white/95 p-3 shadow-xs space-y-2.5">
-        {/* Mode switcher tabs */}
-        <div className="grid grid-cols-3 p-1 bg-[#fbf5f2] border border-[#eaded6] rounded-xl gap-1">
+    <div className="w-full max-w-5xl mx-auto px-4 py-4 sm:py-8 space-y-5 sm:space-y-6">
+      {/* 1. HEADER: Title & Mode Switcher */}
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#eaded6]/60">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#6b2832]">
+            Vocabulario
+          </h1>
+          <p className="text-xs sm:text-sm text-[rgb(var(--color-neutral))]/70 mt-0.5">
+            Diccionario de aprendizaje y registro de palabras.
+          </p>
+        </div>
+
+        {/* Practice Mode Tabs */}
+        <div className="inline-flex items-center p-1 bg-[#f5ebe6]/80 border border-[#eaded6] rounded-xl text-xs font-semibold self-start sm:self-auto">
           {['recognize', 'translate', 'pair_match'].map((option) => (
             <button
               key={option}
@@ -269,583 +225,223 @@ export default function HistoryPage() {
                 playFlip();
                 setMode(option);
               }}
-              className={[
-                'rounded-lg py-1.5 text-xs font-bold transition-all text-center min-h-[34px] flex items-center justify-center',
+              className={`px-3 py-1.5 rounded-lg transition-all ${
                 mode === option
-                  ? 'bg-[rgb(var(--color-accent))] text-white shadow-xs'
-                  : 'text-[rgb(var(--color-neutral))]/70 hover:text-[rgb(var(--color-accent))]',
-              ].join(' ')}
+                  ? 'bg-[#6b2832] text-white shadow-xs'
+                  : 'text-[#6b2832]/70 hover:text-[#6b2832]'
+              }`}
             >
               {modeLabels[option]}
             </button>
           ))}
         </div>
+      </header>
 
-        {/* 4 Mini KPI Chips */}
-        <div className="grid grid-cols-4 gap-1.5 text-center">
-          <div className="rounded-xl bg-[#fdf8f6] p-1.5 border border-[#f2e6df]">
-            <span className="text-[10px] text-[rgb(var(--color-neutral))]/60 font-medium block truncate">Total</span>
-            <span className="text-sm font-extrabold text-[rgb(var(--color-accent))]">{loading ? '—' : totals.total}</span>
+      {/* 2. SEARCH & STREAMLINED STATUS FILTERS */}
+      <section className="space-y-3">
+        {/* Search Bar */}
+        <div className="relative w-full">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Buscar por kanji, kana, romaji o significado en español..."
+            className="w-full min-h-[48px] rounded-2xl border border-[#eaded6] bg-white px-4 pl-11 text-sm sm:text-base text-[rgb(var(--color-neutral))] outline-none transition focus:border-[#6b2832] focus:ring-2 focus:ring-[#6b2832]/10 placeholder:text-[rgb(var(--color-neutral))]/40"
+          />
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-stone-400">
+            <Icon name="magnifier" className="w-4 h-4 text-[#6b2832]/50" />
           </div>
-          <div className="rounded-xl bg-emerald-50/80 p-1.5 border border-emerald-100">
-            <span className="text-[10px] text-emerald-800 font-medium block truncate">Dominadas</span>
-            <span className="text-sm font-extrabold text-emerald-700">{loading ? '—' : totals.correct}</span>
-          </div>
-          <div className="rounded-xl bg-rose-50/80 p-1.5 border border-rose-100">
-            <span className="text-[10px] text-rose-800 font-medium block truncate">Repasar</span>
-            <span className="text-sm font-extrabold text-rose-600">{loading ? '—' : totals.wrong}</span>
-          </div>
-          <div className="rounded-xl bg-amber-50/80 p-1.5 border border-amber-100">
-            <span className="text-[10px] text-amber-800 font-medium block truncate">Pendientes</span>
-            <span className="text-sm font-extrabold text-amber-700">{loading ? '—' : totals.pending}</span>
-          </div>
-        </div>
-
-        {/* Compact Review CTA Button */}
-        {!loading && totals.wrong > 0 && (
-          <button
-            type="button"
-            onClick={() => {
-              const wrongWordIds = allItems.filter((item) => item.status === 'wrong').map((item) => item.id);
-              navigate('/game', {
-                state: {
-                  reviewMode: 'errors',
-                  wordIds: wrongWordIds,
-                  sourceMode: mode,
-                },
-              });
-            }}
-            className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-rose-600 py-2 px-3 text-xs font-bold text-white shadow-xs hover:bg-rose-700 active:scale-[0.98] transition"
-          >
-            <span>⚡ Repasar {totals.wrong} palabras pendientes →</span>
-          </button>
-        )}
-
-        {/* Mobile Search & Filter Action Bar */}
-        <div className="pt-1">
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar palabra..."
-                className="w-full rounded-xl border border-[#eaded6] bg-[#fdfaf8] px-3 py-2 pl-8 text-xs text-[rgb(var(--color-neutral))] outline-none transition focus:border-[rgb(var(--color-accent))] focus:bg-white"
-              />
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[rgb(var(--color-neutral))]/40 select-none">
-                🔍
-              </span>
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[rgb(var(--color-neutral))]/50"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
+          {searchQuery && (
             <button
               type="button"
-              onClick={() => setShowMobileFilters((p) => !p)}
-              className={[
-                'flex h-[34px] items-center gap-1 rounded-xl border px-2.5 text-xs font-bold transition shadow-2xs shrink-0',
-                showMobileFilters || statusFilter !== 'all' || difficultyFilter !== 'all' || sortBy !== 'default'
-                  ? 'bg-[#6b2832] text-white border-[#6b2832]'
-                  : 'bg-white text-[#6b2832] border-[#eaded6] hover:bg-[#faf4f2]',
-              ].join(' ')}
+              onClick={() => setSearchQuery('')}
+              className="absolute inset-y-0 right-0 flex items-center pr-4 text-xs font-bold text-stone-400 hover:text-[#6b2832]"
             >
-              <span>⚙️</span>
-              <span>Filtros</span>
+              Limpiar
             </button>
-          </div>
-
-          {/* Collapsible filters on mobile */}
-          {showMobileFilters && (
-            <div className="pt-2.5 mt-2 border-t border-[#f2e7e1] space-y-2 animate-fadeIn">
-              {/* Status Pills */}
-              <div className="grid grid-cols-4 gap-1 text-[10px]">
-                {[
-                  { id: 'all', label: 'Todos' },
-                  { id: 'correct', label: 'Aprend.' },
-                  { id: 'wrong', label: 'Repaso' },
-                  { id: 'pending', label: 'Pend.' },
-                ].map((filter) => (
-                  <button
-                    key={filter.id}
-                    type="button"
-                    onClick={() => setStatusFilter(filter.id)}
-                    className={[
-                      'rounded-lg py-1.5 font-semibold transition text-center',
-                      statusFilter === filter.id
-                        ? 'bg-[#6b2832] text-white shadow-2xs'
-                        : 'bg-[#f8ebe6] text-[rgb(var(--color-neutral))]/75',
-                    ].join(' ')}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 pt-0.5">
-                <select
-                  value={difficultyFilter}
-                  onChange={(e) => setDifficultyFilter(e.target.value)}
-                  className="rounded-lg border border-[#eaded6] bg-[#fdfaf8] px-2 py-1.5 text-[11px] font-medium text-[rgb(var(--color-neutral))]"
-                >
-                  <option value="all">Todas dificultades</option>
-                  <option value="beginner">Principiante (N5)</option>
-                  <option value="intermediate">Intermedio (N4)</option>
-                  <option value="advanced">Avanzado (N3+)</option>
-                </select>
-
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="rounded-lg border border-[#eaded6] bg-[#fdfaf8] px-2 py-1.5 text-[11px] font-medium text-[rgb(var(--color-neutral))]"
-                >
-                  <option value="default">Por defecto</option>
-                  <option value="mastery_desc">Mayor maestría</option>
-                  <option value="attempts_desc">Más intentos</option>
-                  <option value="recent">Más recientes</option>
-                  <option value="alpha">Alfabético</option>
-                </select>
-              </div>
-
-              {(statusFilter !== 'all' || difficultyFilter !== 'all' || sortBy !== 'default' || searchQuery) && (
-                <button
-                  type="button"
-                  onClick={handleClearFilters}
-                  className="w-full text-center text-xs text-[rgb(var(--color-accent))] font-bold py-1 hover:underline"
-                >
-                  Limpiar todos los filtros
-                </button>
-              )}
-            </div>
           )}
         </div>
-      </div>
 
-      {/* DESKTOP Header & Mode Switcher (hidden sm:block) */}
-      <div className="hidden sm:block rounded-[1.75rem] border border-[#eaded6] bg-white p-4 sm:p-6 shadow-[0_14px_34px_rgba(128,43,56,0.08)]">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-xs sm:text-sm uppercase tracking-[0.35em] text-[rgb(var(--color-accent))]/70">
-              Vocabulario & Avances
-            </p>
-            <h1 className="mt-1 text-2xl sm:text-3xl font-bold text-[rgb(var(--color-accent))] md:text-4xl">
-              Palabras y Progreso
-            </h1>
-            <p className="mt-1 text-xs sm:text-sm text-[rgb(var(--color-neutral))]/75">
-              Consulta tu dominio de vocabulario, niveles de maestría y estadísticas por modo de juego.
-            </p>
-          </div>
-
-          {/* Mode Tabs */}
-          <div className="flex items-center gap-1.5 rounded-2xl bg-[#fbf5f2] p-1.5 border border-[#eaded6] self-start md:self-auto overflow-x-auto max-w-full">
-            {['recognize', 'translate', 'pair_match'].map((option) => (
+        {/* Primary Status Tabs & Summary Row */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
+          <div className="inline-flex items-center p-0.5 bg-[#f5ebe6]/60 border border-[#eaded6] rounded-xl text-xs font-medium">
+            {[
+              { id: 'all', label: 'Todos', count: totals.total },
+              { id: 'correct', label: 'Aprendidas', count: totals.correct },
+              { id: 'wrong', label: 'Por repasar', count: totals.wrong },
+              { id: 'pending', label: 'Pendientes', count: totals.pending },
+            ].map((tab) => (
               <button
-                key={option}
+                key={tab.id}
                 type="button"
-                onClick={() => {
-                  playFlip();
-                  setMode(option);
-                }}
-                className={[
-                  'rounded-xl px-4 py-2 text-xs sm:text-sm font-semibold transition-all whitespace-nowrap min-h-[40px]',
-                  mode === option
-                    ? 'bg-[rgb(var(--color-accent))] text-white shadow-sm'
-                    : 'text-[rgb(var(--color-neutral))]/70 hover:text-[rgb(var(--color-accent))] hover:bg-white',
-                ].join(' ')}
+                onClick={() => setStatusFilter(tab.id)}
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                  statusFilter === tab.id
+                    ? 'bg-[#6b2832] text-white font-bold shadow-2xs'
+                    : 'text-[#6b2832]/75 hover:text-[#6b2832]'
+                }`}
               >
-                {modeLabels[option]}
+                <span>{tab.label}</span>
+                <span className="opacity-70 font-mono text-[11px]">({tab.count})</span>
               </button>
             ))}
           </div>
-        </div>
 
-        {/* Metric Cards (KPIs) */}
-        <div className="mt-5 grid grid-cols-2 gap-2.5 sm:gap-3 sm:grid-cols-4">
-          {/* Total */}
-          <div className="rounded-2xl bg-[#fdf8f6] p-3 sm:p-4 border border-[#f2e6df] shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-[rgb(var(--color-neutral))]/70 uppercase tracking-wider">
-                Total Palabras
-              </span>
-              <span className="text-sm">📚</span>
-            </div>
-            <div className="mt-1 text-2xl sm:text-3xl font-extrabold text-[rgb(var(--color-accent))]">
-              {loading ? '—' : totals.total}
-            </div>
-            <div className="mt-1 text-[11px] text-[rgb(var(--color-neutral))]/60">
-              En el vocabulario activo
-            </div>
-          </div>
-
-          {/* Correctas */}
-          <div className="rounded-2xl bg-emerald-50/70 p-3 sm:p-4 border border-emerald-100 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-emerald-800/80 uppercase tracking-wider">
-                Aprendidas
-              </span>
-              <span className="text-sm">✅</span>
-            </div>
-            <div className="mt-1 text-2xl sm:text-3xl font-extrabold text-emerald-700">
-              {loading ? '—' : totals.correct}
-            </div>
-            <div className="mt-1 text-[11px] text-emerald-600 font-medium">
-              {totals.masteryPercent}% del total dominado
-            </div>
-          </div>
-
-          {/* Falladas */}
-          <div className="rounded-2xl bg-rose-50/70 p-3 sm:p-4 border border-rose-100 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-rose-800/80 uppercase tracking-wider">
-                Por Repasar
-              </span>
-              <span className="text-sm">⚠️</span>
-            </div>
-            <div className="mt-1 text-2xl sm:text-3xl font-extrabold text-rose-600">
-              {loading ? '—' : totals.wrong}
-            </div>
-            <div className="mt-1 text-[11px] text-rose-500">
-              Con fallos o bajo dominio
-            </div>
-          </div>
-
-          {/* Pendientes */}
-          <div className="rounded-2xl bg-amber-50/70 p-3 sm:p-4 border border-amber-100 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-amber-800/80 uppercase tracking-wider">
-                Pendientes
-              </span>
-              <span className="text-sm">⏳</span>
-            </div>
-            <div className="mt-1 text-2xl sm:text-3xl font-extrabold text-amber-700">
-              {loading ? '—' : totals.pending}
-            </div>
-            <div className="mt-1 text-[11px] text-amber-600">
-              Aún sin practicar en este modo
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* DESKTOP Smart Error Review CTA Banner (hidden sm:block) */}
-      {!loading && totals.wrong > 0 && (
-        <div className="hidden sm:flex rounded-2xl border border-rose-200 bg-[linear-gradient(135deg,#fff8f6,#feece7)] p-4 sm:p-5 shadow-xs flex-col sm:flex-row items-center justify-between gap-4 animate-fadeIn">
-          <div className="flex items-center gap-3.5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-rose-500 text-white shadow-sm">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-sm sm:text-base font-bold text-rose-950">
-                Tienes {totals.wrong} {totals.wrong === 1 ? 'palabra pendiente' : 'palabras pendientes'} por repasar
-              </h3>
-              <p className="text-xs text-rose-800/80 mt-0.5">
-                Refuerza los términos que fallaste para consolidar tu maestría en el juego.
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              const wrongWordIds = allItems.filter((item) => item.status === 'wrong').map((item) => item.id);
-              navigate('/game', {
-                state: {
-                  reviewMode: 'errors',
-                  wordIds: wrongWordIds,
-                  sourceMode: mode,
-                },
-              });
-            }}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-rose-700 active:scale-[0.98] transition whitespace-nowrap w-full sm:w-auto"
-          >
-            <span>⚡ Repasar mis {totals.wrong} palabras pendientes</span>
-          </button>
-        </div>
-      )}
-
-      {/* Main Vocabulary Card Section */}
-      <div className="rounded-[1.75rem] border border-[#eaded6] bg-white p-3.5 sm:p-6 shadow-[0_14px_34px_rgba(128,43,56,0.08)]">
-        {/* DESKTOP Filter and Search Controls (hidden sm:block) */}
-        <div className="hidden sm:flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          {/* Search bar */}
-          <div className="relative flex-1 min-w-[240px]">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar por kanji, kana, romaji o traducción..."
-              className="w-full rounded-2xl border border-[#eaded6] bg-[#fdfaf8] px-4 py-2.5 pl-10 text-sm text-[rgb(var(--color-neutral))] outline-none transition focus:border-[rgb(var(--color-accent))] focus:bg-white focus:ring-2 focus:ring-[rgb(var(--color-accent))]/20"
-            />
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[rgb(var(--color-neutral))]/40 select-none">
-              🔍
-            </span>
-            {searchQuery ? (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-xs text-[rgb(var(--color-neutral))]/50 hover:bg-black/5"
-              >
-                ✕
-              </button>
-            ) : null}
-          </div>
-
-          {/* Filter selectors */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Status Tabs */}
-            <div className="flex items-center gap-1 rounded-xl bg-[#f8ebe6] p-1 border border-[#eaded6]/60 text-xs">
-              {[
-                { id: 'all', label: 'Todos' },
-                { id: 'correct', label: 'Aprendidas' },
-                { id: 'wrong', label: 'Por repasar' },
-                { id: 'pending', label: 'Pendientes' },
-              ].map((filter) => (
-                <button
-                  key={filter.id}
-                  type="button"
-                  onClick={() => setStatusFilter(filter.id)}
-                  className={[
-                    'rounded-lg px-2.5 py-1.5 font-medium transition-all',
-                    statusFilter === filter.id
-                      ? 'bg-white text-[rgb(var(--color-accent))] shadow-xs font-semibold'
-                      : 'text-[rgb(var(--color-neutral))]/70 hover:text-[rgb(var(--color-neutral))]',
-                  ].join(' ')}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Difficulty select */}
-            <select
-              value={difficultyFilter}
-              onChange={(e) => setDifficultyFilter(e.target.value)}
-              className="rounded-xl border border-[#eaded6] bg-white px-3 py-2 text-xs font-medium text-[rgb(var(--color-neutral))] outline-none focus:border-[rgb(var(--color-accent))]"
-              aria-label="Filtrar por dificultad"
-            >
-              <option value="all">Todas las dificultades</option>
-              <option value="beginner">Principiante (N5)</option>
-              <option value="intermediate">Intermedio (N4)</option>
-              <option value="advanced">Avanzado (N3+)</option>
-            </select>
-
-            {/* Sort order */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="rounded-xl border border-[#eaded6] bg-white px-3 py-2 text-xs font-medium text-[rgb(var(--color-neutral))] outline-none focus:border-[rgb(var(--color-accent))]"
-              aria-label="Ordenar palabras"
-            >
-              <option value="default">Orden por defecto</option>
-              <option value="mastery_desc">Mayor maestría</option>
-              <option value="attempts_desc">Más intentos</option>
-              <option value="recent">Recientes primero</option>
-              <option value="alpha">Alfabético</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Active search summary */}
-        <div className="mt-3 flex items-center justify-between text-xs text-[rgb(var(--color-neutral))]/60">
-          <span>
-            Mostrando <strong>{filteredItems.length}</strong> de {allItems.length} palabras registradas
-          </span>
-          {searchQuery || statusFilter !== 'all' || difficultyFilter !== 'all' || sortBy !== 'default' ? (
+          {/* Advanced Difficulty Filter Toggle */}
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={handleClearFilters}
-              className="text-[rgb(var(--color-accent))] hover:underline font-semibold"
+              onClick={() => setShowAdvancedFilters((p) => !p)}
+              className="text-xs font-semibold text-[#6b2832]/75 hover:text-[#6b2832] py-1 px-2 rounded-lg hover:bg-black/5 transition"
             >
-              Limpiar filtros
+              {showAdvancedFilters ? 'Ocultar nivel ▲' : 'Filtrar nivel ▼'}
             </button>
-          ) : null}
+            <span className="text-xs text-[rgb(var(--color-neutral))]/60">
+              {filteredItems.length} palabras
+            </span>
+          </div>
         </div>
 
-        {/* Word Grid or Skeleton */}
-        {loading ? (
-          <div className="mt-5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div
-                key={i}
-                className="animate-pulse rounded-2xl border border-[#eaded6] bg-[#fdfbf9] p-4 space-y-3"
+        {/* Collapsible Advanced Filters */}
+        {showAdvancedFilters && (
+          <div className="p-3 bg-[#fdfaf8] border border-[#eaded6] rounded-2xl flex flex-wrap items-center gap-3 animate-fadeIn text-xs">
+            <span className="font-bold text-[#6b2832]">Nivel JLPT:</span>
+            {['all', 'beginner', 'intermediate', 'advanced'].map((lvl) => (
+              <button
+                key={lvl}
+                type="button"
+                onClick={() => setDifficultyFilter(lvl)}
+                className={`px-2.5 py-1 rounded-lg font-semibold ${
+                  difficultyFilter === lvl
+                    ? 'bg-[#6b2832] text-white'
+                    : 'bg-white border border-[#eaded6] text-[#6b2832]/70 hover:text-[#6b2832]'
+                }`}
               >
-                <div className="flex justify-between">
-                  <div className="h-4 w-16 bg-[#ebdcd4] rounded-full" />
-                  <div className="h-4 w-20 bg-[#ebdcd4] rounded-full" />
-                </div>
-                <div className="h-10 w-24 bg-[#ebdcd4] rounded-lg mx-auto" />
-                <div className="h-4 w-32 bg-[#ebdcd4] rounded mx-auto" />
-                <div className="h-3 w-20 bg-[#ebdcd4] rounded mx-auto" />
-                <div className="h-2 w-full bg-[#ebdcd4] rounded-full pt-1" />
-              </div>
+                {lvl === 'all'
+                  ? 'Todos'
+                  : lvl === 'beginner'
+                  ? 'N5 (Principiante)'
+                  : lvl === 'intermediate'
+                  ? 'N4 (Intermedio)'
+                  : 'N3+ (Avanzado)'}
+              </button>
             ))}
+          </div>
+        )}
+      </section>
+
+      {/* 3. VOCABULARY GRID: High legibility, dominant Japanese prompt */}
+      <main>
+        {loading ? (
+          <div className="py-20 text-center text-sm font-semibold text-[#6b2832]/60 animate-pulse">
+            Cargando diccionario de palabras...
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="my-6 flex flex-col items-center justify-center text-center py-8 px-5 rounded-2xl border border-dashed border-[#eaded6] bg-[#fdfbf9]">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fbeae5] text-2xl shadow-2xs border border-[#f2d2cc] mb-3">
-              🔍
-            </div>
-            <h3 className="text-base font-bold text-[#6b2832]">
-              No se encontraron palabras
-            </h3>
-            <p className="mt-1 max-w-sm text-xs sm:text-sm text-[rgb(var(--color-neutral))]/70 leading-relaxed">
-              No hay palabras que coincidan con los filtros o término de búsqueda aplicado.
+          <div className="py-16 text-center border-2 border-dashed border-[#eaded6] rounded-3xl bg-[#fdfbf9] space-y-2">
+            <div className="text-3xl text-stone-300">📖</div>
+            <h3 className="text-base font-bold text-[#6b2832]">No se encontraron palabras</h3>
+            <p className="text-xs text-[rgb(var(--color-neutral))]/70">
+              Prueba cambiando el filtro de búsqueda o el estado.
             </p>
-            <button
-              type="button"
-              onClick={handleClearFilters}
-              className="mt-4 rounded-xl bg-[#6b2832] hover:bg-[#581f27] px-5 py-2.5 text-xs font-semibold text-white shadow-xs transition-all active:scale-98"
-            >
-              Restablecer filtros
-            </button>
           </div>
         ) : (
-          <div className="mt-3 sm:mt-5 grid grid-cols-1 min-[440px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
             {pagedItems.map((item) => {
               const statusCfg = statusConfig[item.status] || statusConfig.pending;
-              const hasJapanesePrompt = containsJapaneseScript(item.japanese || item.hiragana);
+              const hasJapanese = containsJapaneseScript(item.japanese || item.hiragana);
 
               return (
-                <div
+                <article
                   key={item.id}
-                  className={[
-                    'group relative flex flex-col justify-between rounded-xl sm:rounded-2xl border border-[#eaded6] bg-[#fffdfb] p-3 sm:p-4 shadow-2xs transition-all duration-200 hover:shadow-md',
-                    statusCfg.cardBorder,
-                  ].join(' ')}
+                  className="rounded-2xl border border-[#eaded6] bg-white p-4 shadow-2xs hover:shadow-md hover:border-[#6b2832]/30 transition-all flex flex-col justify-between space-y-3"
                 >
-                  {/* Top Badges */}
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="rounded-full bg-[#f6eadf] px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-[rgb(var(--color-accent))]">
-                      {difficultyLabels[item.difficulty] || item.difficulty || 'Nivel ' + (item.level || 1)}
-                    </span>
-
-                    <span
-                      className={[
-                        'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider',
-                        statusCfg.badgeClass,
-                      ].join(' ')}
-                    >
-                      <span aria-hidden="true">{statusCfg.icon}</span>
-                      {statusCfg.label}
-                    </span>
-                  </div>
-
-                  {/* Main Content */}
-                  <div className="my-2 sm:my-3 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <span
-                        className={[
-                          'text-2xl sm:text-4xl font-extrabold text-[rgb(var(--color-accent))] leading-tight tracking-tight',
-                          hasJapanesePrompt ? 'font-jp' : '',
-                        ].join(' ')}
+                  {/* Top Bar: Kanji/Word Protagonist + Audio */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div
+                        className={`text-3xl sm:text-4xl font-bold text-[#6b2832] tracking-tight leading-tight select-none ${
+                          hasJapanese ? 'font-jp' : ''
+                        }`}
                       >
                         {item.japanese || item.hiragana || item.romaji}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => speakWord(item.japanese || item.hiragana)}
-                        className="rounded-full p-1.5 text-[rgb(var(--color-accent))]/50 hover:bg-[#f8ebe6] hover:text-[rgb(var(--color-accent))] transition"
-                        title="Escuchar pronunciación"
-                        aria-label="Escuchar pronunciación"
-                      >
-                        🔊
-                      </button>
-                    </div>
+                      </div>
 
-                    {/* Readings */}
-                    <div className="mt-1 text-xs text-[rgb(var(--color-neutral))]/70 font-medium">
-                      {item.hiragana && item.hiragana !== item.japanese ? (
-                        <span>{item.hiragana} · </span>
-                      ) : null}
-                      <span className="font-mono text-[11px] text-[rgb(var(--color-accent))]/80">
-                        {item.romaji}
-                      </span>
-                    </div>
-
-                    {/* Translation */}
-                    <div className="mt-2 text-sm font-semibold text-[rgb(var(--color-neutral))] line-clamp-2">
-                      {item.translation}
-                    </div>
-                  </div>
-
-                  {/* Footer Stats & Mastery Level */}
-                  <div className="border-t border-[#f2e7e1] pt-3 text-[11px] text-[rgb(var(--color-neutral))]/60">
-                    <div className="flex items-center justify-between">
-                      <span>Maestría:</span>
-                      <div className="flex items-center gap-0.5" title={`Nivel de maestría: ${item.masteryLevel}/5`}>
-                        {Array.from({ length: 5 }).map((_, starIndex) => (
-                          <span
-                            key={starIndex}
-                            className={
-                              starIndex < item.masteryLevel
-                                ? 'text-amber-500 font-bold'
-                                : item.masteryLevel === 0
-                                ? 'text-stone-300 opacity-25'
-                                : 'text-stone-300 opacity-40'
-                            }
-                          >
-                            ★
-                          </span>
-                        ))}
+                      {/* Reading: Hiragana & Romaji */}
+                      <div className="mt-1 text-xs text-[rgb(var(--color-neutral))]/70 font-medium">
+                        {item.hiragana && item.hiragana !== item.japanese ? (
+                          <span>{item.hiragana} · </span>
+                        ) : null}
+                        <span className="font-mono text-[#6b2832]/80">{item.romaji}</span>
                       </div>
                     </div>
 
-                    <div className="mt-1.5 flex items-center justify-between">
-                      <span>Intentos: <strong>{item.attempts}</strong></span>
-                      <span className="truncate max-w-[120px]" title={item.lastAttempt ? new Date(item.lastAttempt).toLocaleString() : ''}>
-                        {formatRelativeTime(item.lastAttempt)}
-                      </span>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => speakWord(item.japanese || item.hiragana)}
+                      className="rounded-full p-2 text-[#6b2832]/60 hover:text-[#6b2832] hover:bg-[#f5ebe6] transition cursor-pointer shrink-0"
+                      title="Escuchar pronunciación"
+                      aria-label="Escuchar pronunciación"
+                    >
+                      <Icon name="volume-high" className="w-4 h-4" />
+                    </button>
                   </div>
-                </div>
+
+                  {/* Translation: Spanish Meaning */}
+                  <div className="text-sm sm:text-base font-semibold text-[rgb(var(--color-neutral))] leading-snug">
+                    {item.translation}
+                  </div>
+
+                  {/* Clean Status Dot & Label */}
+                  <div className="pt-2 border-t border-[#f2e7e1] flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5 font-medium">
+                      <span className={`h-2 w-2 rounded-full ${statusCfg.dotColor}`} />
+                      <span className={statusCfg.textColor}>{statusCfg.label}</span>
+                    </div>
+
+                    {item.difficulty && (
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-[rgb(var(--color-neutral))]/50">
+                        {item.difficulty === 'beginner'
+                          ? 'N5'
+                          : item.difficulty === 'intermediate'
+                          ? 'N4'
+                          : 'N3+'}
+                      </span>
+                    )}
+                  </div>
+                </article>
               );
             })}
           </div>
         )}
 
-        {/* Pagination controls */}
-        {!loading && filteredItems.length > pageSize ? (
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-[#f2e7e1] pt-4">
-            <div className="text-xs sm:text-sm text-[rgb(var(--color-neutral))]/70 text-center sm:text-left">
-              Página <strong>{page}</strong> de <strong>{totalPages}</strong> (
-              {(page - 1) * pageSize + 1} - {Math.min(page * pageSize, filteredItems.length)} de{' '}
-              {filteredItems.length} palabras)
-            </div>
-            <div className="flex justify-center gap-2">
+        {/* 4. PAGINATION */}
+        {!loading && totalPages > 1 && (
+          <div className="flex items-center justify-between pt-6 border-t border-[#eaded6]/60 text-xs sm:text-sm">
+            <span className="text-[rgb(var(--color-neutral))]/70">
+              Página <strong>{page}</strong> de <strong>{totalPages}</strong>
+            </span>
+
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  playFlip();
-                  setPage((current) => Math.max(1, current - 1));
-                }}
-                className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-[#eaded6] bg-white px-4 py-1.5 text-xs sm:text-sm font-semibold text-[rgb(var(--color-accent))] active:scale-98 transition-colors disabled:opacity-40"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
+                className="px-4 py-2 rounded-xl border border-[#eaded6] bg-white font-semibold text-[#6b2832] disabled:opacity-40 hover:bg-[#faf4f2] transition cursor-pointer"
               >
                 Anterior
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  playFlip();
-                  setPage((current) => Math.min(totalPages, current + 1));
-                }}
-                className="inline-flex min-h-[40px] items-center justify-center rounded-xl bg-[rgb(var(--color-accent))] px-4 py-1.5 text-xs sm:text-sm font-semibold text-white shadow-sm active:scale-98 transition-colors disabled:opacity-40"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
+                className="px-4 py-2 rounded-xl bg-[#6b2832] font-semibold text-white disabled:opacity-40 hover:bg-[#581f27] transition cursor-pointer"
               >
                 Siguiente
               </button>
             </div>
           </div>
-        ) : null}
-      </div>
-    </section>
+        )}
+      </main>
+    </div>
   );
 }

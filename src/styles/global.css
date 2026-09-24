@@ -1,95 +1,131 @@
-@import url('https://fonts.googleapis.com/css2?family=Kosugi+Maru&family=Noto+Serif+JP:wght@500&display=swap');
-
-
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Kosugi+Maru&family=Noto+Sans+JP:wght@400;500;700;900&family=Noto+Serif+JP:wght@500;700;900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --color-background: 253 248 245;
+  --color-background: 252 248 244; /* Cálido beige japonés */
   --color-surface: 255 255 255;
-  --color-surface-alt: 248 233 225;
-  --color-accent: 128 43 56;
-  --color-accent-dark: 99 33 43;
-  --color-cream: 242 208 189;
+  --color-surface-alt: 248 235 228;
+  --color-accent: 107 40 50; /* Vino cálido tradicional */
+  --color-accent-dark: 88 31 39;
+  --color-asagi: 30 130 137; /* Cian tradicional japonés (Asagi) */
+  --color-asagi-dark: 21 102 109;
+  --color-asagi-light: 235 246 247;
+  --color-ochre: 201 138 44; /* Ocre suave / Oro japonés */
+  --color-cream: 243 218 202;
   --color-muted-rose: 166 114 114;
-  --color-neutral: 47 29 31;
+  --color-neutral: 45 28 30; /* Texto principal con alto contraste */
 }
 
 html,
 body,
 #root {
-  height: 100%;
+  min-height: 100%;
 }
-
-body {
-  margin: 0;
-  font-family: Inter, 'Noto Sans JP', system-ui, sans-serif;
-  background:
-    radial-gradient(circle at top left, rgba(242, 208, 189, 0.35), transparent 28%),
-    radial-gradient(circle at bottom right, rgba(191, 84, 104, 0.08), transparent 30%),
-    rgb(var(--color-background));
-  color: rgb(var(--color-neutral));
-}
-
 
 /*
+ * Fondo Global con Patrón Tradicional Japonés Seigaiha (Olas de la Buena Fortuna)
+ * Muy sutil y elegante, visible de cerca sobre la base beige cálida.
+ */
+body {
+  margin: 0;
+  font-family: Inter, 'Noto Sans JP', system-ui, -apple-system, sans-serif;
+  background-color: rgb(var(--color-background));
+  background-image: 
+    /* Patrón Seigaiha en trazo de 0.038 opacidad */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='30' viewBox='0 0 60 30'%3E%3Cg fill='none' stroke='%236b2832' stroke-width='0.75' stroke-opacity='0.038'%3E%3Cpath d='M0 30 A30 30 0 0 1 60 30 M5 30 A25 25 0 0 1 55 30 M10 30 A20 20 0 0 1 50 30 M15 30 A15 15 0 0 1 45 30 M20 30 A10 10 0 0 1 40 30 M25 30 A5 5 0 0 1 35 30 M-30 30 A30 30 0 0 1 30 30 M30 30 A30 30 0 0 1 90 30 M-30 0 A30 30 0 0 1 30 0 M30 0 A30 30 0 0 1 90 0 M0 0 A30 30 0 0 1 60 0'/%3E%3C/g%3E%3C/svg%3E"),
+    /* Gradientes radiales cálidos sutiles para ambientación */
+    radial-gradient(circle at 10% 8%, rgba(243, 218, 202, 0.45), transparent 32%),
+    radial-gradient(circle at 90% 85%, rgba(107, 40, 50, 0.045), transparent 36%);
+  background-attachment: fixed;
+  color: rgb(var(--color-neutral));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Washi Paper Texture para Tarjetas Principales */
+.bg-washi {
+  background-color: #ffffff;
+  background-image: 
+    linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(254, 250, 246, 0.94) 60%, rgba(250, 243, 236, 0.96) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.015'/%3E%3C/svg%3E");
+}
+
+/* Tipografía Japonesa Especial */
 .font-jp {
-  font-family: 'Noto Serif JP', serif;
-  font-optical-sizing: auto;
-  font-style: normal;
-}::selection {
-  background: rgba(128, 43, 56, 0.16);
-  color: rgb(var(--color-accent));
-}
-  
-.font-jp {
-  font-family: 'Kosugi Maru', sans-serif;
-  font-optical-sizing: auto;
-  font-style: normal;
-}
-.font-jp::selection {
-  background: rgba(128, 43, 56, 0.16);
-  color: rgb(var(--color-accent));
-}
-*/
-
-
-
-
-@keyframes petal-float {
-  0% {
-    transform: translate3d(0, -8px, 0) rotate(-16deg);
-    opacity: 0;
-  }
-
-  15% {
-    opacity: 0.7;
-  }
-
-  100% {
-    transform: translate3d(24px, 36px, 0) rotate(22deg);
-    opacity: 0;
-  }
+  font-family: 'Noto Serif JP', 'Noto Sans JP', serif;
+  font-feature-settings: 'palt' 1;
 }
 
-.animate-petal-float {
-  animation: petal-float linear infinite;
+/* Game Button Tactile Hierarchy (/gaming-ui-design) */
+.btn-game-primary {
+  background: linear-gradient(135deg, #7c2633 0%, #581f27 100%);
+  box-shadow: 0 8px 20px rgba(107, 40, 50, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.btn-game-primary:hover {
+  background: linear-gradient(135deg, #8d2c3a 0%, #68232c 100%);
+  transform: translateY(-1.5px);
+  box-shadow: 0 12px 24px rgba(107, 40, 50, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.26);
+}
+
+.btn-game-primary:active {
+  transform: translateY(1.5px);
+  box-shadow: 0 2px 6px rgba(107, 40, 50, 0.4), inset 0 1px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Botón de acento interactivo (Cian Japonés Asagi) */
+.btn-game-asagi {
+  background: linear-gradient(135deg, #228b92 0%, #176f75 100%);
+  box-shadow: 0 6px 16px rgba(30, 130, 137, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-game-asagi:hover {
+  background: linear-gradient(135deg, #299fa7 0%, #1c7e85 100%);
+  transform: translateY(-1.5px);
+  box-shadow: 0 10px 20px rgba(30, 130, 137, 0.32);
+}
+
+.btn-game-asagi:active {
+  transform: translateY(1.5px);
+  box-shadow: 0 2px 4px rgba(30, 130, 137, 0.35);
+}
+
+/* 3D Flip Card Styles for Pair-Match Game */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Keyframe Animations */
 @keyframes mascot-success {
   0%, 100% {
     transform: scale(1) translateY(0);
   }
   25% {
-    transform: scale(1.08) translateY(-10px) rotate(-3deg);
+    transform: scale(1.08) translateY(-8px) rotate(-2deg);
   }
   50% {
-    transform: scale(1.12) translateY(-14px) rotate(3deg);
+    transform: scale(1.12) translateY(-12px) rotate(2deg);
   }
   75% {
-    transform: scale(1.04) translateY(-4px) rotate(-1deg);
+    transform: scale(1.04) translateY(-3px) rotate(-1deg);
   }
 }
 
@@ -97,26 +133,20 @@ body {
   0%, 100% {
     transform: translateX(0);
   }
-  20% {
-    transform: translateX(-8px) rotate(-2deg);
+  20%, 60% {
+    transform: translateX(-6px);
   }
-  40% {
-    transform: translateX(8px) rotate(2deg);
-  }
-  60% {
-    transform: translateX(-6px) rotate(-1deg);
-  }
-  80% {
-    transform: translateX(6px) rotate(1deg);
+  40%, 80% {
+    transform: translateX(6px);
   }
 }
 
 .animate-mascot-success {
-  animation: mascot-success 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: mascot-success 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .animate-mascot-error {
-  animation: mascot-error 0.5s ease-in-out;
+  animation: mascot-error 0.4s ease-in-out;
 }
 
 @keyframes fadeIn {
@@ -132,34 +162,30 @@ body {
   animation: fadeIn 0.2s ease-out forwards;
 }
 
-@keyframes toastSlideIn {
-  from {
-    opacity: 0;
-    transform: translate3d(-50%, -20px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-
-.animate-toastSlideIn {
-  animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes shake-subtle {
+@keyframes pulse-subtle {
   0%, 100% {
-    transform: translateX(0);
+    opacity: 1;
+    transform: scale(1);
   }
-  20%, 60% {
-    transform: translateX(-4px);
-  }
-  40%, 80% {
-    transform: translateX(4px);
+  50% {
+    opacity: 0.85;
+    transform: scale(1.02);
   }
 }
 
-.animate-shake-subtle {
-  animation: shake-subtle 0.35s ease-in-out;
+.animate-pulse-subtle {
+  animation: pulse-subtle 3s ease-in-out infinite;
 }
 
+@keyframes float-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-float-subtle {
+  animation: float-subtle 3.5s ease-in-out infinite;
+}

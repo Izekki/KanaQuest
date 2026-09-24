@@ -10,6 +10,8 @@ import {
   ALLOWED_AVATAR_EXTENSIONS,
   MAX_AVATAR_SIZE_BYTES,
 } from '../../services/supabase/storage';
+import Icon from '../../components/ui/Icon';
+import mascotTransparent from '../../img/mascot_pink_slime_transparent.png';
 
 const getStreakStorageKey = (userId) => `kanaquest-streak:${userId}`;
 
@@ -346,8 +348,12 @@ export default function ProfilePage() {
                       className="h-20 w-20 sm:h-24 sm:w-24 rounded-full object-cover shadow-sm ring-2 ring-[#e3b8b1]"
                     />
                   ) : (
-                    <div className="flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f5d2dd,#b86773)] text-2xl font-bold text-white shadow-sm ring-2 ring-[#e3b8b1]">
-                      {(profile.username || 'J').slice(0, 1).toUpperCase()}
+                    <div className="flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full bg-[#fbeae5] shadow-sm ring-2 ring-[#e3b8b1] p-2 overflow-hidden">
+                      <img
+                        src={mascotTransparent}
+                        alt="Mascota KanaQuest"
+                        className="h-full w-full object-contain drop-shadow-[0_4px_8px_rgba(107,40,50,0.18)]"
+                      />
                     </div>
                   )}
 
@@ -477,7 +483,7 @@ export default function ProfilePage() {
               {/* Racha */}
               <div className="flex items-center gap-3.5 rounded-2xl border border-[#f2e6df] bg-[#fcfaf8] p-4 shadow-2xs transition hover:bg-white">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#fbeae5] text-xl shadow-inner border border-[#f2d2cc]">
-                  🔥
+                  <Icon name="fire-streak" className="w-5 h-5 text-amber-500" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-[11px] font-bold uppercase tracking-wider text-[rgb(var(--color-neutral))]/60">
@@ -495,7 +501,7 @@ export default function ProfilePage() {
               {/* Total XP */}
               <div className="flex items-center gap-3.5 rounded-2xl border border-[#f2e6df] bg-[#fcfaf8] p-4 shadow-2xs transition hover:bg-white">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#fff6e6] text-xl shadow-inner border border-[#fae2be]">
-                  ⭐
+                  <Icon name="star-mastery" className="w-5 h-5 text-amber-600" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-[11px] font-bold uppercase tracking-wider text-[rgb(var(--color-neutral))]/60">
@@ -513,7 +519,7 @@ export default function ProfilePage() {
               {/* Palabras Dominadas */}
               <div className="flex items-center gap-3.5 rounded-2xl border border-[#f2e6df] bg-[#fcfaf8] p-4 shadow-2xs transition hover:bg-white">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#edf4f0] text-xl shadow-inner border border-[#d2e4d8]">
-                  📚
+                  <Icon name="book-open" className="w-5 h-5 text-emerald-700" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-[11px] font-bold uppercase tracking-wider text-[rgb(var(--color-neutral))]/60">
