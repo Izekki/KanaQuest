@@ -1,17 +1,16 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fetchWords } from '../../../services/supabase/words';
 import { submitWordAnswer, createGameSession, fetchUserProfile } from '../../../services/supabase/progress';
 import { useAuthSession } from '../../../hooks/useAuthSession';
 import { useSoundEffects } from '../../../hooks/useSoundEffects';
 import ParParejasCard from './ParParejasCard';
-import Button from '../../ui/Button';
-import Card from '../../ui/Card';
-import Badge from '../../ui/Badge';
+import Icon from '../../ui/Icon';
 
 const DIFFICULTIES = [
-  { id: 'beginner', label: 'Principiante', pairs: 6, cols: 'grid-cols-3 sm:grid-cols-4' },
-  { id: 'intermediate', label: 'Intermedio', pairs: 8, cols: 'grid-cols-4' },
-  { id: 'advanced', label: 'Avanzado', pairs: 10, cols: 'grid-cols-4 sm:grid-cols-5' },
+  { id: 'beginner', label: 'Principiante', pairs: 6, cols: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4' },
+  { id: 'intermediate', label: 'Intermedio', pairs: 8, cols: 'grid-cols-2 sm:grid-cols-4' },
+  { id: 'advanced', label: 'Avanzado', pairs: 10, cols: 'grid-cols-2 sm:grid-cols-4 md:grid-cols-5' },
 ];
 
 function shuffle(array) {
@@ -25,6 +24,7 @@ function shuffle(array) {
 
 export default function ParParejasGame({ onBackToLobby }) {
   const { user } = useAuthSession();
+  const navigate = useNavigate();
   const { playFlip, playSuccess, playError, playComplete, isMuted, toggleSound, playCardAudio } = useSoundEffects();
 
   const [difficulty, setDifficulty] = useState('beginner');
@@ -40,7 +40,6 @@ export default function ParParejasGame({ onBackToLobby }) {
   const [isGameOver, setIsGameOver] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
-  const [showMobileInfo, setShowMobileInfo] = useState(false);
 
   const timerRef = useRef(null);
 
@@ -74,10 +73,8 @@ export default function ParParejasGame({ onBackToLobby }) {
   const startNewGame = useCallback(() => {
     if (!wordsPool.length) return;
 
-    // Pick random N words
     const shuffledWords = shuffle(wordsPool).slice(0, targetPairsCount);
 
-    // Generate Card Pairs (Japanese Kanji/Kana & Spanish Translation)
     const generatedCards = [];
     shuffledWords.forEach((word) => {
       const jpText = word.japanese || word.hiragana || word.romaji;
@@ -117,8 +114,10 @@ export default function ParParejasGame({ onBackToLobby }) {
     setAttempts(0);
     setEarnedXp(0);
     setTimerSeconds(0);
+    setIsTimerRunning(false);
     setIsGameOver(false);
-    setIsTimerRunning(true);
+
+    if (timerRef.current) clearInterval(timerRef.current);
   }, [wordsPool, targetPairsCount]);
 
   useEffect(() => {
@@ -127,7 +126,7 @@ export default function ParParejasGame({ onBackToLobby }) {
     }
   }, [wordsPool, difficulty, startNewGame]);
 
-  // 3. Timer effect
+  // 3. Timer Control
   useEffect(() => {
     if (isTimerRunning && !isGameOver) {
       timerRef.current = setInterval(() => {
@@ -136,106 +135,78 @@ export default function ParParejasGame({ onBackToLobby }) {
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
     }
-
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [isTimerRunning, isGameOver]);
 
-  // 4. Card Click & Match Handler
-  const handleCardClick = async (clickedCard) => {
-    if (isLocked || isGameOver) return;
-    if (clickedCard.isFlipped || clickedCard.isMatched) return;
+  // 4. Card Click Handler
+  const handleCardClick = (clickedCard) => {
+    if (isLocked || clickedCard.isFlipped || clickedCard.isMatched || isGameOver) return;
+
+    if (!isTimerRunning && attempts === 0 && flippedCards.length === 0) {
+      setIsTimerRunning(true);
+    }
 
     playFlip();
 
-    if (clickedCard.type === 'kanji') {
-      playCardAudio(clickedCard.japaneseText || clickedCard.content, 'ja');
-    } else {
-      playCardAudio(clickedCard.spanishText || clickedCard.content, 'es');
+    if (clickedCard.type === 'kanji' && clickedCard.japaneseText) {
+      playCardAudio(clickedCard.japaneseText);
     }
 
-    // Flip card visually
-    const nextCards = cards.map((c) => (c.id === clickedCard.id ? { ...c, isFlipped: true } : c));
-    setCards(nextCards);
+    const updatedCards = cards.map((c) =>
+      c.id === clickedCard.id ? { ...c, isFlipped: true } : c
+    );
+    setCards(updatedCards);
 
     const newFlipped = [...flippedCards, clickedCard];
     setFlippedCards(newFlipped);
 
-    // If 2 cards are flipped, check for match
     if (newFlipped.length === 2) {
       setIsLocked(true);
       setAttempts((prev) => prev + 1);
 
       const [firstCard, secondCard] = newFlipped;
-      const isMatch = firstCard.wordId === secondCard.wordId;
+      const isMatch = firstCard.wordId === secondCard.wordId && firstCard.id !== secondCard.id;
 
       if (isMatch) {
-        // MATCH!
         playSuccess();
-        const nextMatched = new Set(matchedWordIds);
-        nextMatched.add(firstCard.wordId);
-        setMatchedWordIds(nextMatched);
 
-        // Mark matched cards
-        setCards((prev) =>
-          prev.map((c) =>
-            c.wordId === firstCard.wordId ? { ...c, isFlipped: true, isMatched: true } : c
-          )
-        );
+        const xpReward = 15;
+        setEarnedXp((prev) => prev + xpReward);
 
-        setFlippedCards([]);
-        setIsLocked(false);
+        setTimeout(() => {
+          setCards((prev) =>
+            prev.map((c) =>
+              c.wordId === firstCard.wordId ? { ...c, isFlipped: true, isMatched: true } : c
+            )
+          );
+          setMatchedWordIds((prev) => {
+            const next = new Set(prev);
+            next.add(firstCard.wordId);
+            return next;
+          });
+          setFlippedCards([]);
+          setIsLocked(false);
+        }, 300);
 
-        // Record progress & experience via Supabase RPC
         if (user?.id) {
-          try {
-            const { data: rpcResult, error: rpcError } = await submitWordAnswer(firstCard.wordId, 'pair_match', true);
-            if (rpcError) {
-              console.warn('Error en RPC pair_match:', rpcError.message);
-            } else if (rpcResult) {
-              if (rpcResult.xp_awarded) {
-                setEarnedXp((prev) => prev + rpcResult.xp_awarded);
-              }
-              window.dispatchEvent(
-                new CustomEvent('kanaquest-profile-updated', {
-                  detail: {
-                    experience: rpcResult.new_total_xp,
-                    level: rpcResult.new_level,
-                  },
-                })
-              );
-            }
-            // Update full profile stats across UI
-            const { data: profileData } = await fetchUserProfile(user.id);
-            if (profileData) {
-              window.dispatchEvent(
-                new CustomEvent('kanaquest-profile-updated', {
-                  detail: profileData,
-                })
-              );
-            }
-          } catch (err) {
-            console.warn('Error registrando acierto de pareja:', err);
-          }
+          submitWordAnswer(firstCard.wordId, 'pair_match', true, false).catch((err) =>
+            console.warn('Error registrando acierto:', err)
+          );
         }
 
-        // Check Victory condition
-        if (nextMatched.size >= targetPairsCount) {
-          setIsTimerRunning(false);
+        // Check if finished
+        if (matchedWordIds.size + 1 >= targetPairsCount) {
           setIsGameOver(true);
+          setIsTimerRunning(false);
           playComplete();
 
-          // Save game session to Supabase
           if (user?.id) {
-            const finalScore = Math.max(
-              100,
-              Math.round((targetPairsCount * 1000) / Math.max(1, attempts + 1) - timerSeconds * 2)
-            );
-
+            const finalScore = (matchedWordIds.size + 1) * 15;
             createGameSession({
               user_id: user.id,
-              mode: 'pair_match',
+              game_mode: 'pair_match',
               difficulty,
               score: finalScore,
               correct_answers: targetPairsCount,
@@ -245,7 +216,7 @@ export default function ParParejasGame({ onBackToLobby }) {
           }
         }
       } else {
-        // MISMATCH!
+        // Mismatch: quick 650ms inspection then flip back
         playError();
 
         setTimeout(() => {
@@ -256,7 +227,7 @@ export default function ParParejasGame({ onBackToLobby }) {
           );
           setFlippedCards([]);
           setIsLocked(false);
-        }, 850);
+        }, 650);
       }
     }
   };
@@ -274,8 +245,8 @@ export default function ParParejasGame({ onBackToLobby }) {
     return (
       <div className="flex min-h-[400px] w-full items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[rgb(var(--color-accent))] border-t-transparent"></div>
-          <p className="text-sm font-medium text-[rgb(var(--color-accent))]">Barajando cartas de memoria...</p>
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#6b2832] border-t-transparent" />
+          <p className="text-sm font-semibold text-[#6b2832]/70">Preparando tablero de memoria...</p>
         </div>
       </div>
     );
@@ -283,220 +254,192 @@ export default function ParParejasGame({ onBackToLobby }) {
 
   if (errorMessage) {
     return (
-      <Card title="Error de carga" description={errorMessage}>
-        <Button onClick={loadWords} variant="primary">
+      <div className="max-w-md mx-auto p-6 bg-white rounded-3xl border border-[#eaded6] text-center space-y-4">
+        <h3 className="text-lg font-bold text-[#6b2832]">Error de carga</h3>
+        <p className="text-sm text-[rgb(var(--color-neutral))]/70">{errorMessage}</p>
+        <button
+          type="button"
+          onClick={loadWords}
+          className="px-6 py-2.5 rounded-xl bg-[#6b2832] text-white font-bold text-sm"
+        >
           Reintentar
-        </Button>
-      </Card>
+        </button>
+      </div>
     );
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-2.5 sm:space-y-6">
-      {/* MOBILE COMPACT HEADER (sm:hidden) - Maximum screen space for cards */}
-      <div className="sm:hidden rounded-2xl border border-[#eaded6] bg-white/95 p-2 shadow-xs backdrop-blur-sm space-y-2">
-        <div className="flex items-center justify-between gap-1.5">
-          {/* Level Selector Pills */}
-          <div className="grid grid-cols-3 p-0.5 bg-[#fbf5f2] border border-rose-100/90 rounded-xl gap-0.5 flex-1 min-w-0">
+    <div className="w-full max-w-5xl mx-auto px-3 sm:px-6 py-2 sm:py-4 space-y-3 sm:space-y-5">
+      {/* 1. TOP HEADER & STREAMLINED STATUS STRIP */}
+      <header className="space-y-2.5">
+        <div className="flex items-center justify-between gap-2">
+          {/* Back Button */}
+          <button
+            type="button"
+            onClick={onBackToLobby || (() => navigate('/'))}
+            className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-[#6b2832]/75 hover:text-[#6b2832] transition py-1 px-2 rounded-lg hover:bg-black/5"
+            aria-label="Volver"
+          >
+            <span className="text-base leading-none">←</span>
+            <span>Salir</span>
+          </button>
+
+          {/* Difficulty Selector as Flat Tabs */}
+          <div className="inline-flex items-center p-1 bg-[#f5ebe6]/80 border border-[#eaded6] rounded-xl text-xs font-semibold">
             {DIFFICULTIES.map((d) => (
               <button
                 key={d.id}
                 type="button"
                 onClick={() => setDifficulty(d.id)}
-                className={[
-                  'rounded-lg py-1 px-1 text-[11px] font-bold transition-all text-center min-h-[30px] flex items-center justify-center gap-0.5 truncate',
+                className={`px-2.5 sm:px-3 py-1 rounded-lg transition-all ${
                   difficulty === d.id
                     ? 'bg-[#6b2832] text-white shadow-xs'
-                    : 'text-[#6b2832]/70 hover:text-[#6b2832]',
-                ].join(' ')}
+                    : 'text-[#6b2832]/70 hover:text-[#6b2832]'
+                }`}
               >
-                <span>{d.label.slice(0, 4)}.</span>
-                <span className="text-[9px] opacity-75 font-normal">({d.pairs})</span>
+                <span>{d.label}</span>
+                <span className="hidden sm:inline text-[10px] ml-1 opacity-75">
+                  ({d.pairs} p.)
+                </span>
               </button>
             ))}
           </div>
 
-          {/* Quick Metrics Chip */}
-          <div className="flex items-center gap-1.5 bg-[#fdf8f6] border border-[#f0e4de] rounded-xl px-2.5 py-1 text-xs font-bold text-[rgb(var(--color-accent))] shrink-0 font-mono">
-            <span>⏱️ {formatTime(timerSeconds)}</span>
-            <span className="text-emerald-700">🎯 {matchedPairsCount}/{targetPairsCount}</span>
+          {/* Sound / Restart actions */}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={toggleSound}
+              className="p-2 rounded-xl text-[#6b2832]/70 hover:text-[#6b2832] hover:bg-black/5 transition cursor-pointer"
+              title={isMuted ? 'Activar sonido' : 'Silenciar sonido'}
+            >
+              <Icon name={isMuted ? 'volume-mute' : 'volume-high'} className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={startNewGame}
+              className="p-2 rounded-xl text-[#6b2832]/70 hover:text-[#6b2832] hover:bg-black/5 transition cursor-pointer"
+              title="Reiniciar partida"
+            >
+              <Icon name="arrow-path" className="w-4 h-4" />
+            </button>
           </div>
-
-          {/* Info Toggle Button */}
-          <button
-            type="button"
-            onClick={() => setShowMobileInfo((prev) => !prev)}
-            className="flex h-[30px] w-[30px] items-center justify-center rounded-xl border border-[#eaded6] bg-white text-xs font-bold text-[#6b2832] hover:bg-[#faf4f2] transition shadow-2xs shrink-0"
-            title="Cómo jugar"
-            aria-label="Ver instrucciones"
-          >
-            {showMobileInfo ? '✕' : 'ℹ️'}
-          </button>
         </div>
 
-        {/* Collapsible Info Dropdown (Closed by default to preserve flow) */}
-        {showMobileInfo && (
-          <div className="rounded-xl border border-rose-100 bg-[#fdf8f6] p-2.5 text-xs text-[#6b2832] space-y-1 animate-fadeIn">
-            <div className="font-bold flex items-center gap-1">
-              <span>🎴 Reglas de Par-Parejas:</span>
-            </div>
-            <p className="text-[11px] text-[rgb(var(--color-neutral))]/80 leading-relaxed">
-              Encuentra los pares volteando una carta en japonés y su correspondiente significado en español.
-            </p>
+        {/* Minimal Stats Strip: "3 parejas · 8 intentos · 00:42" */}
+        <div className="flex items-center justify-between py-1 text-xs sm:text-sm font-semibold text-[#6b2832]">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span>
+              <strong>{matchedPairsCount}</strong> / {targetPairsCount} parejas
+            </span>
+            <span className="text-[#eaded6]">·</span>
+            <span className="text-[rgb(var(--color-neutral))]/70 font-normal">
+              <strong>{attempts}</strong> intentos
+            </span>
+            <span className="text-[#eaded6]">·</span>
+            <span className="font-mono text-[rgb(var(--color-neutral))]/80">
+              {formatTime(timerSeconds)}
+            </span>
           </div>
-        )}
 
-        {/* Thin Progress bar */}
+          {earnedXp > 0 && (
+            <span className="font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200/60 text-xs">
+              +{earnedXp} XP
+            </span>
+          )}
+        </div>
+
+        {/* Clean Progress Bar */}
         <div className="w-full bg-[#f0e4de] h-1.5 rounded-full overflow-hidden">
           <div
-            className="bg-gradient-to-r from-[rgb(var(--color-accent))] to-emerald-500 h-full transition-all duration-300 rounded-full"
+            className="bg-emerald-600 h-full transition-all duration-300 rounded-full"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-      </div>
+      </header>
 
-      {/* DESKTOP / TABLET HEADER (hidden sm:block) */}
-      <div className="hidden sm:block rounded-[1.5rem] border border-[#eaded6] bg-white p-5 shadow-[0_10px_30px_rgba(128,43,56,0.06)]">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xl sm:text-2xl">🎴</span>
-              <h1 className="text-xl sm:text-2xl font-bold text-[rgb(var(--color-accent))]">
-                Par-Parejas (Memory Match)
-              </h1>
+      {/* 2. THE ABSOLUTE PROTAGONIST: THE GAME BOARD */}
+      <main className="w-full">
+        {isGameOver ? (
+          /* Victory Summary Screen */
+          <div className="max-w-lg mx-auto p-6 sm:p-10 rounded-3xl border border-[#eaded6] bg-white text-center space-y-6 shadow-sm animate-fadeIn">
+            <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-3xl">
+              🎉
             </div>
-            <p className="mt-1 text-xs sm:text-sm text-[rgb(var(--color-neutral))]/70">
-              Encuentra los pares haciendo coincidir cada palabra en japonés con su significado en español.
-            </p>
-          </div>
-
-          {/* Difficulty Selector (Centered Pills) */}
-          <div className="flex justify-center md:justify-end w-full md:w-auto">
-            <div className="inline-flex items-center p-1 bg-white/80 border border-rose-100/90 rounded-2xl gap-1 shadow-2xs">
-              {DIFFICULTIES.map((d) => (
-                <button
-                  key={d.id}
-                  type="button"
-                  onClick={() => setDifficulty(d.id)}
-                  className={[
-                    'rounded-xl px-4 py-1.5 text-xs font-semibold transition-all text-center min-h-[36px] flex items-center justify-center gap-1',
-                    difficulty === d.id
-                      ? 'bg-[#6b2832] text-white shadow-xs'
-                      : 'text-[#6b2832]/70 hover:text-[#6b2832] hover:bg-white',
-                  ].join(' ')}
-                >
-                  <span className="font-bold">{d.label}</span>
-                  <span className="text-[11px] opacity-80">({d.pairs} p.)</span>
-                </button>
-              ))}
+            <div className="space-y-1">
+              <h2 className="text-2xl sm:text-3xl font-bold text-[#6b2832]">
+                ¡Tablero Completado!
+              </h2>
+              <p className="text-xs sm:text-sm text-[rgb(var(--color-neutral))]/70">
+                Has emparejado todas las palabras con éxito.
+              </p>
             </div>
-          </div>
-        </div>
 
-        {/* Live Metrics Bar */}
-        <div className="mt-4 pt-4 border-t border-[#f2e7e1] grid grid-cols-4 gap-4 text-center">
-          <div className="rounded-xl bg-[#fdf8f6] p-3 border border-[#f0e4de]">
-            <span className="text-xs text-[rgb(var(--color-neutral))]/60 font-medium">⏱️ Tiempo</span>
-            <div className="text-lg font-bold text-[rgb(var(--color-accent))] font-mono">
-              {formatTime(timerSeconds)}
-            </div>
-          </div>
-
-          <div className="rounded-xl bg-[#fdf8f6] p-3 border border-[#f0e4de]">
-            <span className="text-xs text-[rgb(var(--color-neutral))]/60 font-medium">🔄 Intentos</span>
-            <div className="text-lg font-bold text-[rgb(var(--color-neutral))]">
-              {attempts}
-            </div>
-          </div>
-
-          <div className="rounded-xl bg-[#fdf8f6] p-3 border border-[#f0e4de]">
-            <span className="text-xs text-[rgb(var(--color-neutral))]/60 font-medium">🎯 Parejas</span>
-            <div className="text-lg font-bold text-emerald-600">
-              {matchedPairsCount} / {targetPairsCount}
-            </div>
-          </div>
-
-          <div className="rounded-xl bg-[#fdf8f6] p-3 border border-[#f0e4de]">
-            <span className="text-xs text-[rgb(var(--color-neutral))]/60 font-medium">⭐ XP Ganada</span>
-            <div className="text-lg font-bold text-amber-600">
-              +{earnedXp} XP
-            </div>
-          </div>
-        </div>
-
-        {/* Progress bar */}
-        <div className="mt-3 w-full bg-[#f0e4de] h-2 rounded-full overflow-hidden">
-          <div
-            className="bg-gradient-to-r from-[rgb(var(--color-accent))] to-emerald-500 h-full transition-all duration-300 rounded-full"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Card Grid */}
-      <div className="rounded-2xl sm:rounded-[1.75rem] border border-[#eaded6] bg-white/80 backdrop-blur-sm p-2 sm:p-6 shadow-[0_14px_34px_rgba(128,43,56,0.06)]">
-        <div className={`grid ${activeDifficulty.cols} gap-2 sm:gap-4`}>
-          {cards.map((card) => (
-            <ParParejasCard
-              key={card.id}
-              card={card}
-              onCardClick={handleCardClick}
-              disabled={isLocked || isGameOver}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Victory Modal */}
-      {isGameOver ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(53,18,25,0.5)] p-4 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-md overflow-hidden rounded-[1.75rem] border border-[#eaded6] bg-white p-6 shadow-[0_24px_60px_rgba(53,18,25,0.3)] text-center animate-scaleUp">
-            <div className="text-5xl sm:text-6xl mb-2">🎉</div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-[rgb(var(--color-accent))]">
-              ¡Excelente Memoria!
-            </h2>
-            <p className="mt-1 text-sm text-[rgb(var(--color-neutral))]/75">
-              Has descubierto todos los pares de palabras con éxito.
-            </p>
-
-            <div className="my-5 rounded-2xl bg-[#fdf7f4] border border-[#f0e4de] p-4 space-y-2 text-left">
-              <div className="flex justify-between text-sm">
-                <span className="text-[rgb(var(--color-neutral))]/70">Dificultad:</span>
-                <span className="font-semibold text-[rgb(var(--color-neutral))]">{activeDifficulty.label}</span>
+            <div className="grid grid-cols-3 gap-2 border-y border-[#f2e7e1] py-4 text-center">
+              <div>
+                <div className="text-xl sm:text-2xl font-bold font-mono text-[#6b2832]">
+                  {formatTime(timerSeconds)}
+                </div>
+                <div className="text-[11px] font-semibold text-[rgb(var(--color-neutral))]/60 uppercase">
+                  Tiempo
+                </div>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-[rgb(var(--color-neutral))]/70">Tiempo total:</span>
-                <span className="font-semibold text-[rgb(var(--color-neutral))] font-mono">{formatTime(timerSeconds)}</span>
+              <div>
+                <div className="text-xl sm:text-2xl font-bold text-[#6b2832]">
+                  {attempts}
+                </div>
+                <div className="text-[11px] font-semibold text-[rgb(var(--color-neutral))]/60 uppercase">
+                  Intentos
+                </div>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-[rgb(var(--color-neutral))]/70">Total de intentos:</span>
-                <span className="font-semibold text-[rgb(var(--color-neutral))]">{attempts}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-[rgb(var(--color-neutral))]/70">Precisión estimada:</span>
-                <span className="font-semibold text-emerald-600">
-                  {Math.min(100, Math.round((targetPairsCount / Math.max(1, attempts)) * 100))}%
-                </span>
-              </div>
-              <div className="flex justify-between text-sm border-t border-[#ebdcd4] pt-2">
-                <span className="font-bold text-[rgb(var(--color-accent))]">XP Ganada:</span>
-                <span className="font-bold text-amber-600">+{earnedXp} XP</span>
+              <div>
+                <div className="text-xl sm:text-2xl font-bold text-amber-600">
+                  +{earnedXp}
+                </div>
+                <div className="text-[11px] font-semibold text-[rgb(var(--color-neutral))]/60 uppercase">
+                  XP Ganada
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2.5">
-              <Button onClick={startNewGame} variant="primary" className="flex-1">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={startNewGame}
+                className="w-full sm:w-auto min-h-[46px] px-6 py-2.5 rounded-xl bg-[#6b2832] text-white font-bold text-sm hover:bg-[#581f27] active:scale-98 transition cursor-pointer"
+              >
                 Jugar de nuevo
-              </Button>
-              {onBackToLobby ? (
-                <Button onClick={onBackToLobby} variant="outline" className="flex-1">
-                  Volver
-                </Button>
-              ) : null}
+              </button>
+              {onBackToLobby && (
+                <button
+                  type="button"
+                  onClick={onBackToLobby}
+                  className="w-full sm:w-auto min-h-[46px] px-5 py-2.5 rounded-xl border border-[#eaded6] bg-white text-[#6b2832] font-semibold text-sm hover:bg-[#faf4f2] active:scale-98 transition cursor-pointer"
+                >
+                  Volver a aprender
+                </button>
+              )}
             </div>
           </div>
-        </div>
-      ) : null}
+        ) : (
+          /* Memory Cards Grid */
+          <div
+            className={[
+              'grid gap-2.5 sm:gap-4 md:gap-5 w-full',
+              activeDifficulty.cols,
+            ].join(' ')}
+          >
+            {cards.map((card) => (
+              <ParParejasCard
+                key={card.id}
+                card={card}
+                onCardClick={handleCardClick}
+                disabled={isLocked}
+              />
+            ))}
+          </div>
+        )}
+      </main>
     </div>
   );
 }

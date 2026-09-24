@@ -1,8 +1,9 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthSession } from '../../hooks/useAuthSession';
 
 export default function AuthRedirectRoute({ children, redirectTo = '/game' }) {
   const { user, loading } = useAuthSession();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -15,8 +16,10 @@ export default function AuthRedirectRoute({ children, redirectTo = '/game' }) {
   }
 
   if (user) {
-    return <Navigate to={redirectTo} replace />;
+    const destination = location.state?.from?.pathname || redirectTo;
+    return <Navigate to={destination} replace />;
   }
 
   return children;
 }
+

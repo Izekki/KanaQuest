@@ -7,9 +7,9 @@ export default function ProtectedRoute({ children }) {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-background px-6 text-neutral">
-        <div className="rounded-3xl border border-cream/10 bg-surface px-6 py-4 text-sm text-neutral/80 shadow-2xl shadow-black/20">
-          Checking session...
+      <main className="flex min-h-[50vh] items-center justify-center bg-background px-6 text-neutral">
+        <div className="rounded-2xl border border-[#eaded6] bg-white px-5 py-3 text-xs sm:text-sm font-semibold text-[#6b2832]/80 shadow-sm animate-pulse">
+          Cargando entorno de estudio...
         </div>
       </main>
     );
@@ -21,3 +21,4 @@ export default function ProtectedRoute({ children }) {
 
   return children;
 }
+

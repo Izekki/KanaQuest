@@ -12,6 +12,9 @@ export default {
         cream: 'rgb(var(--color-cream) / <alpha-value>)',
         mutedRose: 'rgb(var(--color-muted-rose) / <alpha-value>)',
         neutral: 'rgb(var(--color-neutral) / <alpha-value>)',
+        asagi: 'rgb(var(--color-asagi) / <alpha-value>)',
+        asagiDark: 'rgb(var(--color-asagi-dark) / <alpha-value>)',
+        ochre: 'rgb(var(--color-ochre) / <alpha-value>)',
       },
       fontFamily: {
         sans: ['Inter', 'Noto Sans JP', 'system-ui', 'sans-serif'],

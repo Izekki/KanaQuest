@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import WordBlock from './WordBlock';
+import Icon from '../../ui/Icon';
 
 /**
  * WordBank Component
@@ -60,8 +61,9 @@ export default function WordBank({
         ].join(' ')}
       >
         {availableBlocks.length === 0 ? (
-          <div className="pointer-events-none text-center text-sm font-medium text-neutral/40 italic">
-            Todas las fichas están en la zona de construcción ✨
+          <div className="pointer-events-none text-center text-sm font-medium text-neutral/40 italic flex items-center justify-center gap-1.5">
+            <span>Todas las fichas están en la zona de construcción</span>
+            <Icon name="sparkles" className="w-3.5 h-3.5 text-amber-500/70" />
           </div>
         ) : (
           availableBlocks.map((block, index) => (

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import WordBlock from './WordBlock';
+import Icon from '../../ui/Icon';
 
 /**
  * SentenceDropZone Component
@@ -73,8 +74,8 @@ export default function SentenceDropZone({
         ].join(' ')}
       >
         {placedBlocks.length === 0 ? (
-          <div className="pointer-events-none text-center text-xs sm:text-sm font-medium text-neutral/40">
-            <span className="hidden sm:block text-2xl mb-1">✍️</span>
+          <div className="pointer-events-none text-center text-xs sm:text-sm font-medium text-neutral/40 flex flex-col items-center">
+            <Icon name="pencil" className="hidden sm:block w-6 h-6 mb-1 text-[#2b5b6c]/40" />
             <span>Toca las fichas de abajo para ordenar</span>
           </div>
         ) : (

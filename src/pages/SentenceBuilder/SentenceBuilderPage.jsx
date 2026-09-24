@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useAuthSession } from '../../hooks/useAuthSession';
 import SentenceBuilderGame from '../../components/gameplay/SentenceBuilder/SentenceBuilderGame';
 import SentenceBuilderLobby from './SentenceBuilderLobby';
@@ -16,28 +16,13 @@ export default function SentenceBuilderPage() {
 
   // If a topic is selected, display the Sentence Builder game for that topic
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-4 sm:space-y-6 py-2 sm:py-4">
-      {/* Navigation & Header */}
-      <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => setSearchParams({})}
-          className="inline-flex min-h-[44px] items-center gap-2 text-sm font-semibold text-accent hover:text-accentDark transition-colors active:scale-98"
-        >
-          <span>←</span> Volver a Selección de Temas
-        </button>
-        <div className="hidden sm:block text-xs uppercase font-bold tracking-widest text-neutral/50">
-          Modo: Constructor de Oraciones
-        </div>
-      </div>
-
-      {/* Main Game Interface */}
+    <div className="w-full">
       <SentenceBuilderGame
         userId={user?.id}
         initialTopicId={topicId}
         onBackToLobby={() => setSearchParams({})}
         onFinishSession={(results) => {
-          console.log('Sesión completada:', results);
+          console.debug('Sesión completada:', results);
         }}
       />
     </div>

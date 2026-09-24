@@ -9,9 +9,10 @@ import { preloadWords } from '../../services/supabase/words';
 import toriiLogo from '../../img/torii.svg';
 import MobileNavigation from './MobileNavigation';
 import FeedbackModal from '../ui/FeedbackModal';
+import SakuraPetalsCanvas from '../ui/SakuraPetalsCanvas';
+import Icon from '../ui/Icon';
 
 const navItems = [
-  { to: '/', label: 'Inicio' },
   { to: '/game', label: 'Aprender' },
   { to: '/pair-match', label: 'Par-Parejas' },
   { to: '/sentence-builder', label: 'Constructor' },
@@ -272,24 +273,43 @@ export default function AppLayout({ children }) {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-background text-neutral">
-      <PetalsLayer />
-      <div className="relative z-0">
-        <header className="relative z-50 px-3 pt-3 sm:px-6 sm:pt-4 lg:px-8">
-          <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 sm:gap-4 rounded-[1.5rem] border border-[#eaded6] bg-white/85 px-3.5 py-2.5 sm:px-5 sm:py-3 shadow-[0_10px_30px_rgba(128,43,56,0.06)] backdrop-blur">
-            <Link className="flex items-center gap-2 text-sm font-semibold text-[rgb(var(--color-accent))]" to="/">
-              <img src={toriiLogo} alt="KanaQuest" className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 object-contain" style={{ filter: 'brightness(0) saturate(100%) invert(18%) sepia(34%) saturate(1700%) hue-rotate(318deg) brightness(88%) contrast(94%)' }} />
-              <span className="text-base sm:text-[1.05rem] leading-none tracking-tight font-bold">KanaQuest</span>
+      <SakuraPetalsCanvas />
+      <div className="relative z-10">
+        <header className="relative z-50 px-3 pt-2.5 sm:px-5 sm:pt-3 lg:px-8">
+          <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 sm:gap-4 rounded-xl border border-[#e8ded6] bg-white/95 px-3 py-2 sm:px-4 sm:py-2 shadow-[0_1px_4px_rgba(0,0,0,0.03)] backdrop-blur-md">
+            
+            {/* Logo Torii Refinado + KanaQuest */}
+            <Link className="flex items-center gap-2 group transition-transform active:scale-98" to="/">
+              <div className="relative flex h-8 w-8 sm:h-8.5 sm:w-8.5 items-center justify-center rounded-lg bg-[#fbf3f0] border border-[#f0ded8] shadow-2xs transition-transform group-hover:scale-102">
+                <img
+                  src={toriiLogo}
+                  alt="KanaQuest Torii"
+                  className="h-5 w-5 shrink-0 object-contain"
+                  style={{ filter: 'brightness(0) saturate(100%) invert(18%) sepia(34%) saturate(1700%) hue-rotate(318deg) brightness(88%) contrast(94%)' }}
+                />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-base sm:text-lg leading-tight tracking-tight font-bold text-[#6b2832] group-hover:text-[#4d1c23] transition-colors">
+                  KanaQuest
+                </span>
+                <span className="text-[9px] font-medium uppercase tracking-widest text-[#6b2832]/60 hidden sm:block -mt-0.5">
+                  仮名クエスト
+                </span>
+              </div>
             </Link>
 
-            <nav className="hidden items-center gap-8 lg:gap-10 text-sm font-medium text-[rgb(var(--color-accent))] md:flex">
+            {/* Menú de Navegación Compacto */}
+            <nav className="hidden items-center gap-1 xl:gap-2 text-sm font-medium lg:flex">
               {navItems.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}
                   className={({ isActive }) =>
                     [
-                      'transition-colors hover:text-[rgb(var(--color-accent-dark))]',
-                      isActive ? 'font-semibold text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-accent))]/75',
+                      'rounded-lg px-3 py-1.5 text-xs sm:text-[13px] font-medium transition-colors',
+                      isActive
+                        ? 'bg-[#fbf0ec] text-[#6b2832] font-semibold'
+                        : 'text-[#6b2832]/75 hover:text-[#6b2832] hover:bg-[#faf4f0]',
                     ].join(' ')
                   }
                 >
@@ -298,37 +318,49 @@ export default function AppLayout({ children }) {
               ))}
             </nav>
 
-            <div className="flex items-center gap-2 sm:gap-3">
+            {/* Usuario: Monedas (0), Racha, Sonido y Perfil (J) Integrados */}
+            <div className="flex items-center gap-1.5 sm:gap-2.5">
+              {/* Botón Silenciar/Sonido */}
               <button
                 type="button"
                 onClick={toggleSound}
-                className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-[#f8ebe6] text-[rgb(var(--color-accent))] hover:bg-[#f3dfd7] transition shadow-sm"
+                className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl border border-[#ead8cf] bg-[#fff6f2] text-[#6b2832] hover:bg-[#faeae3] transition shadow-2xs active:scale-95"
                 title={isMuted ? 'Activar sonido' : 'Silenciar sonido'}
                 aria-label={isMuted ? 'Activar sonido' : 'Silenciar sonido'}
               >
-                <span className="text-base sm:text-lg select-none" aria-hidden="true">
-                  {isMuted ? '🔇' : '🔊'}
-                </span>
+                <Icon name={isMuted ? 'volume-mute' : 'volume-high'} className="w-4 h-4 text-[#6b2832]" />
               </button>
 
+              {/* Indicador de Monedas (0) - Detallado */}
               <div
-                className="flex items-center gap-1.5 rounded-full bg-[#f8ebe6] px-3 py-1.5 sm:px-4 sm:py-2 text-[rgb(var(--color-accent))] shadow-sm"
+                className="flex items-center gap-1.5 rounded-xl border border-[#f2d89f] bg-[#fff9ea] px-2.5 py-1 text-[#9c6a18] shadow-2xs transition-transform hover:scale-102 cursor-default"
+                title="Monedas acumuladas para recompensas y pistas"
+                aria-label="Monedas: 0"
+              >
+                <Icon name="coin-koban" className="w-3.5 h-3.5 text-[#9c6a18]" />
+                <span className="text-xs font-bold leading-none">0</span>
+              </div>
+
+              {/* Indicador de Racha (Fuego) */}
+              <div
+                className="flex items-center gap-1.5 rounded-xl border border-[#f8c4bc] bg-[#fff1ee] px-2.5 py-1 text-[#b83848] shadow-2xs transition-transform hover:scale-102 cursor-default"
                 title={`Racha diaria de estudio: ${streak} ${streak === 1 ? 'día activo' : 'días activos'}`}
                 aria-label={`Racha diaria: ${streak} días`}
               >
-                <span className="text-sm sm:text-base select-none" aria-hidden="true">🔥</span>
-                <span className="text-xs sm:text-sm font-bold">{streak}</span>
+                <Icon name="fire-streak" className="w-3.5 h-3.5 text-[#b83848]" />
+                <span className="text-xs font-bold leading-none">{streak}</span>
               </div>
 
+              {/* Perfil (J) y Dropdown Más Integrado */}
               <div ref={menuRef} className="relative">
                 <button
                   type="button"
                   onClick={() => setMenuOpen((value) => !value)}
-                  className="flex items-center gap-2 sm:gap-3 rounded-full px-1.5 py-1 text-left transition hover:bg-[#f9efea] min-h-[44px]"
+                  className="flex items-center gap-2 rounded-xl border border-[#ead8cf] bg-[#fffbfa] px-1.5 py-1 text-left transition hover:border-[#dfc3bc] hover:bg-white shadow-2xs active:scale-98 min-h-[38px]"
                   aria-expanded={menuOpen}
                   aria-label="Menú de usuario"
                 >
-                  <div className="relative flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f5d2dd,#b86773)] text-xs sm:text-sm font-bold text-white shadow-sm shrink-0 overflow-hidden ring-2 ring-[#e3b8b1]">
+                  <div className="relative flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-[linear-gradient(135deg,#e38997,#b84758)] text-xs font-bold text-white shadow-xs shrink-0 overflow-hidden ring-1 ring-[#e3b8b1]">
                     {avatarUrl ? (
                       <img
                         src={avatarUrl}
@@ -339,11 +371,11 @@ export default function AppLayout({ children }) {
                       profileInitial
                     )}
                   </div>
-                  <div className="hidden min-[460px]:block leading-tight max-w-[110px] sm:max-w-[160px]">
-                    <div className="truncate text-xs sm:text-sm font-semibold text-[rgb(var(--color-neutral))]">{profileName}</div>
-                    <div className="truncate text-[10px] sm:text-xs text-[rgb(var(--color-accent))]/70">Nv. {profileLevel} · {profileExperience} XP</div>
+                  <div className="hidden min-[500px]:block leading-tight max-w-[100px] sm:max-w-[140px]">
+                    <div className="truncate text-xs font-bold text-[#6b2832]">{profileName}</div>
+                    <div className="truncate text-[10px] text-[#6b2832]/65">Nv. {profileLevel} · {profileExperience} XP</div>
                   </div>
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className={['h-4 w-4 shrink-0 text-[rgb(var(--color-accent))]/60 transition-transform', menuOpen ? 'rotate-180' : 'rotate-0'].join(' ')}>
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className={['h-3.5 w-3.5 shrink-0 text-[#6b2832]/60 transition-transform duration-200', menuOpen ? 'rotate-180' : 'rotate-0'].join(' ')}>
                     <path fill="currentColor" d="M5.5 7.5 10 12l4.5-4.5 1.4 1.4L10 14.8 4.1 8.9z" />
                   </svg>
                 </button>

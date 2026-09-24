@@ -159,6 +159,12 @@ docs/schema/
 supabase/.temp/
 correcion.sql
 *.patch.sql
+ejecutar_en_supabase_*.sql
+backup_*.json
+*backup*.json
+*dataset*.json
+supabase/migrations/
+supabase/functions/*.json
 
 # Agent skills & runtime
 .agents/
@@ -170,4 +176,14 @@ renders/
 *.mp4
 *.mov
 *.webm
+
+# Temporary & Sensitive scripts
+scripts/fetch_supabase_summary.js
+scripts/export_words_and_generate_backup.js
+scripts/inspect_*.js
+scripts/test_*.js
+scripts/capture_*.js
+scripts/verify_*.js
+
+
 
