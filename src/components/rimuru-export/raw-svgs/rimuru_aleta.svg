@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<svg viewBox="10 -12 85 130" width="85pt" height="130pt" xmlns="http://www.w3.org/2000/svg">
+  <!-- Rimuru Slime Aleta / Pseudópodo - Rolero Branding (Lavanda / Púrpura Pastel) -->
+  <defs>
+    <!-- Gradiente que fusiona la base con la luz del hombro (#F4EFFF -> #D8CBFE -> #C4B5FD) -->
+    <linearGradient id="aleta-grad" x1="75%" y1="95%" x2="25%" y2="5%">
+      <stop offset="0%" stop-color="#F4EFFF" stop-opacity="1" />
+      <stop offset="18%" stop-color="#D8CBFE" stop-opacity="1" />
+      <stop offset="60%" stop-color="#C4B5FD" stop-opacity="1" />
+      <stop offset="100%" stop-color="#D8CBFE" stop-opacity="1" />
+    </linearGradient>
+
+    <!-- Resplandor luminoso de base para transición invisible con el hombro -->
+    <linearGradient id="aleta-base-glow" x1="50%" y1="100%" x2="50%" y2="0%">
+      <stop offset="0%" stop-color="#F4EFFF" stop-opacity="0.95" />
+      <stop offset="50%" stop-color="#D8CBFE" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#C4B5FD" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <g id="rimuru-aleta-standalone">
+    <!-- Masa principal con gradiente de luz -->
+    <path
+      d="M 32.5 110.4 C 22 92, 12 65, 16 38 C 19 18, 26 -2, 42 -6 C 50 -8, 58 -2, 62 10 C 67 24, 73 40, 87.8 53.7 C 78 62, 69.8 66.8, 58 80 C 48 91, 40 98, 32.5 110.4 Z"
+      fill="url(#aleta-grad)"
+      opacity="1.00"
+    />
+
+    <!-- Fusión luminosa en la base del hombro -->
+    <path
+      d="M 32.5 110.4 C 38 98, 48 84, 58 74 C 68 64, 78 58, 87.8 53.7 C 78 62, 69.8 66.8, 58 80 C 48 91, 40 98, 32.5 110.4 Z"
+      fill="url(#aleta-base-glow)"
+    />
+
+    <!-- Sombra translúcida superior interna -->
+    <path
+      d="M 24 60 C 20 45, 23 28, 32 14 C 38 6, 44 4, 48 6 C 42 16, 38 32, 36 48 C 35 58, 36 68, 38 75 C 32 72, 27 68, 24 60 Z"
+      fill="#9D7FF0"
+      opacity="0.40"
+    />
+
+    <!-- Contorno exterior idéntico al del cuerpo del slime (#7052AC) -->
+    <path
+      d="M 32.5 110.4 C 22 92, 12 65, 16 38 C 19 18, 26 -2, 42 -6 C 50 -8, 58 -2, 62 10 C 67 24, 73 40, 87.8 53.7"
+      fill="none"
+      stroke="#7052AC"
+      stroke-width="2.2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-opacity="0.85"
+    />
+
+    <!-- Luz de borde superior / derecho (#F4EFFF) -->
+    <path
+      d="M 28 20 C 32 6, 38 -2, 44 -4 C 50 -5, 55 0, 58 10 C 62 22, 67 36, 80 48 C 84 51, 86 53, 87.8 53.7"
+      fill="none"
+      stroke="#F4EFFF"
+      stroke-width="2.6"
+      stroke-linecap="round"
+      stroke-opacity="0.95"
+    />
+
+    <!-- Reflejo suave lateral (#EBE3FE) -->
+    <path
+      d="M 32.5 110.4 C 28 98, 22 80, 20 62 C 19 48, 21 34, 26 22"
+      fill="none"
+      stroke="#EBE3FE"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-opacity="0.80"
+    />
+
+    <!-- Puntos de brillo especular -->
+    <ellipse
+      cx="46"
+      cy="4"
+      rx="4.5"
+      ry="2.8"
+      transform="rotate(-20 46 4)"
+      fill="#FFFFFF"
+      opacity="0.95"
+    />
+    <ellipse
+      cx="56"
+      cy="18"
+      rx="2.5"
+      ry="1.5"
+      transform="rotate(30 56 18)"
+      fill="#FFFFFF"
+      opacity="0.80"
+    />
+  </g>
+</svg>

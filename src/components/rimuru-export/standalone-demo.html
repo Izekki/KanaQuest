@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rimuru Mascot - Demo Independiente & OBS</title>
+  <link rel="stylesheet" href="./rimuru-animations.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      min-height: 100vh;
+      background: #F7F3FA;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* Fondo con patrón sutil */
+    .bg-pattern {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(#C4B5FD 1px, transparent 1px);
+      background-size: 24px 24px;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    /* Escenario central de la mascota */
+    .mascot-stage {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      min-height: 280px;
+      z-index: 10;
+    }
+
+    .rimuru-wrapper {
+      transform-origin: bottom center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      z-index: 10;
+    }
+
+    .rimuru-wrapper svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    /* Sombra de suelo */
+    .floor-shadow {
+      border-radius: 9999px;
+      pointer-events: none;
+      position: relative;
+      z-index: 5;
+      filter: blur(2px);
+      transition: width 0.3s ease, height 0.3s ease, margin 0.3s ease;
+    }
+
+    /* Panel flotante de controles */
+    .floating-controls {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 100;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-pattern"></div>
+
+  <!-- Escenario de la mascota con suelo y sombra -->
+  <div class="mascot-stage">
+    <div id="rimuru-container" class="rimuru-wrapper" style="width: 200px; height: auto;" title="¡Haz clic en Rimuru para saltar!">
+      <!-- Contenedor del SVG que se inyecta o conmuta -->
+      <div id="rimuru-svg-host"></div>
+    </div>
+
+    <!-- Sombra dinámica sincronizada con el suelo -->
+    <div id="rimuru-shadow" class="floor-shadow" style="width: 160px; height: 12px; margin-top: -6px;"></div>
+  </div>
+
+  <!-- Botón minimizable y Panel de Control Flotante -->
+  <div class="floating-controls">
+    <button id="toggle-panel-btn" class="rimuru-trigger-badge">
+      <span>🎭</span>
+      <span>Personalizar Mascota</span>
+      <span style="color: #F286D2; font-size: 0.7rem;">✦</span>
+    </button>
+
+    <div id="panel-card" class="rimuru-panel-container hidden" style="margin-top: 8px;">
+      <!-- Header -->
+      <div class="rimuru-panel-header">
+        <span style="display: flex; align-items: center; gap: 0.4rem;">
+          <span>🎭</span> Personalizador Rimuru
+        </span>
+        <button id="close-panel-btn" class="rimuru-panel-close">✕</button>
+      </div>
+
+      <!-- Botones de Acción -->
+      <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.25rem;">
+          <button id="btn-jump" class="rimuru-btn rimuru-btn-action-jump">
+            <span style="font-size: 0.9rem;">🦘</span>
+            <span>Salto</span>
+          </button>
+          <button id="btn-wave" class="rimuru-btn rimuru-btn-action-wave">
+            <span style="font-size: 0.9rem;">👋</span>
+            <span>Brazo</span>
+          </button>
+          <button id="btn-melt" class="rimuru-btn rimuru-btn-action-melt">
+            <span style="font-size: 0.9rem;">🫠</span>
+            <span>Derretirse</span>
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.25rem;">
+          <button id="btn-arm-toggle" class="rimuru-btn" style="padding: 0.35rem 0.5rem; font-size: 0.65rem; gap: 0.25rem; background: #F7F3FA; color: #2D2245; border: 1px solid rgba(196,181,253,0.5);">
+            <span>🤚</span> <span>Brazo Ext.</span>
+          </button>
+          <button id="btn-melt-toggle" class="rimuru-btn" style="padding: 0.35rem 0.5rem; font-size: 0.65rem; gap: 0.25rem; background: #F7F3FA; color: #2D2245; border: 1px solid rgba(196,181,253,0.5);">
+            <span>🫠</span> <span>Charco Plano</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Configuración Automática Stream / OBS -->
+      <div style="display: flex; flex-direction: column; gap: 0.4rem; padding: 0.5rem; border-radius: 0.75rem; background: rgba(247, 243, 250, 0.85); border: 1px solid rgba(196, 181, 253, 0.4);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-size: 0.65rem; font-weight: bold; text-transform: uppercase;">🔄 Auto (Stream):</span>
+          <span id="auto-status-badge" style="font-size: 0.6rem; padding: 0.1rem 0.4rem; border-radius: 9999px; font-weight: bold; background: rgba(16, 185, 129, 0.15); color: #047857; border: 1px solid rgba(16, 185, 129, 0.3);">
+            Activo (10s)
+          </span>
+        </div>
+
+        <div>
+          <span style="font-size: 0.6rem; opacity: 0.75; font-weight: 600;">Animación automática:</span>
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.2rem; margin-top: 0.2rem;">
+            <button class="anim-type-btn rimuru-btn" data-type="jump" style="padding: 0.25rem 0.1rem; font-size: 0.6rem; background: #fff; color: #2D2245; border: 1px solid rgba(196,181,253,0.4);">🦘 Salto</button>
+            <button class="anim-type-btn rimuru-btn" data-type="wave" style="padding: 0.25rem 0.1rem; font-size: 0.6rem; background: #fff; color: #2D2245; border: 1px solid rgba(196,181,253,0.4);">👋 Brazo</button>
+            <button class="anim-type-btn rimuru-btn" data-type="melt" style="padding: 0.25rem 0.1rem; font-size: 0.6rem; background: #fff; color: #2D2245; border: 1px solid rgba(196,181,253,0.4);">🫠 Derretir</button>
+            <button class="anim-type-btn rimuru-btn" data-type="alternate" style="padding: 0.25rem 0.1rem; font-size: 0.6rem; background: #A78BFA; color: #fff; border: 1px solid #A78BFA;">✨ Alt. (3)</button>
+          </div>
+        </div>
+
+        <div>
+          <span style="font-size: 0.6rem; opacity: 0.75; font-weight: 600;">Frecuencia:</span>
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.2rem; margin-top: 0.2rem;">
+            <button class="interval-btn rimuru-btn" data-sec="8" style="padding: 0.25rem 0.1rem; font-size: 0.6rem; background: #fff; color: #2D2245; border: 1px solid rgba(196,181,253,0.4);">8s</button>
+            <button class="interval-btn rimuru-btn" data-sec="10" style="padding: 0.25rem 0.1rem; font-size: 0.6rem; background: #A78BFA; color: #fff; border: 1px solid #A78BFA;">10s ★</button>
+            <button class="interval-btn rimuru-btn" data-sec="15" style="padding: 0.25rem 0.1rem; font-size: 0.6rem; background: #fff; color: #2D2245; border: 1px solid rgba(196,181,253,0.4);">15s</button>
+            <button class="interval-btn rimuru-btn" data-sec="0" style="padding: 0.25rem 0.1rem; font-size: 0.6rem; background: #fff; color: #2D2245; border: 1px solid rgba(196,181,253,0.4);">Off</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Color Slime -->
+      <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+        <span style="font-size: 0.65rem; font-weight: bold; text-transform: uppercase;">Color Slime:</span>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.25rem;">
+          <button class="palette-btn rimuru-btn" data-palette="branding" style="padding: 0.35rem 0.25rem; font-size: 0.65rem; background: #A78BFA; color: #fff; border: 1px solid #A78BFA; gap: 0.25rem;">
+            <span>🟣</span> Rolero Pastel
+          </button>
+          <button class="palette-btn rimuru-btn" data-palette="branding-pink" style="padding: 0.35rem 0.25rem; font-size: 0.65rem; background: #F7F3FA; color: #2D2245; border: 1px solid rgba(196,181,253,0.4); gap: 0.25rem;">
+            <span>🌸</span> Rosa Rolero
+          </button>
+          <button class="palette-btn rimuru-btn" data-palette="branding-cyan" style="padding: 0.35rem 0.25rem; font-size: 0.65rem; background: #F7F3FA; color: #2D2245; border: 1px solid rgba(196,181,253,0.4); gap: 0.25rem;">
+            <span>💧</span> Cyan Rolero
+          </button>
+          <button class="palette-btn rimuru-btn" data-palette="original" style="padding: 0.35rem 0.25rem; font-size: 0.65rem; background: #F7F3FA; color: #2D2245; border: 1px solid rgba(196,181,253,0.4); gap: 0.25rem;">
+            <span>✨</span> Original Azul
+          </button>
+        </div>
+      </div>
+
+      <!-- Tamaño -->
+      <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+        <span style="font-size: 0.65rem; font-weight: bold; text-transform: uppercase;">Tamaño:</span>
+        <div style="display: flex; gap: 0.25rem;">
+          <button class="size-btn rimuru-btn" data-size="small" style="flex: 1; padding: 0.3rem 0.2rem; font-size: 0.65rem; background: #F7F3FA; color: #2D2245; border: 1px solid rgba(196,181,253,0.4);">Pequeño</button>
+          <button class="size-btn rimuru-btn" data-size="medium" style="flex: 1; padding: 0.3rem 0.2rem; font-size: 0.65rem; background: #2D2245; color: #fff; border: 1px solid #2D2245;">Mediano ★</button>
+          <button class="size-btn rimuru-btn" data-size="large" style="flex: 1; padding: 0.3rem 0.2rem; font-size: 0.65rem; background: #F7F3FA; color: #2D2245; border: 1px solid rgba(196,181,253,0.4);">Grande</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Carga dinámica del SVG de Rimuru desde los archivos locales de raw-svgs
+    const PALETTES = {
+      branding: {
+        darkOutline: '#4C3775',
+        contour: '#7052AC',
+        midShadow: '#9D7FF0',
+        midBody: '#B59BF8',
+        mainBody: '#C4B5FD',
+        bodyLight: '#D8CBFE',
+        highlight: '#EBE3FE',
+        highlightEdge: '#F4EFFF',
+        specular: '#FFFFFF',
+        shadowGradient: 'radial-gradient(ellipse at center, rgba(67, 47, 110, 0.65) 0%, rgba(112, 82, 172, 0.42) 45%, rgba(196, 181, 253, 0.20) 70%, transparent 95%)'
+      },
+      'branding-pink': {
+        darkOutline: '#7E3466',
+        contour: '#B85596',
+        midShadow: '#E372BA',
+        midBody: '#ED86C7',
+        mainBody: '#F286D2',
+        bodyLight: '#F7A7E0',
+        highlight: '#FBD2F0',
+        highlightEdge: '#FDF0FA',
+        specular: '#FFFFFF',
+        shadowGradient: 'radial-gradient(ellipse at center, rgba(110, 42, 86, 0.65) 0%, rgba(184, 85, 150, 0.42) 45%, rgba(242, 134, 210, 0.20) 70%, transparent 95%)'
+      },
+      'branding-cyan': {
+        darkOutline: '#1B566E',
+        contour: '#318BAE',
+        midShadow: '#57B5D8',
+        midBody: '#71C7E6',
+        mainBody: '#8BDFF2',
+        bodyLight: '#ABECFA',
+        highlight: '#C8F3FC',
+        highlightEdge: '#E4FAFE',
+        specular: '#FFFFFF',
+        shadowGradient: 'radial-gradient(ellipse at center, rgba(22, 72, 92, 0.65) 0%, rgba(49, 139, 174, 0.42) 45%, rgba(139, 223, 242, 0.20) 70%, transparent 95%)'
+      },
+      original: {
+        darkOutline: '#072859',
+        contour: '#3380b0',
+        midShadow: '#5cb7f0',
+        midBody: '#61c4f8',
+        mainBody: '#75cef9',
+        bodyLight: '#8ad5f9',
+        highlight: '#a5e2fa',
+        highlightEdge: '#b0e6f9',
+        specular: '#d3f1fb',
+        shadowGradient: 'radial-gradient(ellipse at center, rgba(6, 46, 98, 0.65) 0%, rgba(51, 128, 176, 0.42) 45%, rgba(117, 206, 249, 0.20) 70%, transparent 95%)'
+      }
+    };
+
+    let state = {
+      palette: 'branding',
+      size: 'medium',
+      isJumping: false,
+      isArmWaving: false,
+      isArmExtended: false,
+      isMelting: false,
+      isMeltedFlat: false,
+      autoEnabled: true,
+      autoInterval: 10,
+      animType: 'alternate',
+      animStep: 0,
+      timer: null
+    };
+
+    const container = document.getElementById('rimuru-container');
+    const host = document.getElementById('rimuru-svg-host');
+    const shadow = document.getElementById('rimuru-shadow');
+
+    // Cargar el SVG base
+    async function loadMascotSvg() {
+      try {
+        const res = await fetch('./raw-svgs/solorimurushizue_branding_aleta.svg');
+        const text = await res.text();
+        host.innerHTML = text;
+        const svg = host.querySelector('svg');
+        if (svg) {
+          svg.setAttribute('id', 'rimuru-main-svg');
+          svg.style.width = '100%';
+          svg.style.height = '100%';
+        }
+        applyState();
+      } catch (e) {
+        console.error('Error cargando SVG de Rimuru:', e);
+      }
+    }
+
+    function updateShadow() {
+      const p = PALETTES[state.palette];
+      shadow.style.background = p.shadowGradient;
+      if (state.isMeltedFlat) {
+        shadow.style.width = '240px';
+        shadow.style.height = '8px';
+        shadow.style.marginTop = '-4px';
+      } else {
+        const sizeMap = { small: '130px', medium: '160px', large: '210px' };
+        shadow.style.width = sizeMap[state.size] || '160px';
+        shadow.style.height = '12px';
+        shadow.style.marginTop = '-6px';
+      }
+    }
+
+    function applyState() {
+      const sizeWidths = { small: '150px', medium: '200px', large: '260px' };
+      container.style.width = sizeWidths[state.size] || '200px';
+      updateShadow();
+    }
+
+    function triggerJump() {
+      if (state.isJumping || state.isArmWaving || state.isMelting) return;
+      state.isJumping = true;
+      container.classList.add('rimuru-squash-jump');
+      shadow.classList.add('rimuru-shadow-jump');
+
+      setTimeout(() => {
+        container.classList.remove('rimuru-squash-jump');
+        shadow.classList.remove('rimuru-shadow-jump');
+        state.isJumping = false;
+      }, 2500);
+    }
+
+    function triggerWave() {
+      if (state.isJumping || state.isArmWaving || state.isMelting) return;
+      state.isArmWaving = true;
+      const arm = host.querySelector('#rimuru-aleta') || host.querySelector('svg');
+      if (arm) {
+        arm.classList.add('rimuru-arm-wave');
+      }
+      setTimeout(() => {
+        if (arm) arm.classList.remove('rimuru-arm-wave');
+        state.isArmWaving = false;
+      }, 2800);
+    }
+
+    function triggerMelt() {
+      if (state.isJumping || state.isArmWaving || state.isMelting) return;
+      state.isMelting = true;
+      container.classList.add('rimuru-melt-container');
+      shadow.classList.add('rimuru-shadow-melt');
+
+      setTimeout(() => {
+        container.classList.remove('rimuru-melt-container');
+        shadow.classList.remove('rimuru-shadow-melt');
+        state.isMelting = false;
+      }, 4300);
+    }
+
+    // Configuración del temporizador periódico
+    function resetAutoTimer() {
+      if (state.timer) {
+        clearInterval(state.timer);
+        state.timer = null;
+      }
+      if (!state.autoEnabled || state.autoInterval === 0) return;
+
+      state.timer = setInterval(() => {
+        if (state.isJumping || state.isArmWaving || state.isMelting) return;
+
+        if (state.animType === 'jump') {
+          triggerJump();
+        } else if (state.animType === 'wave') {
+          triggerWave();
+        } else if (state.animType === 'melt') {
+          triggerMelt();
+        } else {
+          // alternate
+          const step = state.animStep % 3;
+          if (step === 0) triggerJump();
+          else if (step === 1) triggerWave();
+          else triggerMelt();
+          state.animStep++;
+        }
+      }, state.autoInterval * 1000);
+    }
+
+    // Listeners de UI
+    document.getElementById('btn-jump').addEventListener('click', triggerJump);
+    document.getElementById('btn-wave').addEventListener('click', triggerWave);
+    document.getElementById('btn-melt').addEventListener('click', triggerMelt);
+    container.addEventListener('click', triggerJump);
+
+    document.getElementById('btn-arm-toggle').addEventListener('click', () => {
+      state.isArmExtended = !state.isArmExtended;
+      const btn = document.getElementById('btn-arm-toggle');
+      btn.style.background = state.isArmExtended ? '#2D2245' : '#F7F3FA';
+      btn.style.color = state.isArmExtended ? '#fff' : '#2D2245';
+      const arm = host.querySelector('#rimuru-aleta') || host.querySelector('svg');
+      if (arm) {
+        arm.classList.toggle('rimuru-arm-extended', state.isArmExtended);
+      }
+    });
+
+    document.getElementById('btn-melt-toggle').addEventListener('click', () => {
+      state.isMeltedFlat = !state.isMeltedFlat;
+      const btn = document.getElementById('btn-melt-toggle');
+      btn.style.background = state.isMeltedFlat ? '#A78BFA' : '#F7F3FA';
+      btn.style.color = state.isMeltedFlat ? '#fff' : '#2D2245';
+      updateShadow();
+    });
+
+    // Panel Toggle
+    const panelCard = document.getElementById('panel-card');
+    const togglePanelBtn = document.getElementById('toggle-panel-btn');
+    const closePanelBtn = document.getElementById('close-panel-btn');
+
+    togglePanelBtn.addEventListener('click', () => {
+      panelCard.classList.remove('hidden');
+      togglePanelBtn.classList.add('hidden');
+    });
+
+    closePanelBtn.addEventListener('click', () => {
+      panelCard.classList.add('hidden');
+      togglePanelBtn.classList.remove('hidden');
+    });
+
+    // Paletas
+    document.querySelectorAll('.palette-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const pal = btn.getAttribute('data-palette');
+        state.palette = pal;
+        document.querySelectorAll('.palette-btn').forEach(b => {
+          b.style.background = '#F7F3FA';
+          b.style.color = '#2D2245';
+          b.style.borderColor = 'rgba(196,181,253,0.4)';
+        });
+        const activeColor = pal === 'branding' ? '#A78BFA' : pal === 'branding-pink' ? '#F286D2' : pal === 'branding-cyan' ? '#8BDFF2' : '#0284C7';
+        btn.style.background = activeColor;
+        btn.style.color = pal === 'branding-cyan' ? '#2D2245' : '#fff';
+        btn.style.borderColor = activeColor;
+        updateShadow();
+      });
+    });
+
+    // Tamaños
+    document.querySelectorAll('.size-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.size = btn.getAttribute('data-size');
+        document.querySelectorAll('.size-btn').forEach(b => {
+          b.style.background = '#F7F3FA';
+          b.style.color = '#2D2245';
+          b.style.borderColor = 'rgba(196,181,253,0.4)';
+        });
+        btn.style.background = '#2D2245';
+        btn.style.color = '#fff';
+        btn.style.borderColor = '#2D2245';
+        applyState();
+      });
+    });
+
+    // Anim Type
+    document.querySelectorAll('.anim-type-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.animType = btn.getAttribute('data-type');
+        document.querySelectorAll('.anim-type-btn').forEach(b => {
+          b.style.background = '#fff';
+          b.style.color = '#2D2245';
+          b.style.borderColor = 'rgba(196,181,253,0.4)';
+        });
+        btn.style.background = '#A78BFA';
+        btn.style.color = '#fff';
+        btn.style.borderColor = '#A78BFA';
+      });
+    });
+
+    // Intervalo
+    document.querySelectorAll('.interval-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sec = parseInt(btn.getAttribute('data-sec'), 10);
+        document.querySelectorAll('.interval-btn').forEach(b => {
+          b.style.background = '#fff';
+          b.style.color = '#2D2245';
+          b.style.borderColor = 'rgba(196,181,253,0.4)';
+        });
+        btn.style.background = '#A78BFA';
+        btn.style.color = '#fff';
+        btn.style.borderColor = '#A78BFA';
+
+        const badge = document.getElementById('auto-status-badge');
+        if (sec === 0) {
+          state.autoEnabled = false;
+          badge.textContent = 'Pausado';
+          badge.style.background = 'rgba(244, 63, 94, 0.15)';
+          badge.style.color = '#BE123C';
+          badge.style.borderColor = 'rgba(244, 63, 94, 0.3)';
+        } else {
+          state.autoEnabled = true;
+          state.autoInterval = sec;
+          badge.textContent = `Activo (${sec}s)`;
+          badge.style.background = 'rgba(16, 185, 129, 0.15)';
+          badge.style.color = '#047857';
+          badge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+        }
+        resetAutoTimer();
+      });
+    });
+
+    // Inicializar
+    loadMascotSvg();
+    resetAutoTimer();
+  </script>
+</body>
+</html>

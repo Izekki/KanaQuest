@@ -1,0 +1,697 @@
+/* ==========================================================================
+   RIMURU SLIME ANIMATIONS & STYLES (STANDALONE / EXPORTABLE)
+   Incluye:
+   - Squash & Stretch Jump (Salto elástico 2.5s fluido)
+   - Arm Grow, Wave & Loop (Brote y doble saludo viscoso aleta de slime 2.8s)
+   - Viscous Melting (Derretimiento fluido en 24 frames a charco plano 4.3s)
+   - Sombra de contacto sincronizada y física de suelo
+   - Estilos autocontenidos para el Panel de Control
+   ========================================================================== */
+
+/* 1. ANIMACIÓN SQUASH AND STRETCH DE RIMURU SLIME (2.5s) */
+.rimuru-squash-jump {
+  transform-origin: bottom center !important;
+  animation: rimuruSquashJump 2.5s linear forwards;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+  transform: translate3d(0, 0, 0);
+}
+
+@keyframes rimuruSquashJump {
+  0% {
+    transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  /* 1. Anticipación prolongada: Se aplasta contra el piso acumulando tensión elástica */
+  18% {
+    transform: translate3d(0, 0, 0) scale3d(1.34, 0.66, 1);
+    animation-timing-function: cubic-bezier(0.12, 0.8, 0.32, 1);
+  }
+  /* 2. Despegue explosivo: Se estira verticalmente con gran impulso hacia arriba */
+  28% {
+    transform: translate3d(0, -45px, 0) scale3d(0.82, 1.28, 1);
+    animation-timing-function: cubic-bezier(0.2, 0.8, 0.35, 1);
+  }
+  /* 3. Ápice / Suspensión: Llega al punto más alto (-76px), flota y se expande */
+  42% {
+    transform: translate3d(0, -76px, 0) scale3d(1.12, 0.90, 1);
+    animation-timing-function: cubic-bezier(0.35, 0, 0.65, 1);
+  }
+  /* 4. Transición en el aire: Flotación suave antes de que la gravedad tome el control */
+  50% {
+    transform: translate3d(0, -70px, 0) scale3d(1.04, 0.96, 1);
+    animation-timing-function: cubic-bezier(0.65, 0.05, 0.85, 0.3);
+  }
+  /* 5. Caída rápida: Acelera hacia el suelo estirándose por la gravedad */
+  60% {
+    transform: translate3d(0, -18px, 0) scale3d(0.84, 1.24, 1);
+    animation-timing-function: cubic-bezier(0.8, 0.05, 1, 0.5);
+  }
+  /* 6. ¡IMPACTO Y GRAN EXPANSIÓN!: Choca contra el piso y se expande horizontalmente */
+  66% {
+    transform: translate3d(0, 0, 0) scale3d(1.50, 0.50, 1);
+    animation-timing-function: cubic-bezier(0.08, 0.85, 0.2, 1);
+  }
+  /* 7. Gran rebote elástico hacia arriba */
+  76% {
+    transform: translate3d(0, -28px, 0) scale3d(0.90, 1.14, 1);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.7, 0.3);
+  }
+  /* 8. Segundo impacto con compresión suave */
+  84% {
+    transform: translate3d(0, 0, 0) scale3d(1.18, 0.84, 1);
+    animation-timing-function: cubic-bezier(0.15, 0.8, 0.35, 1);
+  }
+  /* 9. Micro-rebote de asentamiento */
+  92% {
+    transform: translate3d(0, -5px, 0) scale3d(0.97, 1.03, 1);
+    animation-timing-function: cubic-bezier(0.3, 0.1, 0.3, 1);
+  }
+  /* 10. Reposo neutral */
+  100% {
+    transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
+  }
+}
+
+/* 2. INERCIA Y BAMBOLEO DE LA MÁSCARA DE SHIZUE */
+.shizue-mask-follow {
+  transform-box: fill-box;
+  transform-origin: center center;
+  animation: shizueMaskFollowThrough 2.5s linear forwards;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+}
+
+@keyframes shizueMaskFollowThrough {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  18% {
+    transform: translate3d(0, 4px, 0) rotate(-1.5deg);
+    animation-timing-function: cubic-bezier(0.12, 0.8, 0.32, 1);
+  }
+  28% {
+    transform: translate3d(0, 7px, 0) rotate(2deg);
+    animation-timing-function: cubic-bezier(0.2, 0.8, 0.35, 1);
+  }
+  42% {
+    transform: translate3d(0, -6px, 0) rotate(-3deg);
+    animation-timing-function: cubic-bezier(0.35, 0, 0.65, 1);
+  }
+  50% {
+    transform: translate3d(0, -3px, 0) rotate(-1deg);
+    animation-timing-function: cubic-bezier(0.65, 0.05, 0.85, 0.3);
+  }
+  60% {
+    transform: translate3d(0, -1px, 0) rotate(1deg);
+    animation-timing-function: cubic-bezier(0.8, 0.05, 1, 0.5);
+  }
+  66% {
+    transform: translate3d(0, 8px, 0) rotate(4deg);
+    animation-timing-function: cubic-bezier(0.08, 0.85, 0.2, 1);
+  }
+  76% {
+    transform: translate3d(0, -4px, 0) rotate(-2deg);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.7, 0.3);
+  }
+  84% {
+    transform: translate3d(0, 3px, 0) rotate(1.5deg);
+    animation-timing-function: cubic-bezier(0.15, 0.8, 0.35, 1);
+  }
+  92% {
+    transform: translate3d(0, -1px, 0) rotate(-0.5deg);
+    animation-timing-function: cubic-bezier(0.3, 0.1, 0.3, 1);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+}
+
+/* 3. SOMBRA DINÁMICA DE CONTACTO EN EL PISO (SALTO) */
+.rimuru-shadow-jump {
+  animation: rimuruShadowJump 2.5s linear forwards;
+  will-change: transform, opacity;
+  transform-origin: center center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+@keyframes rimuruShadowJump {
+  0% {
+    transform: scale3d(1, 1, 1);
+    opacity: 0.74;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  18% {
+    transform: scale3d(1.36, 1.25, 1);
+    opacity: 0.90;
+    animation-timing-function: cubic-bezier(0.12, 0.8, 0.32, 1);
+  }
+  28% {
+    transform: scale3d(0.68, 0.65, 1);
+    opacity: 0.42;
+    animation-timing-function: cubic-bezier(0.2, 0.8, 0.35, 1);
+  }
+  42% {
+    transform: scale3d(0.48, 0.45, 1);
+    opacity: 0.22;
+    animation-timing-function: cubic-bezier(0.35, 0, 0.65, 1);
+  }
+  50% {
+    transform: scale3d(0.54, 0.50, 1);
+    opacity: 0.28;
+    animation-timing-function: cubic-bezier(0.65, 0.05, 0.85, 0.3);
+  }
+  60% {
+    transform: scale3d(0.92, 0.90, 1);
+    opacity: 0.62;
+    animation-timing-function: cubic-bezier(0.8, 0.05, 1, 0.5);
+  }
+  66% {
+    transform: scale3d(1.55, 1.35, 1);
+    opacity: 0.95;
+    animation-timing-function: cubic-bezier(0.08, 0.85, 0.2, 1);
+  }
+  76% {
+    transform: scale3d(0.78, 0.75, 1);
+    opacity: 0.48;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.7, 0.3);
+  }
+  84% {
+    transform: scale3d(1.18, 1.10, 1);
+    opacity: 0.80;
+    animation-timing-function: cubic-bezier(0.15, 0.8, 0.35, 1);
+  }
+  92% {
+    transform: scale3d(0.96, 0.95, 1);
+    opacity: 0.68;
+    animation-timing-function: cubic-bezier(0.3, 0.1, 0.3, 1);
+  }
+  100% {
+    transform: scale3d(1, 1, 1);
+    opacity: 0.74;
+  }
+}
+
+/* 4. ANIMACIÓN DE BRAZO / ALETA DE SLIME (2.8s - CRECIMIENTO, SALUDO Y ABSORCIÓN) */
+.rimuru-arm-wave {
+  transform-box: view-box;
+  transform-origin: 60px 82px;
+  animation: rimuruArmGrowAndWave 2.8s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+@keyframes rimuruArmGrowAndWave {
+  0% {
+    transform: scale3d(0, 0, 1) rotate(16deg);
+    opacity: 0;
+  }
+  1.5% {
+    transform: scale3d(0.14, 0.04, 1) rotate(15deg);
+    opacity: 0.92;
+  }
+  3.5% {
+    transform: scale3d(0.26, 0.09, 1) rotate(14deg);
+    opacity: 1;
+  }
+  5.5% {
+    transform: scale3d(0.38, 0.17, 1) rotate(12deg);
+  }
+  8.0% {
+    transform: scale3d(0.48, 0.28, 1) rotate(10deg);
+  }
+  10.5% {
+    transform: scale3d(0.52, 0.44, 1) rotate(8deg);
+  }
+  13.0% {
+    transform: scale3d(0.58, 0.68, 1) rotate(6deg);
+  }
+  16.0% {
+    transform: scale3d(0.66, 0.98, 1) rotate(3deg);
+  }
+  19.0% {
+    transform: scale3d(0.74, 1.25, 1) rotate(-1deg);
+  }
+  22.0% {
+    transform: scale3d(0.96, 1.28, 1) rotate(-6deg);
+  }
+  25.0% {
+    transform: scale3d(1.24, 0.78, 1) rotate(-12deg);
+  }
+  28.0% {
+    transform: scale3d(0.88, 1.16, 1) rotate(-6deg);
+  }
+  31.0% {
+    transform: scale3d(1.10, 0.92, 1) rotate(2deg);
+  }
+  34.0% {
+    transform: scale3d(0.97, 1.03, 1) rotate(-1deg);
+  }
+  37.0% {
+    transform: scale3d(1, 1, 1) rotate(0deg);
+  }
+  39.5% {
+    transform: scale3d(1.02, 0.98, 1) rotate(3deg);
+  }
+  42.5% {
+    transform: scale3d(1.05, 0.95, 1) rotate(8deg);
+  }
+  45.5% {
+    transform: scale3d(1.08, 0.92, 1) rotate(13deg);
+  }
+  48.0% {
+    transform: scale3d(1.04, 0.96, 1) rotate(15deg);
+  }
+  50.5% {
+    transform: scale3d(0.98, 1.02, 1) rotate(11deg);
+  }
+  53.5% {
+    transform: scale3d(0.92, 1.08, 1) rotate(4deg);
+  }
+  56.0% {
+    transform: scale3d(0.90, 1.10, 1) rotate(-2deg);
+  }
+  58.5% {
+    transform: scale3d(0.96, 1.04, 1) rotate(-8deg);
+  }
+  61.5% {
+    transform: scale3d(1.04, 0.96, 1) rotate(-13deg);
+  }
+  64.0% {
+    transform: scale3d(1.02, 0.98, 1) rotate(-14deg);
+  }
+  66.5% {
+    transform: scale3d(0.97, 1.03, 1) rotate(-9deg);
+  }
+  69.0% {
+    transform: scale3d(0.94, 1.06, 1) rotate(-2deg);
+  }
+  71.5% {
+    transform: scale3d(1.03, 0.97, 1) rotate(5deg);
+  }
+  74.0% {
+    transform: scale3d(0.98, 1.02, 1) rotate(-2deg);
+  }
+  76.5% {
+    transform: scale3d(1, 1, 1) rotate(0deg);
+  }
+  79.0% {
+    transform: scale3d(1.02, 0.98, 1) rotate(1deg);
+  }
+  82.0% {
+    transform: scale3d(1.08, 0.90, 1) rotate(3deg);
+  }
+  85.0% {
+    transform: scale3d(1.18, 0.76, 1) rotate(6deg);
+  }
+  88.0% {
+    transform: scale3d(1.28, 0.58, 1) rotate(9deg);
+    opacity: 0.98;
+  }
+  91.0% {
+    transform: scale3d(1.34, 0.38, 1) rotate(12deg);
+    opacity: 0.92;
+  }
+  94.0% {
+    transform: scale3d(1.20, 0.20, 1) rotate(14deg);
+    opacity: 0.75;
+  }
+  97.0% {
+    transform: scale3d(0.70, 0.08, 1) rotate(15deg);
+    opacity: 0.40;
+  }
+  100% {
+    transform: scale3d(0, 0, 1) rotate(16deg);
+    opacity: 0;
+  }
+}
+
+/* 5. MODO BRAZO EXTENDIDO CONTINUO (LOOP RESIDUAL) */
+.rimuru-arm-extended {
+  transform-box: view-box;
+  transform-origin: 60px 82px;
+  animation: rimuruArmLoopWave 2.4s ease-in-out infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+@keyframes rimuruArmLoopWave {
+  0% { transform: scale3d(1, 1, 1) rotate(0deg); }
+  6% { transform: scale3d(1.02, 0.98, 1) rotate(4deg); }
+  12% { transform: scale3d(1.06, 0.94, 1) rotate(9deg); }
+  18% { transform: scale3d(1.08, 0.92, 1) rotate(14deg); }
+  24% { transform: scale3d(1.04, 0.96, 1) rotate(16deg); }
+  30% { transform: scale3d(0.97, 1.03, 1) rotate(12deg); }
+  36% { transform: scale3d(0.92, 1.08, 1) rotate(5deg); }
+  42% { transform: scale3d(0.90, 1.10, 1) rotate(0deg); }
+  48% { transform: scale3d(0.93, 1.07, 1) rotate(-6deg); }
+  54% { transform: scale3d(1.02, 0.98, 1) rotate(-11deg); }
+  60% { transform: scale3d(1.06, 0.94, 1) rotate(-14deg); }
+  66% { transform: scale3d(1.03, 0.97, 1) rotate(-15deg); }
+  72% { transform: scale3d(0.96, 1.04, 1) rotate(-10deg); }
+  78% { transform: scale3d(0.92, 1.08, 1) rotate(-4deg); }
+  84% { transform: scale3d(0.91, 1.09, 1) rotate(0deg); }
+  90% { transform: scale3d(0.96, 1.04, 1) rotate(2deg); }
+  95% { transform: scale3d(0.99, 1.01, 1) rotate(1deg); }
+  100% { transform: scale3d(1, 1, 1) rotate(0deg); }
+}
+
+/* 6. ANIMACIÓN DE DERRETIRSE (4.3s - 24 FRAMES FLUIDOS) */
+.rimuru-melt-container {
+  transform-origin: bottom center !important;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+.rimuru-standing-melt {
+  transform-origin: 184px 224px !important;
+  animation: rimuruStandingMelt 4.3s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+@keyframes rimuruStandingMelt {
+  0.0% { transform: translate3d(0, 0, 0) scale3d(1, 1, 1); opacity: 1; }
+  4.2% { transform: translate3d(0, 0, 0) scale3d(1.22, 0.78, 1); opacity: 1; }
+  8.1% { transform: translate3d(0, 0, 0) scale3d(1.36, 0.64, 1); opacity: 1; }
+  14.0% { transform: translate3d(0, 0, 0) scale3d(0.88, 1.20, 1); opacity: 1; }
+  20.5% { transform: translate3d(0, 0, 0) scale3d(0.78, 1.40, 1); opacity: 1; }
+  27.4% { transform: translate3d(0, 0, 0) scale3d(0.70, 1.55, 1); opacity: 1; }
+  33.7% { transform: translate3d(0, 0, 0) scale3d(0.66, 1.65, 1); opacity: 1; }
+  36.0% { transform: translate3d(0, 0, 0) scale3d(1.15, 0.85, 1) rotate(-2deg); opacity: 1; }
+  39.1% { transform: translate3d(0, 0, 0) scale3d(1.48, 0.50, 1) rotate(1deg); opacity: 1; }
+  41.9% { transform: translate3d(0, 0, 0) scale3d(1.88, 0.15, 1); opacity: 0.85; }
+  45.3% { transform: translate3d(0, 0, 0) scale3d(1.90, 0.00, 1); opacity: 0; }
+  50.0% { transform: translate3d(0, 0, 0) scale3d(1.90, 0.00, 1); opacity: 0; }
+  55.8% { transform: translate3d(0, 0, 0) scale3d(1.90, 0.00, 1); opacity: 0; }
+  60.5% { transform: translate3d(0, 0, 0) scale3d(1.90, 0.00, 1); opacity: 0; }
+  65.2% { transform: translate3d(0, 0, 0) scale3d(1.90, 0.00, 1); opacity: 0; }
+  69.8% { transform: translate3d(0, 0, 0) scale3d(1.90, 0.00, 1); opacity: 0; }
+  75.6% { transform: translate3d(0, 0, 0) scale3d(1.45, 0.22, 1); opacity: 0.35; }
+  82.6% { transform: translate3d(0, 0, 0) scale3d(1.25, 0.60, 1); opacity: 0.75; }
+  89.5% { transform: translate3d(0, 0, 0) scale3d(0.90, 1.18, 1); opacity: 0.95; }
+  94.2% { transform: translate3d(0, 0, 0) scale3d(0.80, 1.32, 1); opacity: 1; }
+  97.2% { transform: translate3d(0, 0, 0) scale3d(0.92, 1.10, 1); opacity: 1; }
+  98.8% { transform: translate3d(0, 0, 0) scale3d(1.06, 0.95, 1); opacity: 1; }
+  100.0% { transform: translate3d(0, 0, 0) scale3d(1, 1, 1); opacity: 1; }
+}
+
+/* 7. CHARCO PLANO DE SLIME */
+.rimuru-melted-puddle {
+  transform-origin: 184px 224px !important;
+  animation: rimuruMeltedPuddleGrow 4.3s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+@keyframes rimuruMeltedPuddleGrow {
+  0.0% { transform: scale3d(0.50, 0.01, 1); opacity: 0; }
+  4.2% { transform: scale3d(0.50, 0.01, 1); opacity: 0; }
+  8.1% { transform: scale3d(0.50, 0.01, 1); opacity: 0; }
+  14.0% { transform: scale3d(0.50, 0.01, 1); opacity: 0; }
+  20.5% { transform: scale3d(0.50, 0.01, 1); opacity: 0; }
+  27.4% { transform: scale3d(0.50, 0.01, 1); opacity: 0; }
+  33.7% { transform: scale3d(0.50, 0.01, 1); opacity: 0; }
+  36.0% { transform: scale3d(0.50, 0.01, 1); opacity: 0; }
+  39.1% { transform: scale3d(0.65, 0.15, 1); opacity: 0.25; }
+  41.9% { transform: scale3d(1.10, 0.70, 1); opacity: 0.90; }
+  45.3% { transform: scale3d(1.22, 0.76, 1); opacity: 1; }
+  50.0% { transform: scale3d(1.14, 0.86, 1); opacity: 1; }
+  55.8% { transform: scale3d(0.97, 1.05, 1); opacity: 1; }
+  60.5% { transform: scale3d(1.02, 0.98, 1); opacity: 1; }
+  65.2% { transform: scale3d(0.99, 1.01, 1); opacity: 1; }
+  69.8% { transform: scale3d(1.00, 1.00, 1); opacity: 1; }
+  75.6% { transform: scale3d(0.75, 0.50, 1); opacity: 0.65; }
+  82.6% { transform: scale3d(0.40, 0.18, 1); opacity: 0.25; }
+  89.5% { transform: scale3d(0.15, 0.00, 1); opacity: 0; }
+  94.2% { transform: scale3d(0, 0, 1); opacity: 0; }
+  97.2% { transform: scale3d(0, 0, 1); opacity: 0; }
+  100.0% { transform: scale3d(0, 0, 1); opacity: 0; }
+}
+
+/* 8. MÁSCARA DURANTE EL DERRETIMIENTO */
+.shizue-mask-melt {
+  transform-box: fill-box;
+  transform-origin: center center;
+  animation: shizueMaskMelt 4.3s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+@keyframes shizueMaskMelt {
+  0.0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+  4.2% { transform: translate3d(0, 5px, 0) rotate(-1deg) scale(1.01, 0.98); }
+  8.1% { transform: translate3d(0, 10px, 0) rotate(-2deg) scale(1.03, 0.95); }
+  14.0% { transform: translate3d(0, -16px, 0) rotate(-1.5deg) scale(0.99, 1.03); }
+  20.5% { transform: translate3d(0, -30px, 0) rotate(-2deg) scale(0.97, 1.05); }
+  27.4% { transform: translate3d(0, -42px, 0) rotate(-2.5deg) scale(0.96, 1.06); }
+  33.7% { transform: translate3d(0, -50px, 0) rotate(-3deg) scale(0.95, 1.07); }
+  36.0% { transform: translate3d(-3px, -20px, 0) rotate(-14deg) scale(0.98); }
+  39.1% { transform: translate3d(-7px, 32px, 0) rotate(-36deg) scale(0.95); }
+  41.9% { transform: translate3d(-10px, 78px, 0) rotate(-58deg) scale(0.90); }
+  45.3% { transform: translate3d(-10px, 74px, 0) rotate(-53deg) scale(0.915); }
+  50.0% { transform: translate3d(-10px, 76px, 0) rotate(-55deg) scale(0.91); }
+  55.8% { transform: translate3d(-10px, 76px, 0) rotate(-55deg) scale(0.91); }
+  60.5% { transform: translate3d(-10px, 77.5px, 0) rotate(-56.5deg) scale(0.905); }
+  65.2% { transform: translate3d(-10px, 76px, 0) rotate(-55deg) scale(0.91); }
+  69.8% { transform: translate3d(-10px, 76px, 0) rotate(-55deg) scale(0.91); }
+  75.6% { transform: translate3d(-8px, 58px, 0) rotate(-38deg) scale(0.93); }
+  82.6% { transform: translate3d(-5px, 32px, 0) rotate(-22deg) scale(0.96); }
+  89.5% { transform: translate3d(-2px, 0px, 0) rotate(-9deg) scale(0.99); }
+  94.2% { transform: translate3d(0, -12px, 0) rotate(-2deg) scale(1.02); }
+  97.2% { transform: translate3d(0, 2px, 0) rotate(0.5deg) scale(1.00); }
+  100.0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+}
+
+/* 9. SOMBRA EN EL PISO (DERRETIMIENTO) */
+.rimuru-shadow-melt {
+  animation: rimuruShadowMelt 4.3s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  will-change: transform, opacity;
+  transform-origin: center center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+@keyframes rimuruShadowMelt {
+  0.0% { transform: scale3d(1, 1, 1); opacity: 0.74; }
+  8.1% { transform: scale3d(1.36, 1.26, 1); opacity: 0.88; }
+  20.5% { transform: scale3d(0.85, 0.85, 1); opacity: 0.72; }
+  33.7% { transform: scale3d(0.78, 0.78, 1); opacity: 0.70; }
+  39.1% { transform: scale3d(1.28, 1.18, 1); opacity: 0.82; }
+  41.9% { transform: scale3d(1.68, 1.42, 1); opacity: 0.95; }
+  45.3% { transform: scale3d(1.72, 1.45, 1); opacity: 0.92; }
+  50.0% { transform: scale3d(1.48, 1.30, 1); opacity: 0.88; }
+  55.8% { transform: scale3d(1.48, 1.30, 1); opacity: 0.88; }
+  60.5% { transform: scale3d(1.50, 1.32, 1); opacity: 0.89; }
+  65.2% { transform: scale3d(1.48, 1.30, 1); opacity: 0.88; }
+  69.8% { transform: scale3d(1.48, 1.30, 1); opacity: 0.88; }
+  75.6% { transform: scale3d(1.22, 1.10, 1); opacity: 0.80; }
+  89.5% { transform: scale3d(0.90, 0.90, 1); opacity: 0.72; }
+  100.0% { transform: scale3d(1, 1, 1); opacity: 0.74; }
+}
+
+/* 10. ESTADOS CONTINUOS DE REPOSO CHARCO */
+.rimuru-puddle-idle {
+  transform-origin: 184px 224px !important;
+  animation: rimuruPuddleIdle 3.6s ease-in-out infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+@keyframes rimuruPuddleIdle {
+  0%, 100% { transform: scale3d(1, 1, 1); }
+  50% { transform: scale3d(1.03, 0.96, 1); }
+}
+
+.shizue-mask-puddle-idle {
+  transform-box: fill-box;
+  transform-origin: center center;
+  transform: translate3d(-10px, 76px, 0) rotate(-55deg) scale(0.91);
+  animation: shizueMaskPuddleIdle 3.6s ease-in-out infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+@keyframes shizueMaskPuddleIdle {
+  0%, 100% { transform: translate3d(-10px, 76px, 0) rotate(-55deg) scale(0.91); }
+  50% { transform: translate3d(-10px, 77.5px, 0) rotate(-56.5deg) scale(0.905); }
+}
+
+/* 11. ESTILOS INDEPENDIENTES PARA EL PANEL Y COMPONENTES (FUNCIONA SIN TAILWIND) */
+.rimuru-widget-root {
+  position: relative;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.rimuru-panel-container {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 2px solid rgba(167, 139, 250, 0.4);
+  box-shadow: 0 10px 30px -5px rgba(76, 55, 117, 0.25);
+  border-radius: 1rem;
+  padding: 0.875rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  color: #2D2245;
+  width: 290px;
+  box-sizing: border-box;
+  z-index: 50;
+}
+
+.rimuru-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(196, 181, 253, 0.4);
+  padding-bottom: 0.4rem;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.rimuru-panel-close {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  border: none;
+  background: #F7F3FA;
+  color: #2D2245;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.75rem;
+}
+
+.rimuru-panel-close:hover {
+  background: rgba(242, 134, 210, 0.2);
+}
+
+.rimuru-preview-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem;
+  border-radius: 0.75rem;
+  background: rgba(247, 243, 250, 0.85);
+  border: 1px solid rgba(196, 181, 253, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.rimuru-preview-stage {
+  height: 6rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  position: relative;
+  padding-bottom: 0.25rem;
+}
+
+.rimuru-preview-ground {
+  position: absolute;
+  bottom: 0.25rem;
+  left: 0.75rem;
+  right: 0.75rem;
+  height: 1px;
+  border-bottom: 1px dashed rgba(167, 139, 250, 0.45);
+}
+
+.rimuru-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.65rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  border: 1px solid transparent;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.rimuru-btn:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.rimuru-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.rimuru-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: scale(0.98);
+}
+
+.rimuru-btn-action-jump {
+  background: linear-gradient(135deg, #A78BFA 0%, #F286D2 100%);
+  color: #fff;
+  padding: 0.45rem 0.25rem;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.7rem;
+}
+
+.rimuru-btn-action-wave {
+  background: linear-gradient(135deg, #F286D2 0%, #F59E0B 100%);
+  color: #fff;
+  padding: 0.45rem 0.25rem;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.7rem;
+}
+
+.rimuru-btn-action-melt {
+  background: linear-gradient(135deg, #8BDFF2 0%, #A78BFA 100%);
+  color: #fff;
+  padding: 0.45rem 0.25rem;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.7rem;
+}
+
+.rimuru-trigger-badge {
+  padding: 0.5rem 0.9rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 2px solid rgba(167, 139, 250, 0.4);
+  box-shadow: 0 4px 14px rgba(76, 55, 117, 0.15);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #2D2245;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.rimuru-trigger-badge:hover {
+  background: #ffffff;
+  transform: translateY(-1px);
+}
