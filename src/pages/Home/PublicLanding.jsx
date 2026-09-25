@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import mascotTransparent from '../../img/mascot_pink_slime_transparent.png';
 import Icon from '../../components/ui/Icon';
 import RecognitionPreview from '../../components/landing/RecognitionPreview';
 import TranslationPreview from '../../components/landing/TranslationPreview';
 import PairMatchPreview from '../../components/landing/PairMatchPreview';
 import SentenceBuilderPreview from '../../components/landing/SentenceBuilderPreview';
+import HeroRimuru from '../../components/landing/HeroRimuru';
 
 const LEARNING_STAGES = [
   {
@@ -93,25 +93,9 @@ export default function PublicLanding() {
             </div>
           </div>
 
-          {/* Columna Derecha: Ilustración de Apoyo Naturalmente Integrada */}
+          {/* Columna Derecha: Mascota Rimuru con paleta KanaQuest y animaciones periódicas */}
           <div className="md:col-span-5 flex flex-col items-center justify-center">
-            <div className="relative flex flex-col items-center">
-              {/* Resplandor cálido muy tenue detrás de la mascota */}
-              <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(244,183,195,0.3)_0%,transparent_70%)] blur-2xl transform scale-125 pointer-events-none" />
-
-              {/* Mascota con su tablilla tradicional 学 (Aprender) */}
-              <div className="relative max-w-[190px] sm:max-w-[220px] lg:max-w-[250px] animate-float-subtle select-none">
-                <img
-                  src={mascotTransparent}
-                  alt="Mascota KanaQuest aprendiendo japonés"
-                  className="w-full h-auto object-contain drop-shadow-[0_8px_20px_rgba(107,40,50,0.1)]"
-                  loading="eager"
-                />
-              </div>
-
-              {/* Sombra sutil en la base */}
-              <div className="h-2 w-28 rounded-full bg-[#6b2832]/8 blur-xs mt-2" />
-            </div>
+            <HeroRimuru />
           </div>
 
         </div>
