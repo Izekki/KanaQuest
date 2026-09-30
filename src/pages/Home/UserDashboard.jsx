@@ -315,18 +315,6 @@ export default function UserDashboard({ user }) {
         </aside>
       </div>
 
-      {/* FOOTER */}
-      <footer className="rounded-2xl border border-[#eaded6] bg-white/70 backdrop-blur p-3.5 text-center text-xs text-[rgb(var(--color-neutral))]/70 shadow-2xs">
-        © 2026 KanaQuest · Plataforma interactiva para el aprendizaje del idioma japonés ·{' '}
-        <a
-          href="https://github.com/Izekki/KanaQuest"
-          target="_blank"
-          rel="noreferrer"
-          className="font-semibold text-[#6b2832] hover:underline"
-        >
-          GitHub
-        </a>
-      </footer>
     </div>
   );
 }

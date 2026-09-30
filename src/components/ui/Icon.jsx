@@ -175,6 +175,52 @@ export default function Icon({ name, className = 'w-4 h-4', 'aria-label': ariaLa
         <path d="M18.178 8c5.096 0 5.096 8 0 8-2.616 0-3.874-1.92-5.178-4-1.304 2.08-2.562 4-5.178 4-5.096 0-5.096-8 0-8 2.616 0 3.874 1.92 5.178 4 1.304-2.08 2.562-4 5.178-4z" />
       </svg>
     ),
+    'shield-check': (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <path d="m9 12 2 2 4-4" />
+      </svg>
+    ),
+    'file-text': (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+        <polyline points="10 9 9 9 8 9" />
+      </svg>
+    ),
+    cookie: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+        <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5" />
+        <circle cx="8.5" cy="8.5" r="1" fill="currentColor" />
+        <circle cx="15.5" cy="15.5" r="1" fill="currentColor" />
+        <circle cx="8.5" cy="15.5" r="1" fill="currentColor" />
+        <circle cx="12" cy="12" r="1" fill="currentColor" />
+      </svg>
+    ),
+    sliders: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+        <line x1="4" y1="21" x2="4" y2="14" />
+        <line x1="4" y1="10" x2="4" y2="3" />
+        <line x1="12" y1="21" x2="12" y2="12" />
+        <line x1="12" y1="8" x2="12" y2="3" />
+        <line x1="20" y1="21" x2="20" y2="16" />
+        <line x1="20" y1="12" x2="20" y2="3" />
+        <line x1="1" y1="14" x2="7" y2="14" />
+        <line x1="9" y1="8" x2="15" y2="8" />
+        <line x1="17" y1="16" x2="23" y2="16" />
+      </svg>
+    ),
+    scale: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+        <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
+        <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
+        <path d="M7 21h10" />
+        <path d="M12 3v18" />
+        <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2" />
+      </svg>
+    ),
   };
 
   const rendered = icons[name] || null;
