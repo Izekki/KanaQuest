@@ -254,25 +254,6 @@ export default function PublicLanding() {
         </Link>
       </section>
 
-      {/* 4. FOOTER EDITORIAL Y CALMO */}
-      <footer className="pt-6 pb-4 border-t border-[#ebdcd3]/70 text-xs text-[#5c4447] flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div>
-          © 2026 <span className="font-semibold text-[#38181e]">KanaQuest</span> · Plataforma para aprender japonés a tu ritmo.
-        </div>
-        <div className="flex items-center gap-4 text-[#6b2832]">
-          <Link to="/game" className="hover:underline">Aprender</Link>
-          <Link to="/vocabulary" className="hover:underline">Vocabulario</Link>
-          <Link to="/login" className="hover:underline">Iniciar sesión</Link>
-          <a
-            href="https://github.com/Izekki/KanaQuest"
-            target="_blank"
-            rel="noreferrer"
-            className="hover:underline"
-          >
-            GitHub
-          </a>
-        </div>
-      </footer>
     </div>
   );
 }

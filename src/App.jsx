@@ -15,6 +15,9 @@ import ProfilePage from './pages/Profile/ProfilePage';
 import SentenceBuilderPage from './pages/SentenceBuilder/SentenceBuilderPage';
 import PairMatchPage from './pages/PairMatch/PairMatchPage';
 import AdminFeedbackPage from './pages/Admin/AdminFeedbackPage';
+import TermsPage from './pages/Legal/TermsPage';
+import PrivacyPage from './pages/Legal/PrivacyPage';
+import CookiesPage from './pages/Legal/CookiesPage';
 
 export default function App() {
   return (
@@ -153,6 +156,13 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* Legal Compliance Pages (México - LFPDPPP, LFPC, Código de Comercio) */}
+        <Route path="/terminos" element={<TermsPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/privacidad" element={<PrivacyPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/cookies" element={<CookiesPage />} />
 
         {/* 404 Fallback */}
         <Route

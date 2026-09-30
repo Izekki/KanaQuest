@@ -4,13 +4,14 @@ export async function signIn(email, password) {
   return await supabase.auth.signInWithPassword({ email, password });
 }
 
-export async function signUp(email, password, username) {
+export async function signUp(email, password, username, extraData = {}) {
   return await supabase.auth.signUp({
     email,
     password,
     options: {
       data: {
         username,
+        ...extraData,
       },
     },
   });

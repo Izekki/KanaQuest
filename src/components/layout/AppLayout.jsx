@@ -11,6 +11,10 @@ import MobileNavigation from './MobileNavigation';
 import FeedbackModal from '../ui/FeedbackModal';
 import SakuraPetalsCanvas from '../ui/SakuraPetalsCanvas';
 import Icon from '../ui/Icon';
+import AppFooter from './AppFooter';
+import ComplianceBanner from '../legal/ComplianceBanner';
+import ComplianceSettingsModal from '../legal/ComplianceSettingsModal';
+import { OPEN_PREFERENCES_EVENT } from '../../utils/storagePreferences';
 
 const navItems = [
   { to: '/game', label: 'Aprender' },
@@ -84,8 +88,15 @@ export default function AppLayout({ children }) {
   const [streak, setStreak] = useState(initialSnapshot?.streak ?? 0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [cookieModalOpen, setCookieModalOpen] = useState(false);
   const { isMuted, toggleSound } = useSoundEffects();
   const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleOpenSettings = () => setCookieModalOpen(true);
+    window.addEventListener(OPEN_PREFERENCES_EVENT, handleOpenSettings);
+    return () => window.removeEventListener(OPEN_PREFERENCES_EVENT, handleOpenSettings);
+  }, []);
 
   const resolveAvatarUrl = async (storedAvatar) => {
     if (!storedAvatar) return '';
@@ -473,8 +484,11 @@ export default function AppLayout({ children }) {
           </div>
         </header>
 
-        <div className="mx-auto w-full max-w-7xl px-3 py-3 sm:px-6 sm:py-5 lg:px-8 pb-24 lg:pb-8">
-          {children || <Outlet />}
+        <div className="mx-auto w-full max-w-7xl px-3 py-3 sm:px-6 sm:py-5 lg:px-8 pb-24 lg:pb-8 flex flex-col min-h-[calc(100vh-5rem)]">
+          <div className="flex-1">
+            {children || <Outlet />}
+          </div>
+          <AppFooter />
         </div>
         <MobileNavigation />
       </div>
@@ -482,6 +496,15 @@ export default function AppLayout({ children }) {
       <FeedbackModal
         isOpen={feedbackModalOpen}
         onClose={() => setFeedbackModalOpen(false)}
+      />
+
+      <ComplianceBanner
+        onOpenSettings={() => setCookieModalOpen(true)}
+      />
+
+      <ComplianceSettingsModal
+        isOpen={cookieModalOpen}
+        onClose={() => setCookieModalOpen(false)}
       />
     </main>
   );
