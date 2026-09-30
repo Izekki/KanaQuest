@@ -172,6 +172,9 @@ skills-lock.json
 
 # Video projects & renders
 videos/
+videos/kanaquest-showcase-v2/
+videos/kanaquest-landing-showcase/
+captures_landing/
 renders/
 *.mp4
 *.mov
