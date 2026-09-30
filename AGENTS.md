@@ -5,6 +5,7 @@ Purpose: Quick orientation and behavioral constraints for AI coding agents worki
 ## Quick links
 - Project overview: [AI_Development_Specification.md](AI_Development_Specification.md)
 - Supabase architecture: [Supabase_Architecture_Specification.md](Supabase_Architecture_Specification.md)
+- UI/UX Design System & Rules: [.agents/rules/ui-design-system.md](.agents/rules/ui-design-system.md)
 - Visual system & palette: [Frontend_Visual_System_and_Color_Palette.md](Frontend_Visual_System_and_Color_Palette.md)
 
 ## First steps for an agent

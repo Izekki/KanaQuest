@@ -189,3 +189,81 @@ body {
 .animate-float-subtle {
   animation: float-subtle 3.5s ease-in-out infinite;
 }
+
+/* ========================================================
+ * Scrollbars con estética japonesa KanaQuest
+ * Reemplaza las barras gruesas predeterminadas de Windows
+ * ======================================================== */
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(107, 40, 50, 0.22) transparent;
+}
+
+/* WebKit & Blink (Brave, Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(107, 40, 50, 0.22);
+  border-radius: 9999px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 40, 50, 0.45);
+}
+
+::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Ocultar barra completamente para tiras horizontales (tabs, sliders) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Scrollbar ultra-fino y elegante específico para modales y paneles */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #dfcfc7 transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px 0;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #dfcfc7;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a87880;
+}
