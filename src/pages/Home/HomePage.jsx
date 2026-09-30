@@ -1,10 +1,18 @@
 import React from 'react';
 import { useAuthSession } from '../../hooks/useAuthSession';
+import { usePageSeo } from '../../hooks/usePageSeo';
 import UserDashboard from './UserDashboard';
 import PublicLanding from './PublicLanding';
 
 export default function HomePage() {
   const { user, loading } = useAuthSession();
+
+  usePageSeo({
+    title: 'KanaQuest - Practica y Repasa Japonés Jugando',
+    description:
+      'Practica y repasa japonés gratis con KanaQuest. Refuerza tu vocabulario, memoria de kanji, lectura kana y gramática con minijuegos interactivos y gamificación.',
+    canonicalPath: '/',
+  });
 
   if (loading) {
     return (

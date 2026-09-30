@@ -21,6 +21,7 @@ import ProfileStatsStrip from '../../components/profile/ProfileStatsStrip';
 import ProfileLearningBreakdown from '../../components/profile/ProfileLearningBreakdown';
 import ProfileContinueLearning from '../../components/profile/ProfileContinueLearning';
 import ProfileEditModal from '../../components/profile/ProfileEditModal';
+import { usePageSeo } from '../../hooks/usePageSeo';
 
 const getStreakStorageKey = (userId) => `kanaquest-streak:${userId}`;
 
@@ -31,6 +32,12 @@ const isKatakana = (str = '') => /^[\u30a0-\u30ffー\s]+$/u.test(str);
 
 export default function ProfilePage() {
   const { user: authUser, loading: authLoading } = useAuthSession();
+
+  usePageSeo({
+    title: 'Mi Perfil de Aprendizaje',
+    description: 'Espacio personal de aprendizaje en KanaQuest: revisa tu nivel, racha, títulos desbloqueados y avance por categorías.',
+    canonicalPath: '/profile',
+  });
   const [activeUser, setActiveUser] = useState(authUser ?? null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);

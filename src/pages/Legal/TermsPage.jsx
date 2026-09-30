@@ -1,8 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import LegalLayout from './LegalLayout';
+import { usePageSeo } from '../../hooks/usePageSeo';
 
 export default function TermsPage() {
+  usePageSeo({
+    title: 'Términos y Condiciones',
+    description: 'Términos y condiciones de uso de KanaQuest. Contrato de adhesión para la plataforma de aprendizaje del idioma japonés.',
+    canonicalPath: '/terminos',
+  });
   return (
     <LegalLayout
       title="Términos y Condiciones de Uso"

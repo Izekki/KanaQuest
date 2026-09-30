@@ -1,8 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import LegalLayout from './LegalLayout';
+import { usePageSeo } from '../../hooks/usePageSeo';
 
 export default function PrivacyPage() {
+  usePageSeo({
+    title: 'Aviso de Privacidad',
+    description: 'Aviso de privacidad integral de KanaQuest conforme a la LFPDPPP de México. Conoce cómo protegemos tus datos y progreso.',
+    canonicalPath: '/privacidad',
+  });
   return (
     <LegalLayout
       title="Aviso de Privacidad Integral"

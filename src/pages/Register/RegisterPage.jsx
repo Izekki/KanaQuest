@@ -1,7 +1,13 @@
 import RegisterForm from '../../components/auth/RegisterForm';
 import toriiLogo from '../../img/torii.svg';
+import { usePageSeo } from '../../hooks/usePageSeo';
 
 export default function RegisterPage() {
+  usePageSeo({
+    title: 'Crear Cuenta Gratis',
+    description: 'Crea tu cuenta gratis en KanaQuest y comienza a aprender japonés con lecciones gamificadas de Hiragana, Katakana y Kanji.',
+    canonicalPath: '/register',
+  });
   return (
     <div className="mx-auto w-full max-w-md lg:max-w-4xl grid gap-6 lg:grid-cols-[1.2fr_0.8fr] items-stretch">
       <RegisterForm />

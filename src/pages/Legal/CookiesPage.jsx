@@ -3,8 +3,14 @@ import LegalLayout from './LegalLayout';
 import Icon from '../../components/ui/Icon';
 import Button from '../../components/ui/Button';
 import { openComplianceSettings } from '../../utils/storagePreferences';
+import { usePageSeo } from '../../hooks/usePageSeo';
 
 export default function CookiesPage() {
+  usePageSeo({
+    title: 'Política de Cookies',
+    description: 'Conoce cómo KanaQuest utiliza cookies técnicas y de preferencias locales para garantizar tu sesión y aprendizaje.',
+    canonicalPath: '/cookies',
+  });
   return (
     <LegalLayout
       title="Política de Cookies y Tecnologías de Almacenamiento"

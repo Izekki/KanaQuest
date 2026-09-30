@@ -1,7 +1,13 @@
 import LoginForm from '../../components/auth/LoginForm';
 import toriiLogo from '../../img/torii.svg';
+import { usePageSeo } from '../../hooks/usePageSeo';
 
 export default function LoginPage() {
+  usePageSeo({
+    title: 'Iniciar Sesión',
+    description: 'Accede a tu cuenta de KanaQuest para continuar tu racha, guardar tus palabras dominadas y seguir practicando japonés.',
+    canonicalPath: '/login',
+  });
   return (
     <div className="mx-auto w-full max-w-md lg:max-w-4xl grid gap-6 lg:grid-cols-[1.2fr_0.8fr] items-stretch">
       <LoginForm />
