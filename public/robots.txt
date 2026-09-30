@@ -1,0 +1,11 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Rutas privadas de sesion de usuario y administracion
+Disallow: /admin/
+Disallow: /reset-password
+Disallow: /profile
+
+# Localizacion del Sitemap oficial
+Sitemap: https://kanaquest.izekki.me/sitemap.xml

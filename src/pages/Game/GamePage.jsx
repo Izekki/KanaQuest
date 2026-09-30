@@ -9,6 +9,7 @@ import {
 } from '../../services/supabase/progress';
 import { useAuthSession } from '../../hooks/useAuthSession';
 import { useSoundEffects } from '../../hooks/useSoundEffects';
+import { usePageSeo } from '../../hooks/usePageSeo';
 import Icon from '../../components/ui/Icon';
 import MultipleChoiceGrid from '../../components/gameplay/MultipleChoiceGrid';
 import {
@@ -108,6 +109,12 @@ export default function GamePage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { playFlip, playSuccess, playError, playComplete } = useSoundEffects();
+
+  usePageSeo({
+    title: 'Modo Preguntas y Reconocimiento',
+    description: 'Practica el reconocimiento visual y fonético de caracteres kana y kanji con opciones dinámicas y feedback auditivo.',
+    canonicalPath: '/game',
+  });
 
   const [mode, setMode] = useState('recognize');
   const [allWords, setAllWords] = useState([]);

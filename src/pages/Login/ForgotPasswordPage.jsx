@@ -1,7 +1,13 @@
 import ForgotPasswordForm from '../../components/auth/ForgotPasswordForm';
 import toriiLogo from '../../img/torii.svg';
+import { usePageSeo } from '../../hooks/usePageSeo';
 
 export default function ForgotPasswordPage() {
+  usePageSeo({
+    title: 'Recuperar Contraseña',
+    description: 'Recupera el acceso a tu cuenta de KanaQuest para no perder tu progreso de estudio de japonés.',
+    canonicalPath: '/forgot-password',
+  });
   return (
     <div className="mx-auto w-full max-w-md lg:max-w-4xl grid gap-6 lg:grid-cols-[1.2fr_0.8fr] items-stretch">
       <ForgotPasswordForm />

@@ -283,7 +283,14 @@ export default function AppLayout({ children }) {
   const profileInitial = (profileName || 'J').slice(0, 1).toUpperCase();
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-background text-neutral">
+    <div className="relative min-h-screen overflow-hidden bg-background text-neutral">
+      {/* Enlace accesible para lectores de pantalla y bots */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-xl focus:bg-[#6b2832] focus:px-4 focus:py-2 focus:text-xs focus:font-bold focus:text-white focus:shadow-lg"
+      >
+        Saltar al contenido principal
+      </a>
       <SakuraPetalsCanvas />
       <div className="relative z-10">
         <header className="relative z-50 px-3 pt-2.5 sm:px-5 sm:pt-3 lg:px-8">
@@ -484,10 +491,10 @@ export default function AppLayout({ children }) {
           </div>
         </header>
 
-        <div className="mx-auto w-full max-w-7xl px-3 py-3 sm:px-6 sm:py-5 lg:px-8 pb-24 lg:pb-8 flex flex-col min-h-[calc(100vh-5rem)]">
-          <div className="flex-1">
-            {children || <Outlet />}
-          </div>
+        <main id="main-content" className="mx-auto w-full max-w-7xl px-3 py-3 sm:px-6 sm:py-5 lg:px-8 flex-1">
+          {children || <Outlet />}
+        </main>
+        <div className="mx-auto w-full max-w-7xl px-3 sm:px-6 lg:px-8 pb-24 lg:pb-8">
           <AppFooter />
         </div>
         <MobileNavigation />
@@ -506,6 +513,6 @@ export default function AppLayout({ children }) {
         isOpen={cookieModalOpen}
         onClose={() => setCookieModalOpen(false)}
       />
-    </main>
+    </div>
   );
 }

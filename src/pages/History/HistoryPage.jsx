@@ -5,6 +5,7 @@ import { getUser } from '../../services/supabase/auth';
 import { fetchWordsForHistory } from '../../services/supabase/words';
 import { fetchUserProgress } from '../../services/supabase/progress';
 import { useSoundEffects } from '../../hooks/useSoundEffects';
+import { usePageSeo } from '../../hooks/usePageSeo';
 import Icon from '../../components/ui/Icon';
 
 const containsJapaneseScript = (value = '') => /[\u3040-\u30ff\u3400-\u9fff]/.test(value);
@@ -56,6 +57,12 @@ export default function HistoryPage() {
   const { user } = useAuthSession();
   const { playFlip } = useSoundEffects();
   const navigate = useNavigate();
+
+  usePageSeo({
+    title: 'Catálogo de Vocabulario y Progreso',
+    description: 'Consulta tu historial de vocabulario japonés estudiado, estado de maestría y repasa palabras clave en KanaQuest.',
+    canonicalPath: '/vocabulary',
+  });
 
   const [mode, setMode] = useState('recognize');
   const [loading, setLoading] = useState(true);
