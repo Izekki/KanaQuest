@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import { submitFeedback } from '../../services/supabase/feedback';
 import { useSoundEffects } from '../../hooks/useSoundEffects';
@@ -118,8 +119,8 @@ export default function FeedbackModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
+  const modalContent = (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
       {/* Toast Notification */}
       {showToast && (
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[1000] animate-toastSlideIn">
@@ -150,7 +151,7 @@ export default function FeedbackModal({
 
       {/* Modal Dialog Card */}
       <div
-        className="relative w-full max-w-xl max-h-[92vh] overflow-y-auto rounded-[1.8rem] border border-[#e8d7cf] bg-white p-5 sm:p-7 shadow-[0_20px_50px_rgba(128,43,56,0.18)]"
+        className="relative w-full max-w-xl max-h-[92vh] overflow-y-auto custom-scrollbar rounded-[1.8rem] border border-[#e8d7cf] bg-white p-5 sm:p-7 shadow-[0_20px_50px_rgba(128,43,56,0.18)]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="feedback-modal-title"
@@ -324,4 +325,7 @@ export default function FeedbackModal({
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(modalContent, document.body);
 }
