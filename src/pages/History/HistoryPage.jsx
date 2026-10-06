@@ -72,7 +72,7 @@ export default function HistoryPage() {
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'correct' | 'wrong' | 'pending'
-  const [difficultyFilter, setDifficultyFilter] = useState('all'); // 'all' | 'beginner' | 'intermediate' | 'advanced'
+  const [jlptFilter, setJlptFilter] = useState('all'); // 'all' | 'N5' | 'foundation'
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   // Pagination
@@ -126,7 +126,7 @@ export default function HistoryPage() {
   // Reset pagination on filter changes
   useEffect(() => {
     setPage(1);
-  }, [mode, searchQuery, statusFilter, difficultyFilter]);
+  }, [mode, searchQuery, statusFilter, jlptFilter]);
 
   // 2. Correlate Words with Progress per active mode
   const progressMap = useMemo(() => {
@@ -194,13 +194,13 @@ export default function HistoryPage() {
       result = result.filter((item) => item.status === statusFilter);
     }
 
-    // Difficulty filter
-    if (difficultyFilter !== 'all') {
-      result = result.filter((item) => item.difficulty === difficultyFilter);
+    // JLPT classification filter (using true jlpt_tier)
+    if (jlptFilter !== 'all') {
+      result = result.filter((item) => (item.jlpt_tier || 'N5') === jlptFilter);
     }
 
     return result;
-  }, [allItems, searchQuery, statusFilter, difficultyFilter]);
+  }, [allItems, searchQuery, statusFilter, jlptFilter]);
 
   // Pagination slice
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
@@ -294,45 +294,58 @@ export default function HistoryPage() {
             ))}
           </div>
 
-          {/* Advanced Difficulty Filter Toggle */}
+          {/* Level Filter Toggle */}
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setShowAdvancedFilters((p) => !p)}
-              className="text-xs font-semibold text-[#6b2832]/75 hover:text-[#6b2832] py-1 px-2 rounded-lg hover:bg-black/5 transition"
+              className="text-xs font-semibold text-[#6b2832]/80 hover:text-[#6b2832] py-1.5 px-2.5 rounded-xl border border-[#eaded6] bg-white hover:bg-[#faf4f2] transition flex items-center gap-1.5 shadow-2xs"
             >
-              {showAdvancedFilters ? 'Ocultar nivel ▲' : 'Filtrar nivel ▼'}
+              <span>{showAdvancedFilters ? 'Ocultar nivel ▲' : 'Filtrar por nivel ▼'}</span>
+              {jlptFilter !== 'all' && (
+                <span className="h-1.5 w-1.5 rounded-full bg-[#6b2832]" title="Filtro de nivel activo" />
+              )}
             </button>
-            <span className="text-xs text-[rgb(var(--color-neutral))]/60">
+            <span className="text-xs text-[rgb(var(--color-neutral))]/60 font-medium">
               {filteredItems.length} palabras
             </span>
           </div>
         </div>
 
-        {/* Collapsible Advanced Filters */}
+        {/* Collapsible Single Clean Level Filter (Option 1) */}
         {showAdvancedFilters && (
-          <div className="p-3 bg-[#fdfaf8] border border-[#eaded6] rounded-2xl flex flex-wrap items-center gap-3 animate-fadeIn text-xs">
-            <span className="font-bold text-[#6b2832]">Nivel JLPT:</span>
-            {['all', 'beginner', 'intermediate', 'advanced'].map((lvl) => (
+          <div className="p-3 bg-[#fdfaf8] border border-[#eaded6] rounded-2xl flex flex-wrap items-center justify-between gap-3 animate-fadeIn text-xs shadow-2xs">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-bold text-[#6b2832] min-w-[70px]">Nivel JLPT:</span>
+              {[
+                { id: 'all', label: 'Todos' },
+                { id: 'N5', label: 'N5 (Inicial)' },
+                { id: 'foundation', label: 'Cimientos (Kana)' },
+              ].map((tier) => (
+                <button
+                  key={tier.id}
+                  type="button"
+                  onClick={() => setJlptFilter(tier.id)}
+                  className={`px-3 py-1.5 rounded-lg font-semibold transition active:scale-98 ${
+                    jlptFilter === tier.id
+                      ? 'bg-[#6b2832] text-white shadow-2xs'
+                      : 'bg-white border border-[#eaded6] text-[#6b2832]/70 hover:text-[#6b2832] hover:bg-[#faf4f2]'
+                  }`}
+                >
+                  {tier.label}
+                </button>
+              ))}
+            </div>
+
+            {jlptFilter !== 'all' && (
               <button
-                key={lvl}
                 type="button"
-                onClick={() => setDifficultyFilter(lvl)}
-                className={`px-2.5 py-1 rounded-lg font-semibold ${
-                  difficultyFilter === lvl
-                    ? 'bg-[#6b2832] text-white'
-                    : 'bg-white border border-[#eaded6] text-[#6b2832]/70 hover:text-[#6b2832]'
-                }`}
+                onClick={() => setJlptFilter('all')}
+                className="text-xs font-semibold text-[#6b2832] hover:underline underline-offset-2 ml-auto"
               >
-                {lvl === 'all'
-                  ? 'Todos'
-                  : lvl === 'beginner'
-                  ? 'N5 (Principiante)'
-                  : lvl === 'intermediate'
-                  ? 'N4 (Intermedio)'
-                  : 'N3+ (Avanzado)'}
+                Restablecer
               </button>
-            ))}
+            )}
           </div>
         )}
       </section>
@@ -405,15 +418,12 @@ export default function HistoryPage() {
                       <span className={statusCfg.textColor}>{statusCfg.label}</span>
                     </div>
 
-                    {item.difficulty && (
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-[rgb(var(--color-neutral))]/50">
-                        {item.difficulty === 'beginner'
-                          ? 'N5'
-                          : item.difficulty === 'intermediate'
-                          ? 'N4'
-                          : 'N3+'}
+                    <div className="flex items-center gap-1.5">
+                      {/* Real JLPT Tier Badge */}
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#f5ebe6] text-[#6b2832] uppercase tracking-wider">
+                        {item.jlpt_tier === 'foundation' ? 'Cimiento' : (item.jlpt_tier || 'N5')}
                       </span>
-                    )}
+                    </div>
                   </div>
                 </article>
               );
